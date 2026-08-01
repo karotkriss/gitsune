@@ -9,8 +9,10 @@ Claims not backed by a cited source are marked `[inferred]`.
 
 Every channel below is really being tested against two independent constraints, and keeping them separate is what makes the analysis honest.
 
-- **Wall A, the GitLab layer:** is there a per-user event source that can be subscribed to without running a server? The answer is yes, in several forms: notification email, IMAP IDLE against a mailbox, GraphQL subscriptions over GitLab's real-time channel, and Atom/RSS feeds.
-- **Wall B, the mobile operating system layer:** can the app be woken while closed, without an app-owned Apple Push Notification service (APNs) or Firebase Cloud Messaging (FCM) relay? The answer is no on iOS for any approach that depends on holding a persistent background connection, and roughly a 15-minute best-effort floor on Android for background polling.
+- **Wall A, the GitLab layer:** is there a per-user event source that can be subscribed to without running a server?
+  The answer is yes, in several forms: notification email, IMAP IDLE against a mailbox, GraphQL subscriptions over GitLab's real-time channel, and Atom/RSS feeds.
+- **Wall B, the mobile operating system layer:** can the app be woken while closed, without an app-owned Apple Push Notification service (APNs) or Firebase Cloud Messaging (FCM) relay?
+  The answer is no on iOS for any approach that depends on holding a persistent background connection, and roughly a 15-minute best-effort floor on Android for background polling.
 
 A channel can clear Wall A (real per-user push data exists) and still fail Wall B on iOS.
 The only channels that clear Wall B on iOS without this project operating a relay are the ones where some other party already operates the push relay: a third-party notification service the user connects themselves, or, prospectively, GitLab's own emerging native push capability.

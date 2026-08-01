@@ -120,7 +120,7 @@ It is gated behind default-off feature flags, scoped to a single notification ty
 No public repository, announcement, or product-direction page for a GitLab-branded mobile app exists.
 
 This is a real, credible signal and it changes the competitive framing, but it does not close the gap Gitsune targets.
-If GitLab ships an official app along the lines this work suggests, it would plausibly cover gitlab.com iOS notifications for Duo-centric workflows, a narrower and more assistant-focused surface than Gitsune's full-breadth, cross-platform, self-hosted-first, open-source scope.
+If GitLab ships an official app along the lines this work suggests, it would plausibly cover gitlab.com iOS notifications for Duo-centric workflows, a narrower and more assistant-focused surface than Gitsune's planned full-breadth, cross-platform, self-hosted-first, open-source scope.
 See `docs/decisions/0006-strategy-and-positioning.md` for how this shapes Gitsune's positioning, and `docs/decisions/0002-notification-architecture.md` for the seam that lets Gitsune evaluate GitLab's own push infrastructure without an architectural redesign.
 Enabling the infrastructure on a self-hosted instance does not make it usable by Gitsune because native push requires APNs credentials bound to Gitsune's app identity.
 Adoption remains conditional on an unresolved future credential-sharing arrangement between the project and cooperating instance administrators.

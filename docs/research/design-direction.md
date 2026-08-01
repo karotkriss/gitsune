@@ -128,6 +128,7 @@ The one-line summary: GitHub Mobile decides how the app moves; Pajamas decides h
 ## Starting kit
 
 1. Pull Pajamas' color ramps, both typefaces, and the icon set (UI, status, pipeline, and file-type collections) as design tokens; all are public and open source and can live directly in this repository once a design system exists.
-2. The seven surfaces to design first, in order: sign-in, home, the to-do inbox, merge request view, diff review, issue view, and the account switcher. Sign-in and the switcher are where Gitsune differentiates most; the rest deliberately track GitHub Mobile's proven anatomy.
+2. The seven surfaces to design first, in order: sign-in, home, the to-do inbox, merge request view, diff review, issue view, and the account switcher.
+   Sign-in and the switcher are where Gitsune differentiates most; the rest deliberately track GitHub Mobile's proven anatomy.
 3. Design light and dark themes together from the start; Pajamas' color system is explicitly built for both.
 4. Auth mechanics, the offline/error model, and the cross-platform framework's effect on font and system-component fidelity are all design-affecting but owned by separate decisions; see `docs/decisions/0001-auth-posture.md` and `docs/research/technology-assessment.md`.

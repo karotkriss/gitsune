@@ -1,6 +1,6 @@
 # Gitsune
 
-Gitsune is an open-source, cross-platform GitLab client for phones and tablets.
+Gitsune is a planned open-source, cross-platform GitLab client for phones and tablets.
 It targets both gitlab.com and self-hosted GitLab instances, with self-hosted treated as a first-class target rather than an afterthought.
 
 ## Why this project exists
@@ -16,7 +16,7 @@ Merge request review on the go, push notifications, CI/CD status, and reliable s
 
 Worth stating plainly: GitLab is also known to be prototyping push-notification infrastructure that looks like early work toward an official mobile app of its own.
 Nothing has shipped or been announced publicly, and what has surfaced looks narrow in scope (iOS-only, notification-focused).
-Gitsune's differentiators, cross-platform coverage, self-hosted-first design, an open-source license, and full feature breadth, remain distinct from that narrower framing regardless of how it develops.
+Gitsune's differentiators, cross-platform coverage, self-hosted-first design, a commitment to an open-source license, and full feature breadth, remain distinct from that narrower framing regardless of how it develops.
 See `docs/decisions/0006-strategy-and-positioning.md` for how this shapes positioning.
 
 ## What Gitsune is
@@ -33,7 +33,7 @@ See `docs/decisions/0006-strategy-and-positioning.md` for how this shapes positi
 
 Gitsune is in its documentation phase.
 No application code has been written, and no scaffolding exists yet.
-A design system is being built next, outside this repository, before development begins.
+A design system is being built next, before development begins.
 See `docs/plan/phase-plan.md` for the full sequencing.
 
 ## How the docs are organized

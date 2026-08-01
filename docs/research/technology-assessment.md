@@ -95,12 +95,13 @@ The testing approach is biased toward being fast, deterministic, and low-frictio
 - **Unit and widget tests** cover repositories, the diff-hunk parser, GitLab-flavored-markdown reference resolution, and authentication/session/refresh logic, using a mocking library that needs no code generation step, to keep the contributor loop simple.
 - **Golden (visual regression) tests** cover the Pajamas theme components and key screens in both light and dark mode, rendered in a CI mode that avoids cross-machine font-rendering flakiness.
 - **A small number of full-app integration tests** run on an emulator against a fake local server, covering the handful of flows that depend on real HTTP behavior: pagination headers, and the token-refresh-and-retry round trip.
-- **A GitLab instance is faked, never real, in automated tests:** the bulk of tests replay recorded, scrubbed JSON fixtures captured from real API responses; a small in-process fake HTTP server handles the few flows that need real HTTP semantics. No automated test ever talks to a live GitLab instance, which keeps tests hermetic and fast.
+- **A GitLab instance is faked, never real, in automated tests:** the bulk of tests replay recorded, scrubbed JSON fixtures captured from real API responses; a small in-process fake HTTP server handles the few flows that need real HTTP semantics.
+  No automated test ever talks to a live GitLab instance, which keeps tests hermetic and fast.
 - Every job that runs on every change (formatting, linting, the test suite, and a build sanity check) needs no secrets, which is what allows those checks to run safely on contributions from outside the project.
 
 ## CI/CD and distribution
 
-Gitsune is hosted on GitHub (`docs/decisions/0005-hosting-platform.md`) and ships on all three of the App Store, Google Play, and F-Droid at v1 (`docs/decisions/0004-app-store-launch-scope.md`).
+Gitsune is hosted on GitHub (`docs/decisions/0005-hosting-platform.md`) and ships on the App Store, Google Play, and F-Droid at v1 (`docs/decisions/0004-app-store-launch-scope.md`).
 This section covers the mechanics behind that.
 
 **iOS/macOS builds require a Mac.**

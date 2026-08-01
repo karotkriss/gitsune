@@ -27,12 +27,15 @@ Separately, GitLab's notification emails already carry a rich, largely machine-r
 
 Gitsune's notification system is layered, and the project operates no notification servers of any kind, at any layer, ever.
 
-1. **Baseline, on by default, works on every instance:** conditional-request polling of the Todos API, using stored ETags to keep it cheap, surfaced as local notifications on the device. This sets the honest expectation of near-real-time delivery rather than instant push, and it requires no server-side cooperation from any instance.
-2. **Foreground:** GraphQL subscriptions over GitLab's real-time channel, authenticated with the user's own token, drive live updates while a screen is open. This channel is not available while the app is backgrounded or closed, so it supplements the baseline rather than replacing it.
+1. **Baseline, on by default, works on every instance:** conditional-request polling of the Todos API, using stored ETags to keep it cheap, surfaced as local notifications on the device.
+   This sets the honest expectation of near-real-time delivery rather than instant push, and it requires no server-side cooperation from any instance.
+2. **Foreground:** GraphQL subscriptions over GitLab's real-time channel, authenticated with the user's own token, drive live updates while a screen is open.
+   This channel is not available while the app is backgrounded or closed, so it supplements the baseline rather than replacing it.
 3. **Android, opt-in:** either a foreground service that polls from the device, or a user-owned webhook-to-gateway bridge with ntfy acting as the UnifiedPush distributor.
    The bridge is the event source for UnifiedPush: a project or group owner configures GitLab to send selected events to the user's ntfy gateway, which then delivers them to Gitsune.
    This path is for users who want closer-to-instant delivery and accept its setup and authorization requirements; only the foreground-service option carries the battery and persistent-notification tradeoffs.
-4. **iOS, opt-in:** a guided wizard that helps the user connect their own account on a push-relay service they choose and control, such as ntfy or Pushover, by generating the correct GitLab webhook configuration for them to add. The relay in this path is operated by that third-party service, chosen and authorized by the user, never by this project.
+4. **iOS, opt-in:** a guided wizard that helps the user connect their own account on a push-relay service they choose and control, such as ntfy or Pushover, by generating the correct GitLab webhook configuration for them to add.
+   The relay in this path is operated by that third-party service, chosen and authorized by the user, never by this project.
 5. **Native-push seam:** the device-registration layer is built around a single `registerDevice()` interface so that Gitsune can evaluate GitLab's native per-user push capability without architectural rework if it becomes available.
    Adoption for a self-hosted instance remains conditional on resolving the open question of how cooperating instance administrators can use APNs credentials bound to Gitsune's app identity.
 

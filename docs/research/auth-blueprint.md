@@ -3,7 +3,7 @@
 This document is the implementation-level detail behind `docs/decisions/0001-auth-posture.md`: how OAuth2 with PKCE works end to end for both gitlab.com and self-hosted instances, the exact shape of the self-hosted registration wizard, session and refresh handling, and every edge case identified so far.
 
 Claims are sourced inline: a citation into GitLab's own CLI source code (`glab`, read from a public clone), a docs.gitlab.com page, or `flutter_appauth` package documentation.
-Claims not backed by one of those is marked `[inferred]`.
+Claims not backed by one of those are marked `[inferred]`.
 
 ## The precedent: how GitLab's own CLI does OAuth
 
@@ -11,8 +11,10 @@ GitLab's own command-line tool, `glab`, already ships a production OAuth2-with-P
 
 The flow, end to end:
 
-1. **Resolve the client ID.** On gitlab.com, `glab` uses a baked-in default client ID. On a self-hosted instance, it reads a `client_id` the user has configured locally; if none is set, it errors with a clear instruction to configure one first.
-2. **Resolve the OAuth endpoints.** gitlab.com uses fixed, well-known endpoints. A self-hosted instance's endpoints are derived directly from the instance's base URL (`<base>/oauth/authorize`, `<base>/oauth/token`).
+1. **Resolve the client ID.** On gitlab.com, `glab` uses a baked-in default client ID.
+   On a self-hosted instance, it reads a `client_id` the user has configured locally; if none is set, it errors with a clear instruction to configure one first.
+2. **Resolve the OAuth endpoints.** gitlab.com uses fixed, well-known endpoints.
+   A self-hosted instance's endpoints are derived directly from the instance's base URL (`<base>/oauth/authorize`, `<base>/oauth/token`).
 3. **Run Authorization Code with PKCE against a local callback.** `glab` generates a random state value and a PKCE code verifier, builds the authorization URL with an S256 PKCE challenge, opens the system browser, and on callback validates the state, requires a non-empty authorization code, and exchanges it for tokens by sending the code verifier, with no client secret involved at all, since this is a public client.
 4. **Persist the token.** The access token, refresh token, and expiry are written to local, OS-appropriate secure storage, using the operating system's keyring where one is available.
 
