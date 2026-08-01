@@ -132,3 +132,7 @@ The one-line summary: GitHub Mobile decides how the app moves; Pajamas decides h
    Sign-in and the switcher are where Gitsune differentiates most; the rest deliberately track GitHub Mobile's proven anatomy.
 3. Design light and dark themes together from the start; Pajamas' color system is explicitly built for both.
 4. Auth mechanics, the offline/error model, and the cross-platform framework's effect on font and system-component fidelity are all design-affecting but owned by separate decisions; see `docs/decisions/0001-auth-posture.md` and `docs/research/technology-assessment.md`.
+
+## See also
+
+`docs/design/design-references.md` collects the mobile screenshot references behind this direction, surface by surface, with sourcing back to each original screen.

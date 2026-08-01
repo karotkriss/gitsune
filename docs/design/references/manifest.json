@@ -1,0 +1,122 @@
+{
+ "https://mobbin.com/screens/02d58dae-2b39-479c-930f-d7e53de1184c": {
+  "file": "github-02d58dae.png",
+  "app": "GitHub",
+  "what": "Profile tab and Settings list (Appearance, Code Options, External Links)"
+ },
+ "https://mobbin.com/screens/055f71a7-631f-4231-ace7-47ea501d308c": {
+  "file": "github-055f71a7.png",
+  "app": "GitHub",
+  "what": "Inbox rows: entity glyph, repo + number, comment preview, swipe-right Done"
+ },
+ "https://mobbin.com/screens/1e93ecab-0223-478e-bc37-f6e0e1d164cb": {
+  "file": "github-1e93ecab.png",
+  "app": "GitHub",
+  "what": "Actions bottom sheet: Assignees / Labels / Milestone, then the destructive zone"
+ },
+ "https://mobbin.com/screens/24b3cdbf-d26e-4908-8b30-2c5bcb593088": {
+  "file": "github-24b3cdbf.png",
+  "app": "GitHub",
+  "what": "The same Home in dark - design both themes together"
+ },
+ "https://mobbin.com/screens/2f215b52-9a22-4ee9-b192-88e2de993521": {
+  "file": "linear-2f215b52.png",
+  "app": "Linear",
+  "what": "Inbox with snooze + undo, filter sheet by type, display options, a designed empty state"
+ },
+ "https://mobbin.com/screens/3d9ccfd8-2425-49e9-a00b-27189140d3a3": {
+  "file": "linear-3d9ccfd8.png",
+  "app": "Linear",
+  "what": "Inbox with snooze + undo, filter sheet by type, display options, a designed empty state"
+ },
+ "https://mobbin.com/screens/5a3306dc-cc3c-4734-bda5-1fdd8dfdba1c": {
+  "file": "github-5a3306dc.png",
+  "app": "GitHub",
+  "what": "Filtered inbox view (\"Mentioned\")"
+ },
+ "https://mobbin.com/screens/5c0bbb27-424b-4830-9184-bdb7e684b85d": {
+  "file": "github-5c0bbb27.png",
+  "app": "GitHub",
+  "what": "Profile tab and Settings list (Appearance, Code Options, External Links)"
+ },
+ "https://mobbin.com/screens/5d3a1ed0-a1b4-4999-892e-e302bc5580a5": {
+  "file": "github-5d3a1ed0.png",
+  "app": "GitHub",
+  "what": "\"Add Enterprise Account\" hidden in settings - the other anti-pattern"
+ },
+ "https://mobbin.com/screens/6d7c142a-2783-4972-926a-658b4c04f3a1": {
+  "file": "linear-6d7c142a.png",
+  "app": "Linear",
+  "what": "Inbox with snooze + undo, filter sheet by type, display options, a designed empty state"
+ },
+ "https://mobbin.com/screens/76987c00-2bd3-4966-a632-b1a689bf834d": {
+  "file": "bluesky-76987c00.png",
+  "app": "Bluesky",
+  "what": "Its honest failure state: \"Unable to contact your service\""
+ },
+ "https://mobbin.com/screens/9be4aad3-c5b8-41a3-adc5-d60a940edccb": {
+  "file": "github-9be4aad3.png",
+  "app": "GitHub",
+  "what": "The same Home in dark - design both themes together"
+ },
+ "https://mobbin.com/screens/b7b5c43b-4a26-4deb-96b3-a7def8aa48ce": {
+  "file": "slack-b7b5c43b.png",
+  "app": "Slack",
+  "what": "\"Sign in with workspace URL\" as a buried text link - the anti-pattern"
+ },
+ "https://mobbin.com/screens/b9c2f935-3abf-48ea-ae42-38bc2da21690": {
+  "file": "workday-one-b9c2f935.png",
+  "app": "Workday One",
+  "what": "Search-first \"find your employer\" - does not fit (no directory of instances exists)"
+ },
+ "https://mobbin.com/screens/c52d3c07-2f2f-422d-b9f1-28457b741bf5": {
+  "file": "github-c52d3c07.png",
+  "app": "GitHub",
+  "what": "Inbox rows: entity glyph, repo + number, comment preview, swipe-right Done"
+ },
+ "https://mobbin.com/screens/d8e6f226-e5fe-47d6-884c-7fa41d7d4e5a": {
+  "file": "github-d8e6f226.png",
+  "app": "GitHub",
+  "what": "Thread with state-change events inline and reactions"
+ },
+ "https://mobbin.com/screens/d9396132-fa25-49a5-abc9-fe0a5968bf96": {
+  "file": "bluesky-d9396132.png",
+  "app": "Bluesky",
+  "what": "Sign-in with a \"Hosting provider\" field above the account fields - the shape to steal"
+ },
+ "https://mobbin.com/screens/dfd5799c-6eda-4120-9cbc-eef758ebf26a": {
+  "file": "github-dfd5799c.png",
+  "app": "GitHub",
+  "what": "Home: \"My Work\" colored tiles, Favorites, Recent - light"
+ },
+ "https://mobbin.com/screens/e6762d9b-01dc-48bf-99ad-137c8b8bd44a": {
+  "file": "slack-e6762d9b.png",
+  "app": "Slack",
+  "what": "Workspace switcher sheet: avatar + name + URL per row, unread badge, add at bottom - the switching shape to steal"
+ },
+ "https://mobbin.com/screens/ed788cb0-3715-4383-9cbd-783d2a55bdf8": {
+  "file": "linear-ed788cb0.png",
+  "app": "Linear",
+  "what": "Metadata as horizontal pills under the title - the one improvement to steal"
+ },
+ "https://mobbin.com/screens/f078a659-e648-4b5a-b312-f3be58eece15": {
+  "file": "github-f078a659.png",
+  "app": "GitHub",
+  "what": "Diff screen: per-file hunks, green/red line backgrounds, \"Jump to file\""
+ },
+ "https://mobbin.com/screens/f53ca970-0d28-4619-89d2-af3d650dc060": {
+  "file": "github-f53ca970.png",
+  "app": "GitHub",
+  "what": "Inbox rows: entity glyph, repo + number, comment preview, swipe-right Done"
+ },
+ "https://mobbin.com/screens/f688fc71-2060-49c2-be67-bc6ab5e53bee": {
+  "file": "linear-f688fc71.png",
+  "app": "Linear",
+  "what": "Inbox with snooze + undo, filter sheet by type, display options, a designed empty state"
+ },
+ "https://mobbin.com/screens/fca69407-4df2-4d2c-a90f-83f70bd13671": {
+  "file": "github-fca69407.png",
+  "app": "GitHub",
+  "what": "\"Edit My Work\" reorder sheet - checkboxes plus drag handles"
+ }
+}
