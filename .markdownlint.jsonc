@@ -1,0 +1,6 @@
+{
+  // Prose in this repo follows a one-sentence-per-line convention, so lines
+  // are as long as a sentence needs to be rather than wrapped at a fixed
+  // column. MD013 (line length) is disabled to match that deliberate style.
+  "MD013": false
+}
