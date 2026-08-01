@@ -50,7 +50,7 @@ The overall content-rendering picture: list rendering and image caching are solv
 ## Push notifications and authentication
 
 Push notification architecture and authentication are large enough decisions to warrant their own documents: see `docs/decisions/0002-notification-architecture.md` and `docs/research/notification-analysis.md` for notifications, and `docs/decisions/0001-auth-posture.md` and `docs/research/auth-blueprint.md` for authentication.
-The packages that implement those decisions: `flutter_appauth` (OAuth2 with PKCE, using the system browser rather than an embedded web view, so instance SSO and multi-factor authentication behave exactly as they do on the web) and `flutter_secure_storage` (tokens in the platform's Keychain or Keystore-backed secure storage) for authentication; `flutter_local_notifications` for local notification display, with `workmanager` handling background polling within the operating system's real scheduling limits, and an opt-in UnifiedPush integration for Android.
+The packages that implement those decisions: `flutter_appauth` (OAuth2 with PKCE, using the system browser rather than an embedded web view, so instance SSO and multi-factor authentication behave exactly as they do on the web) and `flutter_secure_storage` (tokens in the platform's Keychain or Keystore-backed secure storage) for authentication; `flutter_local_notifications` for local notification display, with `workmanager` handling background polling within the operating system's real scheduling limits, and an opt-in UnifiedPush integration for Android fed by a user-owned GitLab webhook-to-ntfy bridge.
 
 ## API layer and offline caching
 

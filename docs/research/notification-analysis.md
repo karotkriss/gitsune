@@ -28,7 +28,7 @@ Sources: Apple developer documentation on background execution limits (`BGAppRef
 | GraphQL subscriptions over GitLab's real-time channel | Granular per-object push | Sub-second, foreground only | Mostly per-object, one genuinely per-user subscription | Low (just a token) | No | Yes | Nobody (foreground-only, no relay needed) |
 | User-owned webhook into a self-chosen push service (ntfy, Pushover) | Selected events as phone push | Near-instant | Per-project, owner-configured | High | Yes | Yes | The push service the user chose |
 | Built-in chat integrations (Telegram, Discord, and others) | Selected events into a chat app | Near-instant | Per-project, owner-configured | Medium | Yes | Yes | The chat provider |
-| GitLab's own emerging native push capability | Server push on to-do creation | Near-instant | Per-user | Low (device registration call) | Yes, once available | Yes, if the instance enables it | The GitLab instance itself |
+| GitLab's own emerging native push capability | Server push on to-do creation | Near-instant | Per-user | Unresolved (requires app-bound APNs credentials) | Yes, once available | Only with an undesigned credential-sharing arrangement | The cooperating GitLab instance sends; APNs delivers |
 
 Only the last three rows deliver real closed-app iOS push without this project operating a relay.
 The email-and-IMAP and GraphQL-subscription rows are genuine per-user push, but they die on iOS's background wall; the feed and polling rows are honest, cheap pulls.
@@ -91,11 +91,14 @@ The most significant finding of this analysis: GitLab is actively building exact
 Work observed directly in GitLab's own public source repository adds a device push-subscription registry, a REST API to register and deregister a device (`POST /api/v4/user/push_subscriptions`), and server-initiated push delivery to Apple's push service triggered on to-do creation.
 It is gated behind default-off feature flags, is scoped to a single event type (to-do creation, which covers assignments, mentions, and review requests), and is Apple-push-only with nothing for Android as of this research.
 
-The architecture is genuinely usable by a third-party app on a self-hosted instance whose administrator is willing to cooperate: the registration call is a standard, documented REST call any app can make once the capability is enabled, and delivery is signed using the instance's own configured push credentials, which an administrator could point at this app's own credentials rather than GitLab's.
-That would be genuine, per-user server push with no relay operated by this project at all.
+The registration call is a standard REST call that an app could make once the capability is enabled, but registration alone does not make the architecture usable by a third-party app.
+APNs credentials and device tokens are bound to Gitsune's developer team and app identity, so a self-hosted instance cannot deliver to Gitsune with credentials of its own.
+Using this capability would require a future credential-sharing arrangement between the project and cooperating instance administrators.
+That arrangement has not been designed, and its security and operational model remains an open question.
 On GitLab's own SaaS (gitlab.com), this capability is expected to serve GitLab's own official app rather than being usable by third parties, since it is bound to a single set of push credentials per instance.
 
-**Conclusion:** this is not yet available, but it is the clearest path to instant push without a project-operated relay, on any self-hosted instance willing to enable it, which is exactly why Gitsune's notification architecture is built around a device-registration interface designed to adopt this capability the moment it becomes available, rather than around any workaround for its current absence.
+**Conclusion:** this is not yet available and cannot be promised as a working Gitsune path until credential ownership is resolved.
+Gitsune's notification architecture keeps a device-registration seam so the project can evaluate the capability later without inventing a distribution mechanism now.
 
 Sources: first-hand review of the relevant merge requests and feature-flag issues in GitLab's own public source repository, gitlab.com/gitlab-org/gitlab, dated 2026-07-31.
 
@@ -107,5 +110,5 @@ GitLab has no equivalent today, and no public work toward a general "web push" s
 
 ## The resulting architecture
 
-See `docs/decisions/0002-notification-architecture.md` for the decision this analysis supports: a layered system built on conditional-request polling as the universal baseline, GraphQL subscriptions for foreground live updates, opt-in Android and iOS paths that route through services the user chooses and controls, and a device-registration interface designed from the start to adopt GitLab's own native push capability the moment a given instance enables it.
+See `docs/decisions/0002-notification-architecture.md` for the decision this analysis supports: a layered system built on conditional-request polling as the universal baseline, GraphQL subscriptions for foreground live updates, opt-in Android and iOS paths that route through services the user chooses and controls, and a device-registration interface that preserves the option to evaluate GitLab's native push capability if its credential-ownership question is resolved.
 An app-operated relay is excluded permanently, not held in reserve as a fallback.

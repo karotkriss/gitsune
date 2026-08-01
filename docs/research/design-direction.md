@@ -66,7 +66,9 @@ Pajamas has no mobile-specific interaction guidance, so for surfaces it does not
 
 ### Sign-in, including self-hosted instance entry
 
-Because instance-URL-first sign-in is a core requirement (`docs/decisions/0001-auth-posture.md`), the sign-in screen shows an instance field permanently and prominently, pre-filled with `gitlab.com` and visibly editable, with credentials entered below it.
+Because instance-URL-first sign-in is a core requirement (`docs/decisions/0001-auth-posture.md`), the sign-in screen shows an instance field permanently and prominently, pre-filled with `gitlab.com` and visibly editable, followed by one continue action that opens the instance's OAuth flow in the operating system browser.
+The primary screen shows no credential fields.
+A Personal Access Token option appears only behind a secondary "having trouble signing in" affordance for instances where OAuth registration is unavailable.
 An unreachable or non-GitLab URL produces a clear inline error rather than a silent hang.
 This deliberately avoids two weaker patterns seen elsewhere: burying the instance-URL field behind a secondary link, or gating self-hosted entry behind a settings-menu "Enterprise account" afterthought.
 Visuals stay neutral and quiet: a light surface, GitLab Sans, one blue confirm action, purple reserved for the logo or an illustration.

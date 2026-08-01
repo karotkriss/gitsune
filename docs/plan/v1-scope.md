@@ -22,6 +22,7 @@ For each capability: whether GitHub Mobile supports it (the functional bar, see 
 | Push notifications | Yes, scheduled | No push API | Claimed by only a few clients | v1: layered polling + opt-in channels, per `docs/decisions/0002-notification-architecture.md` |
 | Offline read cache | No | Not applicable (client-side) | Rare | v1 differentiator, deliberately exceeding GitHub Mobile |
 | Biometric app lock | Yes | Not applicable | Rare | v1, table stakes for a security-conscious audience |
+| Dark mode | Yes | Not applicable | Common, but not universal | v1, platform table stakes |
 | Multi-instance / multi-account | Yes | Not applicable | A few clients | v1, since self-hosted users routinely run more than one instance |
 | Discussions as a first-class surface | Yes | Yes | Partial | Deferred past v1 |
 | AI/agent assistant surface | Yes (Copilot) | Not researched | No | Out of scope, per `docs/decisions/0006-strategy-and-positioning.md` |
