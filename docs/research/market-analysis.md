@@ -121,7 +121,9 @@ No public repository, announcement, or product-direction page for a GitLab-brand
 
 This is a real, credible signal and it changes the competitive framing, but it does not close the gap Gitsune targets.
 If GitLab ships an official app along the lines this work suggests, it would plausibly cover gitlab.com iOS notifications for Duo-centric workflows, a narrower and more assistant-focused surface than Gitsune's full-breadth, cross-platform, self-hosted-first, open-source scope.
-See `docs/decisions/0006-strategy-and-positioning.md` for how this shapes Gitsune's positioning, and `docs/decisions/0002-notification-architecture.md` for how Gitsune's notification design is built to make use of GitLab's own push infrastructure, on self-hosted instances that enable it, rather than only compete against it.
+See `docs/decisions/0006-strategy-and-positioning.md` for how this shapes Gitsune's positioning, and `docs/decisions/0002-notification-architecture.md` for the seam that lets Gitsune evaluate GitLab's own push infrastructure without an architectural redesign.
+Enabling the infrastructure on a self-hosted instance does not make it usable by Gitsune because native push requires APNs credentials bound to Gitsune's app identity.
+Adoption remains conditional on an unresolved future credential-sharing arrangement between the project and cooperating instance administrators.
 
 A newer third-party competitor was also identified during this update: a native iOS client in beta testing with a unified inbox, merge request review and merge, issue support, and CI/CD pipeline status.
 Its existence is further evidence that the iOS GitLab-client field is actively growing rather than static, which reinforces cross-platform coverage, not iOS alone, as a durable differentiator for Gitsune.

@@ -13,7 +13,9 @@ As of this writing, nothing has been announced publicly, no app has shipped, and
 It is nonetheless a stronger signal than the earlier "settled field, no incumbent coming" framing assumed, and it should be treated as a credible, in-progress effort rather than dismissed.
 
 Weighed against that signal, Gitsune's structural differentiators are unaffected by it: a single codebase covering both major mobile platforms rather than one, a self-hosted instance treated as a first-class target from the start rather than a SaaS-only or admin-configured extension, an open-source license with no proprietary tie-in, and a full-breadth feature set (merge request review, CI/CD, code browsing, issues, and notifications together) rather than a narrower assistant-monitoring surface.
-Where GitLab's own emerging push infrastructure becomes available on a given self-hosted instance, Gitsune's notification architecture (`docs/decisions/0002-notification-architecture.md`) is explicitly designed to adopt it as a channel, which turns that infrastructure into something Gitsune can use rather than only something it competes against.
+Gitsune's notification architecture (`docs/decisions/0002-notification-architecture.md`) preserves a seam for evaluating GitLab's own emerging push infrastructure without requiring an architectural redesign.
+Availability on a self-hosted instance is not sufficient for adoption because native push requires APNs credentials bound to Gitsune's app identity.
+Using that infrastructure remains conditional on a future credential-sharing arrangement between the project and cooperating instance administrators, and that arrangement has not been designed.
 
 ## Decision
 
