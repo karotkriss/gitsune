@@ -1,0 +1,18 @@
+/* Pajamas base palette — values verbatim from @gitlab/ui@135.1.1 design tokens (vendor/gitlab-tokens.css).
+   Five semantic ramps + neutrals. Semantics are fixed product-wide: blue=current/active/progress,
+   green=success/done/approved, orange=warning/pending, red=critical/failed/destructive,
+   purple=brand (illustrations & empty states, never the interactive color). */
+:root{
+--gl-color-blue-50:#e9f3fc;--gl-color-blue-100:#cbe2f9;--gl-color-blue-200:#9dc7f1;--gl-color-blue-300:#63a6e9;--gl-color-blue-400:#428fdc;--gl-color-blue-500:#1f75cb;--gl-color-blue-600:#2f68b4;--gl-color-blue-700:#2f5ca0;--gl-color-blue-800:#284779;--gl-color-blue-900:#213454;--gl-color-blue-950:#1d283e;
+--gl-color-green-50:#ecf4ee;--gl-color-green-100:#c3e6cd;--gl-color-green-200:#91d4a8;--gl-color-green-300:#52b87a;--gl-color-green-400:#2da160;--gl-color-green-500:#108548;--gl-color-green-600:#2f7549;--gl-color-green-700:#306440;--gl-color-green-800:#225131;--gl-color-green-900:#1e3e28;--gl-color-green-950:#17291c;
+--gl-color-orange-50:#fdf1dd;--gl-color-orange-100:#f5d9a8;--gl-color-orange-200:#e9be74;--gl-color-orange-300:#d99530;--gl-color-orange-400:#c17d10;--gl-color-orange-500:#ab6100;--gl-color-orange-600:#995715;--gl-color-orange-700:#894b16;--gl-color-orange-800:#693c14;--gl-color-orange-900:#532e16;--gl-color-orange-950:#382315;
+--gl-color-red-50:#fcf1ef;--gl-color-red-100:#fdd4cd;--gl-color-red-200:#fcb5aa;--gl-color-red-300:#f6806d;--gl-color-red-400:#ec5941;--gl-color-red-500:#dd2b0e;--gl-color-red-600:#c02f12;--gl-color-red-700:#a32c12;--gl-color-red-800:#812713;--gl-color-red-900:#582014;--gl-color-red-950:#3e1a14;
+--gl-color-purple-50:#f4f0ff;--gl-color-purple-100:#e1d8f9;--gl-color-purple-200:#cbbbf2;--gl-color-purple-300:#ac93e6;--gl-color-purple-400:#9475db;--gl-color-purple-500:#7b58cf;--gl-color-purple-600:#6a4fb4;--gl-color-purple-700:#5c47a6;--gl-color-purple-800:#493c83;--gl-color-purple-900:#342d59;--gl-color-purple-950:#27243e;
+--gl-color-neutral-0:#fff;--gl-color-neutral-10:#fbfafd;--gl-color-neutral-50:#ececef;--gl-color-neutral-100:#dcdcde;--gl-color-neutral-200:#bfbfc3;--gl-color-neutral-300:#a4a3a8;--gl-color-neutral-400:#89888d;--gl-color-neutral-500:#737278;--gl-color-neutral-600:#626168;--gl-color-neutral-700:#4c4b51;--gl-color-neutral-800:#3a383f;--gl-color-neutral-900:#28272d;--gl-color-neutral-950:#18171d;--gl-color-neutral-1000:#050506;
+/* Gitsune brand ramp — built around the current GitLab tanuki oranges (#e24329 / #fc6d26 / #fca326). Purple above is retired to data-viz/illustrations. */
+--gs-color-brand-50:#fef0e8;--gs-color-brand-100:#fdd8c0;--gs-color-brand-200:#fcb891;--gs-color-brand-300:#fd9455;--gs-color-brand-400:#fc7d38;--gs-color-brand-500:#fc6d26;--gs-color-brand-600:#e35d1d;--gs-color-brand-700:#c74e17;--gs-color-brand-800:#9c3d14;--gs-color-brand-900:#6b2b10;--gs-color-brand-950:#451d0c;
+--gs-brand-amber:#fca326;--gs-brand-orange:#fc6d26;--gs-brand-red:#e24329;
+--gl-color-alpha-0:rgba(0,0,0,0);
+--gl-color-alpha-dark-2:rgba(5,5,6,.02);--gl-color-alpha-dark-4:rgba(5,5,6,.04);--gl-color-alpha-dark-6:rgba(5,5,6,.06);--gl-color-alpha-dark-8:rgba(5,5,6,.08);--gl-color-alpha-dark-16:rgba(5,5,6,.16);--gl-color-alpha-dark-24:rgba(5,5,6,.24);--gl-color-alpha-dark-40:rgba(5,5,6,.4);
+--gl-color-alpha-light-2:rgba(255,255,255,.02);--gl-color-alpha-light-4:rgba(255,255,255,.04);--gl-color-alpha-light-6:rgba(255,255,255,.06);--gl-color-alpha-light-8:rgba(255,255,255,.08);--gl-color-alpha-light-16:rgba(255,255,255,.16);--gl-color-alpha-light-24:rgba(255,255,255,.24);--gl-color-alpha-light-36:rgba(255,255,255,.36);--gl-color-alpha-light-40:rgba(255,255,255,.4);
+}

@@ -1,0 +1,14 @@
+/* Type. GitLab Sans for UI, GitLab Mono for every git reference (branch names, commit IDs, pipeline IDs, code) — a hard rule.
+   Two weights carry everything: 400 body, 600 headings. Mobile uses the fixed (non-fluid) Pajamas scale. */
+:root{
+--gs-font-ui:"GitLab Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",Ubuntu,Cantarell,"Helvetica Neue",sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+--gs-font-mono:"GitLab Mono","JetBrains Mono",Menlo,"DejaVu Sans Mono","Liberation Mono",Consolas,"Ubuntu Mono","Courier New",monospace;
+--gl-font-size-xs:0.625rem;--gl-font-size-100:0.75rem;--gl-font-size-200:0.8125rem;--gl-font-size-300:0.875rem;--gl-font-size-400:1rem;--gl-font-size-500:1.125rem;--gl-font-size-600:1.3125rem;--gl-font-size-700:1.5rem;--gl-font-size-800:1.75rem;
+--gl-font-weight-normal:400;--gl-font-weight-semibold:500;--gl-font-weight-bold:600;--gl-font-weight-heading:600;
+--gl-line-height-16:1rem;--gl-line-height-20:1.25rem;--gl-line-height-24:1.5rem;--gl-line-height-28:1.75rem;--gl-line-height-32:2rem;--gl-line-height-36:2.25rem;
+--gl-line-height-heading:1.25;--gl-letter-spacing-heading-reduced:-0.01em;
+--gs-text-body:var(--gl-font-size-300)/var(--gl-line-height-20) var(--gs-font-ui);
+--gs-text-caption:var(--gl-font-size-100)/var(--gl-line-height-16) var(--gs-font-ui);
+--gs-text-mono:var(--gl-font-size-200)/var(--gl-line-height-20) var(--gs-font-mono);
+--gs-screen-title-size:var(--gl-font-size-800);
+}

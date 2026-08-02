@@ -1,0 +1,19 @@
+/* Shadows are quiet and gray-based; dark theme deepens the same shadows rather than recoloring.
+   Focus ring: inner keyline in the surface color, 2px blue outer ring. */
+:root{
+--gl-shadow-color:var(--gl-color-alpha-dark-16);
+--gl-shadow-sm:0 0 2px 0 var(--gl-shadow-color),0 1px 4px 0 var(--gl-shadow-color);
+--gl-shadow-md:0 0 1px 0 var(--gl-shadow-color),0 0 2px 0 var(--gl-shadow-color),0 2px 8px 0 var(--gl-shadow-color);
+--gl-shadow-lg:0 0 2px 0 var(--gl-shadow-color),0 0 2px 0 var(--gl-shadow-color),0 4px 12px 0 var(--gl-shadow-color);
+--gs-focus-ring-color:var(--gs-color-brand-500);
+--gs-focus-ring:0 0 0 1px var(--gl-background-color-default),0 0 0 3px var(--gs-focus-ring-color);
+}
+[data-theme="dark"]{
+--gl-shadow-color:var(--gl-color-alpha-dark-40);
+--gs-focus-ring-color:var(--gs-color-brand-400);
+/* Re-declared so the chains re-resolve against this scope's values. */
+--gl-shadow-sm:0 0 2px 0 var(--gl-shadow-color),0 1px 4px 0 var(--gl-shadow-color);
+--gl-shadow-md:0 0 1px 0 var(--gl-shadow-color),0 0 2px 0 var(--gl-shadow-color),0 2px 8px 0 var(--gl-shadow-color);
+--gl-shadow-lg:0 0 2px 0 var(--gl-shadow-color),0 0 2px 0 var(--gl-shadow-color),0 4px 12px 0 var(--gl-shadow-color);
+--gs-focus-ring:0 0 0 1px var(--gl-color-neutral-950),0 0 0 3px var(--gs-focus-ring-color);
+}

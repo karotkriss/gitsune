@@ -5,6 +5,9 @@ This document summarizes the design research behind Gitsune's visual and interac
 Claims are sourced inline.
 Claims not backed by a cited source are marked `[inferred]`.
 
+**Amended:** the interactive-color guidance below (blue, in Part 1's Color section and Part 3's "Merge action color" row) is superseded by `docs/decisions/0007-interactive-color-orange-over-blue.md`, which sets brand orange as Gitsune's interactive and brand color.
+This document is left as written otherwise, since it remains an accurate record of the phase-one research.
+
 ## Part 1: the design-language baseline (Pajamas, translated to mobile)
 
 GitLab's design system, Pajamas (design.gitlab.com), is the source of truth for how Gitsune should look, speak, and name things.

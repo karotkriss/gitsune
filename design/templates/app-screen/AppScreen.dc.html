@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Gitsune app screen" description="Interactive phone mock of the Gitsune GitLab client — pick the surface and theme" -->
+<helmet><script src="./ds-base.js"></script></helmet>
+<div style="min-height:100vh;display:flex;align-items:flex-start;justify-content:center;background:#0a090c;padding:24px 0">
+<div style="border-radius:20px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 24px 64px rgba(5,5,6,.6)">
+<x-import component-from-global-scope="GitsuneDesignSystem_6e1df4.GitsuneApp" screen="{{ screen }}" theme="{{ theme }}" hint-size="390px,844px"></x-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:438,&quot;height&quot;:916},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;home&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;todos&quot;,&quot;explore&quot;,&quot;profile&quot;,&quot;signin&quot;,&quot;mr&quot;,&quot;issue&quot;,&quot;code&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Screen&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Screen&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return { screen: this.props.screen ?? 'home', theme: this.props.theme ?? 'dark' };
+  }
+}
+</script>
+</body>
+</html>
