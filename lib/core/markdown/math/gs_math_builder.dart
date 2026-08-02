@@ -29,6 +29,19 @@ class GsMathBlockBuilder extends MarkdownElementBuilder {
   }
 }
 
+class GsMathFallbackBuilder extends MarkdownElementBuilder {
+  @override
+  bool isBlockElement() => true;
+
+  @override
+  Widget visitElementAfterWithContext(
+    BuildContext context,
+    md.Element element,
+    TextStyle? preferredStyle,
+    TextStyle? parentStyle,
+  ) => gsRawSourceFallback(context, element.textContent);
+}
+
 /// Renders a `$...$` inline math span as text-style TeX inline with
 /// surrounding prose, degrading to the raw source on any parse or build
 /// error.

@@ -44,6 +44,7 @@ class GsMarkdown extends StatelessWidget {
       builders: {
         gsMermaidBlockTag: GsMermaidBlockBuilder(),
         gsMathBlockTag: GsMathBlockBuilder(),
+        gsMathFallbackTag: GsMathFallbackBuilder(),
         gsMathInlineTag: GsMathInlineBuilder(),
       },
       styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(

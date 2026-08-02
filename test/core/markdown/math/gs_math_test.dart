@@ -44,4 +44,59 @@ void main() {
     final text = tester.widget<Text>(find.text(r'\frac{1}{'));
     expect(text.style?.fontFamily, gs.mono.fontFamily);
   });
+
+  testWidgets(r'an unterminated $$ block preserves following Markdown', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        r'$$'
+        '\nnot math\n\n# Still a heading',
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(Math), findsNothing);
+    final gs = buildAppTheme().extension<GsTheme>()!;
+    final delimiter = tester.widget<Text>(find.text(r'$$'));
+    expect(delimiter.style?.fontFamily, gs.mono.fontFamily);
+    expect(find.text('not math'), findsOneWidget);
+    expect(find.text('Still a heading'), findsOneWidget);
+  });
+
+  testWidgets(r'an empty $$ block shows its raw delimiters', (tester) async {
+    await tester.pumpWidget(
+      host(
+        r'$$'
+        '\n'
+        r'$$',
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(Math), findsNothing);
+    final gs = buildAppTheme().extension<GsTheme>()!;
+    final delimiters = tester.widget<Text>(
+      find.text(
+        r'$$'
+        '\n'
+        r'$$',
+      ),
+    );
+    expect(delimiters.style?.fontFamily, gs.mono.fontFamily);
+  });
+
+  testWidgets('currency and whitespace-bound dollars remain plain text', (
+    tester,
+  ) async {
+    const source = r'Costs are $20,000 and $30,000; keep $ x$ and $x $ too.';
+    await tester.pumpWidget(host(source));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(Math), findsNothing);
+    expect(find.text(source), findsOneWidget);
+  });
 }
