@@ -10,6 +10,7 @@ import 'tokens.dart';
 ThemeData buildAppTheme([GsTokenSet tokens = gsTokens]) {
   final gs = GsTheme(tokens);
   final n = tokens.neutral;
+  final textTheme = _textTheme(tokens);
   final colorScheme = ColorScheme(
     brightness: Brightness.dark,
     primary: tokens.brand.shade500,
@@ -28,14 +29,14 @@ ThemeData buildAppTheme([GsTokenSet tokens = gsTokens]) {
     secondaryFixedDim: tokens.brand.shade300,
     onSecondaryFixed: tokens.brand.shade950,
     onSecondaryFixedVariant: tokens.brand.shade800,
-    tertiary: tokens.purple.shade300,
+    tertiary: tokens.brand.shade300,
     onTertiary: n.shade950,
-    tertiaryContainer: tokens.purple.shade900,
-    onTertiaryContainer: tokens.purple.shade200,
-    tertiaryFixed: tokens.purple.shade100,
-    tertiaryFixedDim: tokens.purple.shade300,
-    onTertiaryFixed: tokens.purple.shade950,
-    onTertiaryFixedVariant: tokens.purple.shade800,
+    tertiaryContainer: tokens.brand.shade800,
+    onTertiaryContainer: tokens.brand.shade100,
+    tertiaryFixed: tokens.brand.shade100,
+    tertiaryFixedDim: tokens.brand.shade300,
+    onTertiaryFixed: tokens.brand.shade950,
+    onTertiaryFixedVariant: tokens.brand.shade800,
     error: tokens.red.shade300,
     onError: n.shade950,
     errorContainer: tokens.red.shade900,
@@ -83,8 +84,18 @@ ThemeData buildAppTheme([GsTokenSet tokens = gsTokens]) {
     fontFamily: tokens.fontUi,
     iconTheme: IconThemeData(color: gs.textDefault),
     primaryIconTheme: IconThemeData(color: gs.onAccent),
+    buttonTheme: ButtonThemeData(
+      buttonColor: gs.accent,
+      disabledColor: gs.textDisabled,
+      focusColor: gs.pressOverlayStrong,
+      hoverColor: gs.pressOverlay,
+      highlightColor: gs.pressOverlayStrong,
+      splashColor: gs.pressOverlayStrong,
+      colorScheme: colorScheme,
+    ),
     dialogTheme: DialogThemeData(backgroundColor: gs.surfaceSheet),
-    textTheme: _textTheme(tokens),
+    primaryTextTheme: textTheme,
+    textTheme: textTheme,
     extensions: [gs],
   );
 }

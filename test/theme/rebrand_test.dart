@@ -83,14 +83,14 @@ void main() {
     expect(scheme.secondaryFixedDim, fork.brand.shade300);
     expect(scheme.onSecondaryFixed, fork.brand.shade950);
     expect(scheme.onSecondaryFixedVariant, fork.brand.shade800);
-    expect(scheme.tertiary, fork.purple.shade300);
+    expect(scheme.tertiary, fork.brand.shade300);
     expect(scheme.onTertiary, fork.neutral.shade950);
-    expect(scheme.tertiaryContainer, fork.purple.shade900);
-    expect(scheme.onTertiaryContainer, fork.purple.shade200);
-    expect(scheme.tertiaryFixed, fork.purple.shade100);
-    expect(scheme.tertiaryFixedDim, fork.purple.shade300);
-    expect(scheme.onTertiaryFixed, fork.purple.shade950);
-    expect(scheme.onTertiaryFixedVariant, fork.purple.shade800);
+    expect(scheme.tertiaryContainer, fork.brand.shade800);
+    expect(scheme.onTertiaryContainer, fork.brand.shade100);
+    expect(scheme.tertiaryFixed, fork.brand.shade100);
+    expect(scheme.tertiaryFixedDim, fork.brand.shade300);
+    expect(scheme.onTertiaryFixed, fork.brand.shade950);
+    expect(scheme.onTertiaryFixedVariant, fork.brand.shade800);
     expect(scheme.error, fork.red.shade300);
     expect(scheme.onError, fork.neutral.shade950);
     expect(scheme.errorContainer, fork.red.shade900);
@@ -133,31 +133,38 @@ void main() {
     expect(theme.dialogTheme.backgroundColor, gs.surfaceSheet);
     expect(theme.iconTheme.color, gs.textDefault);
     expect(theme.primaryIconTheme.color, gs.onAccent);
+    expect(theme.buttonTheme.colorScheme, scheme);
+    expect(
+      theme.buttonTheme.getFillColor(_PrimaryMaterialButton(onPressed: () {})),
+      gs.accent,
+    );
 
-    for (final style in <TextStyle?>[
-      theme.textTheme.displayLarge,
-      theme.textTheme.displayMedium,
-      theme.textTheme.displaySmall,
-      theme.textTheme.headlineLarge,
-      theme.textTheme.headlineMedium,
-      theme.textTheme.headlineSmall,
-      theme.textTheme.titleLarge,
-      theme.textTheme.titleMedium,
-      theme.textTheme.titleSmall,
-      theme.textTheme.bodyLarge,
-      theme.textTheme.bodyMedium,
-      theme.textTheme.bodySmall,
-      theme.textTheme.labelLarge,
-      theme.textTheme.labelMedium,
-      theme.textTheme.labelSmall,
-    ]) {
-      expect(style!.fontFamily, fork.fontUi);
-      expect(style.fontVariations, isNotEmpty);
-      expect(style.fontVariations!.single.axis, 'wght');
-      expect(
-        style.fontVariations!.single.value,
-        style.fontWeight == FontWeight.w600 ? 600 : 400,
-      );
+    for (final textTheme in [theme.textTheme, theme.primaryTextTheme]) {
+      for (final style in <TextStyle?>[
+        textTheme.displayLarge,
+        textTheme.displayMedium,
+        textTheme.displaySmall,
+        textTheme.headlineLarge,
+        textTheme.headlineMedium,
+        textTheme.headlineSmall,
+        textTheme.titleLarge,
+        textTheme.titleMedium,
+        textTheme.titleSmall,
+        textTheme.bodyLarge,
+        textTheme.bodyMedium,
+        textTheme.bodySmall,
+        textTheme.labelLarge,
+        textTheme.labelMedium,
+        textTheme.labelSmall,
+      ]) {
+        expect(style!.fontFamily, fork.fontUi);
+        expect(style.fontVariations, isNotEmpty);
+        expect(style.fontVariations!.single.axis, 'wght');
+        expect(
+          style.fontVariations!.single.value,
+          style.fontWeight == FontWeight.w600 ? 600 : 400,
+        );
+      }
     }
 
     // Nothing accent-colored is left on the old brand.
@@ -183,4 +190,9 @@ void main() {
       );
     }
   });
+}
+
+class _PrimaryMaterialButton extends MaterialButton {
+  const _PrimaryMaterialButton({required VoidCallback onPressed})
+    : super(onPressed: onPressed, textTheme: ButtonTextTheme.primary);
 }
