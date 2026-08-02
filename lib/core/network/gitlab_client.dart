@@ -20,6 +20,18 @@ Uri resolveApiBaseUrl(AccountKey account) =>
     Uri.https(account.instanceHost, '/api/v4');
 
 const _retriedAfter401 = 'gitsuneRetriedAfter401';
+const _authorizationHeader = 'Authorization';
+
+bool _hasAuthorizationHeader(Map<String, dynamic> headers) => headers.keys.any(
+  (header) => header.toLowerCase() == _authorizationHeader.toLowerCase(),
+);
+
+void _setBearerToken(Map<String, dynamic> headers, String token) {
+  headers.removeWhere(
+    (header, _) => header.toLowerCase() == _authorizationHeader.toLowerCase(),
+  );
+  headers[_authorizationHeader] = 'Bearer $token';
+}
 
 /// Builds a per-account `dio` client: base URL resolved from [account]'s
 /// instance, with interceptor seams for token injection and a one-time 401
@@ -42,10 +54,10 @@ Dio createGitLabClient({
       onRequest: (options, handler) async {
         // A 401 retry pre-sets Authorization with the refreshed token before
         // re-entering this interceptor; don't clobber it with the stale one.
-        if (!options.headers.containsKey('Authorization')) {
+        if (!_hasAuthorizationHeader(options.headers)) {
           final token = await readToken(account);
           if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
+            _setBearerToken(options.headers, token);
           }
         }
         handler.next(options);
@@ -58,15 +70,26 @@ Dio createGitLabClient({
           return;
         }
 
+        final requestOptions = error.requestOptions;
+        if (requestOptions.data is Stream) {
+          handler.next(error);
+          return;
+        }
+
         final newToken = await refreshToken(account);
         if (newToken == null) {
           handler.next(error);
           return;
         }
 
-        final retryOptions = error.requestOptions
-          ..extra[_retriedAfter401] = true
-          ..headers['Authorization'] = 'Bearer $newToken';
+        final retryHeaders = Map<String, dynamic>.from(requestOptions.headers);
+        _setBearerToken(retryHeaders, newToken);
+        final requestData = requestOptions.data;
+        final retryOptions = requestOptions.copyWith(
+          data: requestData is FormData ? requestData.clone() : requestData,
+          extra: {...requestOptions.extra, _retriedAfter401: true},
+          headers: retryHeaders,
+        );
 
         try {
           handler.resolve(await dio.fetch(retryOptions));
