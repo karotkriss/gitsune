@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// Home tab. Placeholder until E1.4 adds the shortcut-tile grid.
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+/// To-Dos tab. Placeholder until E5 builds the To-Do List.
+class TodosScreen extends StatelessWidget {
+  const TodosScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Align(
             alignment: Alignment.topLeft,
-            child: Text('Home', style: gs.screenTitle),
+            child: Text('To-Dos', style: gs.screenTitle),
           ),
         ),
       ),

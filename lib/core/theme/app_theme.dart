@@ -94,6 +94,34 @@ ThemeData buildAppTheme([GsTokenSet tokens = gsTokens]) {
       colorScheme: colorScheme,
     ),
     dialogTheme: DialogThemeData(backgroundColor: gs.surfaceSheet),
+    // Tab bar (design `TabBar` component): active item in a pill, labels
+    // 12/500 per the type scale's tab-bar exception. Solid surface for now;
+    // the liquid-glass capsule treatment arrives with the glass work (E1.5).
+    navigationBarTheme: NavigationBarThemeData(
+      height: 64,
+      backgroundColor: gs.surfaceSubtle,
+      surfaceTintColor: Colors.transparent,
+      indicatorColor: gs.pressOverlayStrong,
+      indicatorShape: const StadiumBorder(),
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          size: 24,
+          color: states.contains(WidgetState.selected)
+              ? gs.textHeading
+              : gs.textSubtle,
+        ),
+      ),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => TextStyle(
+          fontFamily: tokens.fontUi,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: states.contains(WidgetState.selected)
+              ? gs.textHeading
+              : gs.textSubtle,
+        ),
+      ),
+    ),
     primaryTextTheme: textTheme,
     textTheme: textTheme,
     extensions: [gs],

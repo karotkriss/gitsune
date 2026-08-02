@@ -9,54 +9,63 @@ import 'package:flutter_test/flutter_test.dart';
 /// Enforces the core-versus-feature boundary: `core/` is shared
 /// infrastructure and must never depend on `features/`, only the reverse.
 void main() {
-  test('core never imports or exports features', () async {
-    final projectDir = Directory.current.absolute;
-    final coreDir = Directory('${projectDir.path}/lib/core');
-    final featuresUri = Directory(
-      '${projectDir.path}/lib/features',
-    ).absolute.uri.normalizePath();
-    final collection = AnalysisContextCollection(
-      includedPaths: [projectDir.path],
-      sdkPath: _dartSdkPath(),
-    );
-    final violations = <String>[];
+  test(
+    'core never imports or exports features',
+    () async {
+      final projectDir = Directory.current.absolute;
+      final coreDir = Directory('${projectDir.path}/lib/core');
+      final featuresUri = Directory(
+        '${projectDir.path}/lib/features',
+      ).absolute.uri.normalizePath();
+      // Only core files are resolved, so only include them: resolving the full
+      // dependency graph grows with every added package and can blow past the
+      // default 30-second test timeout otherwise.
+      final collection = AnalysisContextCollection(
+        includedPaths: [coreDir.path],
+        sdkPath: _dartSdkPath(),
+      );
+      final violations = <String>[];
 
-    try {
-      for (final entity in coreDir.listSync(recursive: true)) {
-        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      try {
+        for (final entity in coreDir.listSync(recursive: true)) {
+          if (entity is! File || !entity.path.endsWith('.dart')) continue;
 
-        final path = entity.absolute.path;
-        final context = collection.contextFor(path);
-        final result = await context.currentSession.getResolvedUnit(path);
-        if (result is! ResolvedUnitResult) {
-          fail('Could not resolve $path for architecture validation.');
+          final path = entity.absolute.path;
+          final context = collection.contextFor(path);
+          final result = await context.currentSession.getResolvedUnit(path);
+          if (result is! ResolvedUnitResult) {
+            fail('Could not resolve $path for architecture validation.');
+          }
+
+          for (final directive
+              in result.unit.directives.whereType<NamespaceDirective>()) {
+            final referencesFeature = _referencedUris(
+              directive,
+              result.uri,
+            ).any((uri) => _isFeatureUri(uri, featuresUri));
+            if (!referencesFeature) continue;
+
+            final line = result.lineInfo
+                .getLocation(directive.offset)
+                .lineNumber;
+            final source = directive.toSource().replaceAll(RegExp(r'\s+'), ' ');
+            violations.add('${entity.path}:$line: $source');
+          }
         }
-
-        for (final directive
-            in result.unit.directives.whereType<NamespaceDirective>()) {
-          final referencesFeature = _referencedUris(
-            directive,
-            result.uri,
-          ).any((uri) => _isFeatureUri(uri, featuresUri));
-          if (!referencesFeature) continue;
-
-          final line = result.lineInfo.getLocation(directive.offset).lineNumber;
-          final source = directive.toSource().replaceAll(RegExp(r'\s+'), ' ');
-          violations.add('${entity.path}:$line: $source');
-        }
+      } finally {
+        await collection.dispose();
       }
-    } finally {
-      await collection.dispose();
-    }
 
-    expect(
-      violations,
-      isEmpty,
-      reason:
-          'core/ must not import or export features/:\n'
-          '${violations.join('\n')}',
-    );
-  });
+      expect(
+        violations,
+        isEmpty,
+        reason:
+            'core/ must not import or export features/:\n'
+            '${violations.join('\n')}',
+      );
+    },
+    timeout: const Timeout(Duration(minutes: 5)),
+  );
 }
 
 String _dartSdkPath() {
