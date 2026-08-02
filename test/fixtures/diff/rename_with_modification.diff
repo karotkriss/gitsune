@@ -1,0 +1,6 @@
+@@ -1,4 +1,4 @@
+ library gitsune.core.diff;
+ 
+-import 'package:gitsune/old_location/utils.dart';
++import 'package:gitsune/core/diff/utils.dart';
+ 

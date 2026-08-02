@@ -1,0 +1,18 @@
+@@ -1,6 +1,8 @@
+ class Greeter {
+   final String name;
+ 
+-  Greeter(this.name);
++  Greeter(this.name) {
++    assert(name.isNotEmpty);
++  }
+ 
+   String greet() => 'Hello, $name!';
+@@ -20,6 +22,6 @@ class Farewell {
+   final String name;
+ 
+   String sayBye() {
+-    return 'Bye, $name.';
++    return 'Goodbye, $name.';
+   }
+ }
