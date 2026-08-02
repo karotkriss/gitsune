@@ -25,7 +25,7 @@ These hold across every phase and are not restated per task.
 
 - **Fixtures-first testing.**
   GitLab is always faked, never a live instance: bulk cases use recorded, scrubbed JSON fixtures, and HTTP-semantics cases use a small in-process fake server.
-  The full test suite runs with one command, no network, and no secrets, so an outside contributor can run everything a change needs.
+  The full test suite runs with one command, no external network access, and no secrets, so an outside contributor can run everything a change needs.
   See `docs/research/technology-assessment.md` for the full testing shape.
 - **REST v4 is the primary transport.**
   REST is the stable contract across the self-hosted version spread; GraphQL is used selectively, per screen, only where REST cannot serve the need (for example live foreground subscriptions).
@@ -90,7 +90,7 @@ If the spike finds no approach that holds the frame budget, it reports that earl
 **Exit criteria:**
 
 - CI is green building a themed but empty app shell for Android, iOS, and the F-Droid flavor.
-- The fixtures harness runs the (initially small) suite with one command, no network, no secrets, and a stable golden baseline for the dark theme.
+- The fixtures harness runs the (initially small) suite with one command, no external network access, no secrets, and a stable golden baseline for the dark theme.
 - The liquid-glass spike has delivered a chosen implementation approach with a documented performance ceiling, or an early report that the heavy-overlay treatment needs to be reduced.
 - The `dio` client skeleton resolves a per-instance base URL and exposes the token-injection and refresh-retry interceptor seams (unpopulated until phase one).
 

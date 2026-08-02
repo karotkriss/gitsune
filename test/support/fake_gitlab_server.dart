@@ -4,7 +4,7 @@ import 'dart:io';
 /// An in-process fake GitLab server for tests that need real HTTP semantics
 /// (status codes, headers, pagination) rather than just a decoded fixture.
 ///
-/// Binds to loopback only, so the suite never touches the network and never
+/// Binds to loopback only, so the suite never reaches the external network or
 /// talks to a real GitLab instance.
 class FakeGitLabServer {
   FakeGitLabServer._(this._server) {

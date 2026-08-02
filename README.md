@@ -37,9 +37,10 @@ See `docs/plan/phase-plan.md` for the full sequencing.
 
 ## Testing
 
-`flutter test` runs the whole suite, unit, widget, and golden tests alike, with no network access and no secrets required.
+`flutter test` runs the whole suite, unit, widget, and golden tests alike, with no external network access and no secrets required.
 GitLab is always faked: bulk-data tests replay recorded, scrubbed JSON fixtures from `test/fixtures/` via `test/support/fixtures.dart`, and tests that need real HTTP semantics use the in-process `test/support/fake_gitlab_server.dart`, which binds to loopback only.
 Golden tests render text with a bundled test font (`test/golden/fonts/`) instead of whatever fonts the host happens to have installed, so golden images are pixel-identical across machines; `test/flutter_test_config.dart` wires that up automatically for every test in the suite.
+Regenerate golden baselines with `flutter test --update-goldens` after an intentional visual change.
 
 ## How the docs are organized
 

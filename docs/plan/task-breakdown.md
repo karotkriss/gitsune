@@ -37,7 +37,7 @@ Every task inherits the operating principles in `docs/plan/roadmap.md` (fixtures
 | Task | Acceptance | Depends on |
 | --- | --- | --- |
 | E0.1 Scaffold Flutter project, feature-first single package, Riverpod wired | `flutter analyze` is clean on an app that boots to an empty themed screen, and the `core`-versus-feature boundary is enforced (features import `core`, never the reverse) | none |
-| E0.2 Fixtures-first test harness: recorded-fixture loader, in-process fake HTTP server, golden infra (dark, font-stable) | one command runs unit, widget, and golden tests with no network and no secrets, and a sample fixture test plus a sample golden pass in CI | E0.1 |
+| E0.2 Fixtures-first test harness: recorded-fixture loader, in-process fake HTTP server, golden infra (dark, font-stable) | one command runs unit, widget, and golden tests with no external network access and no secrets, and the suite includes passing sample fixture and golden tests | E0.1 |
 | E0.3 GitHub Actions CI: format, analyze, test, build-sanity for Android and iOS, secret-free | PR CI is green on the scaffold for the Android and iOS build targets and references no secrets | E0.1, E0.2 |
 | E0.4 F-Droid build-flavor scaffold with proprietary push dependencies removed | the F-Droid flavor builds in CI and contains no FCM or other proprietary push dependency | E0.1, E0.3 |
 
