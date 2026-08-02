@@ -18,16 +18,15 @@ This is a from-scratch build, not a port, and the app owns its whole stack rathe
 
 Source: docs.flutter.dev/perf/impeller; flutter.dev/blog (2026 roadmap).
 
-## Design-language fidelity: why Gitsune does not chase Apple's newest visual style
+## Design-language fidelity and liquid-glass implementation
 
 Apple's newest iOS visual language ("Liquid Glass," introduced with iOS 26) is not implemented by Flutter's official Cupertino widget library, and the Flutter team has explicitly paused adopting it while it restructures how Material and Cupertino styling are packaged, with no committed timeline.
 The community packages that attempt to simulate or interop with it are pre-1.0, effectively single-maintainer, and self-described as experimental or proof-of-concept.
 
-This matters less for Gitsune than it would for a typical Flutter app, because Gitsune's visual direction is GitLab's own Pajamas design system (`docs/research/design-direction.md`), not the newest iOS system style.
-Pajamas is flat, token-driven, and consistent across platforms by design, which is a natural fit for Flutter's actual strength: pixel-consistent, brand-driven UI on both Android and iOS from one codebase.
-
-Gitsune does not build any chrome around Apple's newest visual style.
-If desired later, applying it to a small number of native iOS controls, gated behind an OS-version check and isolated so a broken or abandoned package degrades cleanly to the standard theme, remains an option, but it is polish, not architecture, and is out of scope for v1.
+Gitsune's visual direction remains its own token-driven interpretation of Pajamas rather than an adoption of Apple's platform design language.
+The design system now specifies liquid-glass floating chrome, with heavier treatment app-wide and the heaviest treatment on Drawer and Modal overlays, as recorded in `docs/decisions/0009-liquid-glass-direction.md`.
+That decision defines the visual hierarchy but deliberately leaves the cross-platform implementation mechanism open until development can evaluate rendering support, fidelity, accessibility, and performance on target devices.
+Apple's native Liquid Glass implementation is therefore neither a cross-platform dependency nor a v1 contract.
 
 ## Rendering and content
 
@@ -93,7 +92,7 @@ This layering does not depend on the Riverpod-versus-Bloc choice above.
 The testing approach is biased toward being fast, deterministic, and low-friction for outside contributors: a contributor should be able to run the whole test suite with one command and see it pass without network access or extra tooling.
 
 - **Unit and widget tests** cover repositories, the diff-hunk parser, GitLab-flavored-markdown reference resolution, and authentication/session/refresh logic, using a mocking library that needs no code generation step, to keep the contributor loop simple.
-- **Golden (visual regression) tests** cover the Pajamas theme components and key screens in the v1 dark theme, rendered in a CI mode that avoids cross-machine font-rendering flakiness.
+- **Golden (visual regression) tests** cover the Pajamas theme components and key screens in v1's dark theme, rendered in a CI mode that avoids cross-machine font-rendering flakiness; light-theme coverage begins when that theme enters scope under `docs/decisions/0008-dark-mode-only-v1.md`.
 - **A small number of full-app integration tests** run on an emulator against a fake local server, covering the handful of flows that depend on real HTTP behavior: pagination headers, and the token-refresh-and-retry round trip.
 - **A GitLab instance is faked, never real, in automated tests:** the bulk of tests replay recorded, scrubbed JSON fixtures captured from real API responses; a small in-process fake HTTP server handles the few flows that need real HTTP semantics.
   No automated test ever talks to a live GitLab instance, which keeps tests hermetic and fast.

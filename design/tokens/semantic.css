@@ -1,0 +1,55 @@
+/* Semantic layer. --gl-* aliases mirror Pajamas' own semantic tokens (verbatim mappings from @gitlab/ui);
+   --gs-* are Gitsune's mobile-app tokens. Dark theme = [data-theme="dark"] on <html> or any subtree root.
+   Interactive-state rule (Pajamas): darken one ramp step on hover/focus, two on active. */
+:root{
+color-scheme:light;
+--gl-text-color-default:var(--gl-color-neutral-800);--gl-text-color-subtle:var(--gl-color-neutral-600);--gl-text-color-disabled:var(--gl-color-neutral-400);--gl-text-color-heading:var(--gl-color-neutral-950);--gl-text-color-link:var(--gs-color-brand-700);--gl-text-color-danger:var(--gl-color-red-600);--gl-text-color-success:var(--gl-color-green-600);
+--gl-background-color-default:var(--gl-color-neutral-0);--gl-background-color-subtle:var(--gl-color-neutral-10);--gl-background-color-strong:var(--gl-color-neutral-50);--gl-background-color-disabled:var(--gl-color-neutral-10);--gl-background-color-overlap:var(--gl-color-neutral-0);--gl-background-color-section:var(--gl-color-neutral-0);
+--gl-border-color-default:var(--gl-color-neutral-100);--gl-border-color-subtle:var(--gl-color-neutral-50);--gl-border-color-strong:var(--gl-color-neutral-200);
+--gl-icon-color-default:var(--gl-text-color-default);--gl-icon-color-subtle:var(--gl-text-color-subtle);
+--gl-status-info-color:var(--gl-color-blue-500);--gl-status-success-color:var(--gl-color-green-500);--gl-status-warning-color:var(--gl-color-orange-500);--gl-status-danger-color:var(--gl-color-red-500);--gl-status-neutral-color:var(--gl-color-neutral-500);--gl-status-brand-color:var(--gs-color-brand-500);
+--gl-feedback-info-background-color:var(--gl-color-blue-50);--gl-feedback-success-background-color:var(--gl-color-green-50);--gl-feedback-warning-background-color:var(--gl-color-orange-50);--gl-feedback-danger-background-color:var(--gl-color-red-50);
+--gl-feedback-info-text-color:var(--gl-color-blue-700);--gl-feedback-success-text-color:var(--gl-color-green-700);--gl-feedback-warning-text-color:var(--gl-color-orange-700);--gl-feedback-danger-text-color:var(--gl-color-red-700);
+--gs-surface-app:var(--gl-background-color-default);--gs-surface-subtle:var(--gl-background-color-subtle);--gs-surface-strong:var(--gl-background-color-strong);--gs-surface-card:var(--gl-color-neutral-0);--gs-surface-sheet:var(--gl-color-neutral-0);--gs-surface-inset:var(--gl-color-neutral-10);
+--gs-scrim:var(--gl-color-alpha-dark-40);
+--gs-action-color:var(--gs-color-brand-500);--gs-action-color-hover:var(--gs-color-brand-600);--gs-action-color-active:var(--gs-color-brand-700);--gs-action-text-on:var(--gl-color-neutral-0);
+--gs-action-selected-bg:var(--gs-color-brand-50);--gs-action-selected-text:var(--gs-color-brand-700);
+--gs-press-overlay:var(--gl-color-alpha-dark-6);--gs-press-overlay-strong:var(--gl-color-alpha-dark-16);
+--gs-link-color:var(--gl-text-color-link);--gs-link-color-hover:var(--gs-color-brand-800);
+/* Liquid glass — the floating chrome layer only (capsule tab bar, sheets, toasts); content stays opaque. */
+--gs-glass-bg:rgba(251,250,253,.6);--gs-glass-bg-strong:rgba(255,255,255,.82);--gs-glass-border:rgba(5,5,6,.08);--gs-glass-active:rgba(5,5,6,.07);--gs-glass-blur:blur(24px) saturate(1.8);/* @kind other */--gs-glass-edge:inset 0 1px 0 rgba(255,255,255,.65),0 0 0 1px rgba(5,5,6,.08),0 12px 32px rgba(5,5,6,.18);/* @kind shadow */
+--gs-tile-issues:var(--gl-color-green-500);--gs-tile-mrs:var(--gl-color-blue-500);--gs-tile-todos:var(--gl-color-orange-500);--gs-tile-pipelines:var(--gl-color-purple-500);--gs-tile-projects:var(--gl-color-neutral-600);--gs-tile-groups:var(--gl-color-blue-800);
+--gs-diff-add-bg:var(--gl-color-green-50);--gs-diff-add-strong:var(--gl-color-green-100);--gs-diff-del-bg:var(--gl-color-red-50);--gs-diff-del-strong:var(--gl-color-red-100);
+--gs-code-bg:var(--gl-color-neutral-10);--gs-code-keyword:var(--gl-color-purple-600);--gs-code-string:var(--gl-color-green-600);--gs-code-comment:var(--gl-color-neutral-500);--gs-code-function:var(--gl-color-blue-600);--gs-code-number:var(--gl-color-orange-600);
+--gs-avatar-bg-red:rgba(252,181,170,.24);--gs-avatar-bg-purple:rgba(203,187,242,.24);--gs-avatar-bg-blue:rgba(157,199,241,.24);--gs-avatar-bg-green:rgba(145,212,168,.24);--gs-avatar-bg-orange:rgba(233,190,116,.24);--gs-avatar-bg-neutral:rgba(191,191,195,.24);
+--gs-avatar-text-red:var(--gl-color-red-800);--gs-avatar-text-purple:var(--gl-color-purple-800);--gs-avatar-text-blue:var(--gl-color-blue-800);--gs-avatar-text-green:var(--gl-color-green-800);--gs-avatar-text-orange:var(--gl-color-orange-800);--gs-avatar-text-neutral:var(--gl-color-neutral-800);
+--gs-token-bg:var(--gl-color-neutral-100);
+--gs-toast-bg:rgba(28,27,34,.82);--gs-toast-text:var(--gl-color-neutral-0);--gs-toast-action:var(--gs-color-brand-300);
+--gs-skeleton-bg:var(--gl-color-neutral-100);--gs-skeleton-shimmer:var(--gl-color-neutral-50);
+}
+[data-theme="dark"]{
+color-scheme:dark;
+--gl-text-color-default:var(--gl-color-neutral-50);--gl-text-color-subtle:var(--gl-color-neutral-200);--gl-text-color-disabled:var(--gl-color-neutral-400);--gl-text-color-heading:var(--gl-color-neutral-0);--gl-text-color-link:var(--gs-color-brand-300);--gl-text-color-danger:var(--gl-color-red-300);--gl-text-color-success:var(--gl-color-green-300);
+/* Aliases chaining to re-themed vars must be re-declared inside this scope (custom properties inherit as computed values). */
+--gl-icon-color-default:var(--gl-text-color-default);--gl-icon-color-subtle:var(--gl-text-color-subtle);
+--gs-surface-app:var(--gl-color-neutral-950);--gs-surface-subtle:var(--gl-color-neutral-900);--gs-surface-strong:var(--gl-color-neutral-800);
+--gs-link-color:var(--gs-color-brand-300);
+--gl-background-color-default:var(--gl-color-neutral-950);--gl-background-color-subtle:var(--gl-color-neutral-900);--gl-background-color-strong:var(--gl-color-neutral-800);--gl-background-color-disabled:var(--gl-color-neutral-900);--gl-background-color-overlap:var(--gl-color-neutral-900);--gl-background-color-section:var(--gl-color-neutral-800);
+--gl-border-color-default:var(--gl-color-neutral-700);--gl-border-color-subtle:var(--gl-color-neutral-800);--gl-border-color-strong:var(--gl-color-neutral-600);
+--gl-status-info-color:var(--gl-color-blue-300);--gl-status-success-color:var(--gl-color-green-300);--gl-status-warning-color:var(--gl-color-orange-300);--gl-status-danger-color:var(--gl-color-red-300);--gl-status-neutral-color:var(--gl-color-neutral-300);
+--gl-feedback-info-background-color:var(--gl-color-blue-950);--gl-feedback-success-background-color:var(--gl-color-green-900);--gl-feedback-warning-background-color:var(--gl-color-orange-900);--gl-feedback-danger-background-color:var(--gl-color-red-900);
+--gl-feedback-info-text-color:var(--gl-color-blue-200);--gl-feedback-success-text-color:var(--gl-color-green-200);--gl-feedback-warning-text-color:var(--gl-color-orange-200);--gl-feedback-danger-text-color:var(--gl-color-red-200);
+--gs-surface-card:var(--gl-color-neutral-900);--gs-surface-sheet:var(--gl-color-neutral-900);--gs-surface-inset:var(--gl-color-neutral-900);
+--gs-scrim:rgba(5,5,6,.6);
+--gs-action-color:var(--gs-color-brand-500);--gs-action-color-hover:var(--gs-color-brand-400);--gs-action-color-active:var(--gs-color-brand-300);
+--gs-action-selected-bg:rgba(252,109,38,.16);--gs-action-selected-text:var(--gs-color-brand-200);
+--gs-press-overlay:var(--gl-color-alpha-light-8);--gs-press-overlay-strong:var(--gl-color-alpha-light-16);
+--gs-link-color-hover:var(--gs-color-brand-200);
+--gs-glass-bg:rgba(24,23,29,.55);--gs-glass-bg-strong:rgba(30,29,36,.85);--gs-glass-border:rgba(255,255,255,.12);--gs-glass-active:rgba(255,255,255,.14);--gs-glass-edge:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 1px rgba(255,255,255,.1),0 12px 32px rgba(5,5,6,.5);/* @kind shadow */
+--gs-diff-add-bg:var(--gl-color-green-950);--gs-diff-add-strong:var(--gl-color-green-900);--gs-diff-del-bg:var(--gl-color-red-950);--gs-diff-del-strong:var(--gl-color-red-900);
+--gs-code-bg:var(--gl-color-neutral-900);--gs-code-keyword:var(--gl-color-purple-300);--gs-code-string:var(--gl-color-green-300);--gs-code-comment:var(--gl-color-neutral-400);--gs-code-function:var(--gl-color-blue-300);--gs-code-number:var(--gl-color-orange-300);
+--gs-avatar-text-red:var(--gl-color-red-200);--gs-avatar-text-purple:var(--gl-color-purple-200);--gs-avatar-text-blue:var(--gl-color-blue-200);--gs-avatar-text-green:var(--gl-color-green-200);--gs-avatar-text-orange:var(--gl-color-orange-200);--gs-avatar-text-neutral:var(--gl-color-neutral-200);
+--gs-token-bg:var(--gl-color-neutral-800);
+--gs-toast-bg:rgba(76,75,81,.66);--gs-toast-text:var(--gl-color-neutral-0);--gs-toast-action:var(--gs-color-brand-200);
+--gs-skeleton-bg:var(--gl-color-neutral-800);--gs-skeleton-shimmer:var(--gl-color-neutral-700);
+}

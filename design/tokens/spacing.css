@@ -1,0 +1,12 @@
+/* 8px grid ($grid-size). Pajamas spacing scale + Gitsune mobile metrics. */
+:root{
+--gl-spacing-scale-0:0;--gl-spacing-scale-px:1px;--gl-spacing-scale-1:0.125rem;--gl-spacing-scale-2:0.25rem;--gl-spacing-scale-2-5:0.375rem;--gl-spacing-scale-3:0.5rem;--gl-spacing-scale-4:0.75rem;--gl-spacing-scale-5:1rem;--gl-spacing-scale-6:1.5rem;--gl-spacing-scale-7:2rem;--gl-spacing-scale-8:2.5rem;--gl-spacing-scale-9:3rem;--gl-spacing-scale-10:3.5rem;--gl-spacing-scale-11:4rem;--gl-spacing-scale-12:5rem;--gl-spacing-scale-13:6rem;
+--gl-border-radius-none:0;--gl-border-radius-xs:1px;--gl-border-radius-sm:0.125rem;--gl-border-radius-md:0.25rem;--gl-border-radius-lg:0.5rem;--gl-border-radius-xl:0.75rem;--gl-border-radius-2xl:1rem;--gl-border-radius-full:9999px;--gl-border-radius-default:var(--gl-border-radius-md);
+--gl-card-border-radius:var(--gl-border-radius-xl);--gl-drawer-border-radius:var(--gl-border-radius-2xl);--gl-modal-border-radius:var(--gl-border-radius-2xl);
+--gs-border-width:1px;
+--gs-touch-target:44px;
+--gs-screen-pad:1rem;
+--gs-tabbar-height:56px;
+--gs-icon-size:16px;--gs-icon-size-mobile:20px;--gs-icon-size-tile:24px;
+--gs-radius-control:10px;
+}

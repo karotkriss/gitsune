@@ -3,23 +3,23 @@
 Gitsune is being built in three deliberate phases: documentation, then design system, then development.
 This sequencing is intentional, not incidental, and each phase is expected to complete before the next one starts in earnest.
 
-## Phase 1: documentation (current phase)
+## Phase 1: documentation (complete)
 
-This repository, in its current state, is the output of phase one: the market research, design direction, technology assessment, and every settled decision behind the product, recorded as the project's own architecture decision records and supporting research.
+Phase one produced the market research, design direction, technology assessment, and every settled decision behind the product, recorded as the project's own architecture decision records and supporting research.
 
 No application code exists yet, and none is expected during this phase.
 A cold-start contributor should be able to read the README, then `docs/decisions/`, then `docs/plan/`, and come away knowing exactly what Gitsune is, what has been decided, and why.
 
-## Phase 2: design system
+## Phase 2: design system (complete)
 
-The next phase translates the direction recorded in `docs/research/design-direction.md`, together with the closed design-review inputs recorded in `docs/plan/roadmap.md`, into a concrete, implementable design system: design tokens, component specifications, and screen-level designs.
+Phase two translated the design direction recorded in `docs/research/design-direction.md`, GitLab's own Pajamas design system as the visual-language baseline, GitHub Mobile's proven interaction patterns for surfaces Pajamas does not cover, and the specific resolutions where the two disagree, into the concrete design system in `design/`.
 
-This phase happens before development begins, deliberately.
+This phase completed before development begins, deliberately.
 Building screens against an unsettled design language produces rework; settling the design system first means development can implement against a stable target from day one.
 
-## Phase 3: development
+## Phase 3: development (next phase)
 
-Development begins once the design system from phase two is in place.
+Development begins when this phase formally opens, with the completed design system from phase two in place as its implementation target.
 The authoritative engineering sequence for this phase is `docs/plan/roadmap.md`, with the pickable-task companion in `docs/plan/task-breakdown.md`.
 That sequence builds on the decisions in `docs/decisions/` and the technology choices in `docs/research/technology-assessment.md`.
 

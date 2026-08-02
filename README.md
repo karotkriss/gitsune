@@ -31,9 +31,9 @@ See `docs/decisions/0006-strategy-and-positioning.md` for how this shapes positi
 
 ## Current status
 
-Gitsune is in its documentation phase.
+Gitsune has completed its documentation and design-system phases.
 No application code has been written, and no scaffolding exists yet.
-A design system is being built next, before development begins.
+Development has not formally opened yet.
 See `docs/plan/phase-plan.md` for the full sequencing.
 
 ## How the docs are organized

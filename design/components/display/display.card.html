@@ -1,0 +1,39 @@
+<!-- @dsCard group="Components" viewport="700x330" name="Display" subtitle="Avatar · Badge · Label · Token · Skeleton" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:16px;background:var(--gl-background-color-default)}.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Avatar, Badge, Label, Token, Skeleton } = window.GitsuneDesignSystem_6e1df4;
+ReactDOM.createRoot(document.getElementById('root')).render(<div>
+  <div className="row">
+    <Avatar name="Marin Katsuragi" size={48}/><Avatar name="Ade Ogunleye" size={32}/><Avatar name="Priya Sharma" size={24}/><Avatar name="Tom Chen" size={16}/>
+    <span style={{width:8}}></span>
+    <Avatar name="gitsune" entity="project" size={48}/><Avatar name="mobile devs" entity="group" size={32}/><Avatar name="infra" entity="project" size={24}/>
+  </div>
+  <div className="row">
+    <Badge variant="success" icon="issue-open-m">Open</Badge>
+    <Badge variant="info" icon="merge">Merged</Badge>
+    <Badge variant="neutral" icon="issue-close">Closed</Badge>
+    <Badge variant="warning" icon="status_pending">Pending</Badge>
+    <Badge variant="danger" icon="status_failed">1 failed</Badge>
+    <Badge>v1.4.2</Badge>
+  </div>
+  <div className="row">
+    <Label name="bug" color="#dd2b0e"/>
+    <Label name="feature" color="#108548"/>
+    <Label name="documentation" color="#1f75cb"/>
+    <Label name="workflow::in review" color="#7b58cf"/>
+    <Label name="priority::1" color="#ab6100"/>
+  </div>
+  <div className="row">
+    <Token icon="user" onRemove={()=>{}}>assignee = @marin</Token>
+    <Token icon="labels" onRemove={()=>{}}>label = bug</Token>
+    <Token>milestone = 17.1</Token>
+  </div>
+  <div style={{maxWidth:420}}><Skeleton lines={3}/></div>
+</div>);
+</script></body></html>

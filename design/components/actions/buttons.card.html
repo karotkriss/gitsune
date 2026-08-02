@@ -1,0 +1,28 @@
+<!-- @dsCard group="Components" viewport="700x290" name="Button" subtitle="Confirm is brand orange — the interactive color; red only for destructive" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:16px;background:var(--gl-background-color-default)}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Button } = window.GitsuneDesignSystem_6e1df4;
+ReactDOM.createRoot(document.getElementById('root')).render(<div>
+  <div className="row">
+    <Button variant="confirm">Merge</Button>
+    <Button>Cancel</Button>
+    <Button variant="danger">Delete branch</Button>
+    <Button variant="ghost">View on web</Button>
+  </div>
+  <div className="row">
+    <Button variant="confirm" size="sm">Approve</Button>
+    <Button size="sm" icon="retry">Retry</Button>
+    <Button variant="confirm" disabled>Merge</Button>
+    <Button loading>Loading</Button>
+    <Button variant="ghost" iconOnly icon="ellipsis_h" label="More"/>
+    <Button variant="ghost" iconOnly icon="star-o" label="Favorite" size="sm"/>
+  </div>
+  <div style={{maxWidth:360}}><Button variant="confirm" size="lg" block>Continue on gitlab.com</Button></div>
+</div>);
+</script></body></html>

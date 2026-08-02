@@ -1,0 +1,5 @@
+/* GitLab's open-source brand faces, vendored verbatim from npm @gitlab/fonts@1.3.1 (OFL). Variable fonts: one file carries every weight. */
+@font-face{font-family:"GitLab Sans";src:url("../assets/fonts/GitLabSans.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"GitLab Sans";src:url("../assets/fonts/GitLabSans-Italic.woff2") format("woff2");font-weight:100 900;font-style:italic;font-display:swap}
+@font-face{font-family:"GitLab Mono";src:url("../assets/fonts/GitLabMono.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"GitLab Mono";src:url("../assets/fonts/GitLabMono-Italic.woff2") format("woff2");font-weight:100 900;font-style:italic;font-display:swap}

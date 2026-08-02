@@ -1,0 +1,19 @@
+<!-- @dsCard group="Components" viewport="700x330" name="Icon & CiIcon" subtitle="GitLab SVG glyphs — the only sanctioned icon source" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;padding:14px 16px;background:var(--gl-background-color-default)}</style>
+</head><body><div id="root"></div>
+<script type="text/babel">
+const { Icon, CiIcon } = window.GitsuneDesignSystem_6e1df4;
+const ui = ['home','todo-done','compass','user','issues','merge-request','rocket','project','group','search','branch','commit','fork','comment','labels','milestone','epic','clock','check-circle','error','warning','notifications','settings','external-link','download','filter','sort-lowest','pencil','paper-airplane','eye','star-o','ellipsis_h'];
+const files = ['javascript','dart','ruby','python','go','rust','vue','react','json','markdown','docker','gitlab'];
+function Cell({name, children}) { return <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,width:64}}>{children}<span style={{font:'var(--gs-text-caption)',color:'var(--gl-text-color-subtle)',fontSize:9,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:60}}>{name}</span></div>; }
+ReactDOM.createRoot(document.getElementById('root')).render(<div style={{display:'flex',flexDirection:'column',gap:12}}>
+  <div style={{display:'flex',flexWrap:'wrap',gap:'10px 2px',color:'var(--gl-icon-color-default)'}}>{ui.map(n=><Cell key={n} name={n}><Icon name={n} size={20}/></Cell>)}</div>
+  <div style={{display:'flex',gap:2,paddingTop:4,borderTop:'1px solid var(--gl-border-color-subtle)'}}>{CiIcon.statuses.map(s=><Cell key={s} name={s}><CiIcon status={s} size={20}/></Cell>)}</div>
+  <div style={{display:'flex',gap:2}}>{files.map(n=><Cell key={n} name={n}><Icon file name={n} size={20}/></Cell>)}</div>
+</div>);
+</script></body></html>

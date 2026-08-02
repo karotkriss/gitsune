@@ -1,0 +1,23 @@
+<!-- @dsCard group="Colors" viewport="700x230" name="Status semantics" subtitle="The mapping IS the identity — no decorative reassignment" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>body{margin:0;padding:16px;display:flex;flex-direction:column;gap:14px}svg{width:16px;height:16px;display:block}.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px}.row{display:flex;gap:18px;flex-wrap:wrap;align-items:center}.pill{display:inline-flex;align-items:center;gap:4px;border-radius:9999px;padding:2px 10px;font-size:12px;font-weight:600}.lbl{font-size:11px;color:var(--gl-text-color-subtle);width:76px;flex:none}</style></head><body>
+<div class="row"><span class="lbl">Pipelines</span>
+<span class="chip" style="color:var(--gl-status-success-color)"><svg><use href="../assets/icons/gitlab-icons.svg#status_success"></use></svg>Passed</span>
+<span class="chip" style="color:var(--gl-status-info-color)"><svg><use href="../assets/icons/gitlab-icons.svg#status_running"></use></svg>Running</span>
+<span class="chip" style="color:var(--gl-status-danger-color)"><svg><use href="../assets/icons/gitlab-icons.svg#status_failed"></use></svg>Failed</span>
+<span class="chip" style="color:var(--gl-status-warning-color)"><svg><use href="../assets/icons/gitlab-icons.svg#status_pending"></use></svg>Pending</span>
+<span class="chip" style="color:var(--gl-status-neutral-color)"><svg><use href="../assets/icons/gitlab-icons.svg#status_canceled"></use></svg>Canceled</span>
+<span class="chip" style="color:var(--gl-status-neutral-color)"><svg><use href="../assets/icons/gitlab-icons.svg#status_manual"></use></svg>Manual</span>
+</div>
+<div class="row"><span class="lbl">Entity states</span>
+<span class="pill" style="background:var(--gl-feedback-success-background-color);color:var(--gl-feedback-success-text-color)">Open</span>
+<span class="pill" style="background:var(--gl-feedback-info-background-color);color:var(--gl-feedback-info-text-color)">Merged</span>
+<span class="pill" style="background:var(--gl-background-color-strong);color:var(--gl-text-color-default)">Closed</span>
+<span style="font-size:12px;color:var(--gl-text-color-subtle)">closed is neutral or blue — red is strictly failure/destructive</span>
+</div>
+<div class="row"><span class="lbl">Actions</span>
+<span class="pill" style="background:var(--gs-action-color);color:#fff;padding:8px 16px;border-radius:4px;font-size:13px">Merge</span>
+<span class="pill" style="background:var(--gl-color-red-500);color:#fff;padding:8px 16px;border-radius:4px;font-size:13px">Delete source branch</span>
+<span style="font-size:12px;color:var(--gl-text-color-subtle)">the merge button is brand orange — green marks achieved success, red destructive only</span>
+</div>
+</body></html>
