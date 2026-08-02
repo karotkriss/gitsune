@@ -40,6 +40,7 @@ See `docs/plan/phase-plan.md` for the full sequencing.
 
 - **`docs/decisions/`** - architecture decision records (ADRs) for every settled ruling: authentication posture, notification architecture, v1 scope, app store launch scope, hosting platform, and strategic positioning.
 - **`docs/research/`** - the research behind those decisions, edited for a public audience: market analysis, design direction, technology assessment, notification analysis, and the authentication implementation blueprint.
+- **`docs/design/`** - the screenshot reference material behind the design direction: `design-references.md`, with sourcing back to each original screen.
 - **`docs/plan/`** - the v1 feature list with its supporting gap analysis, and the phase plan from documentation through design and into development.
 
 A good reading order for a new contributor is README, then `docs/decisions/`, then `docs/plan/`.
