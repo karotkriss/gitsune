@@ -8,6 +8,8 @@ import '../issues/data/issue_models.dart';
 import '../issues/data/issues_repository.dart';
 import '../issues/presentation/issue_detail_screen.dart';
 import '../issues/presentation/issue_list_screen.dart';
+import '../pipelines/data/pipelines_repository.dart';
+import '../pipelines/presentation/pipeline_detail_screen.dart';
 import '../profile/profile_screen.dart';
 import '../todos/todos_screen.dart';
 
@@ -23,6 +25,7 @@ import '../todos/todos_screen.dart';
 /// without hiding the route contract E6.1 exposes to project navigation.
 GoRouter buildAppRouter({
   IssuesRepository? issuesRepository,
+  PipelinesRepository? pipelinesRepository,
   String initialLocation = '/home',
 }) {
   return GoRouter(
@@ -104,6 +107,23 @@ GoRouter buildAppRouter({
           },
         ),
       ],
+      if (pipelinesRepository != null)
+        GoRoute(
+          path: '/projects/:projectId/pipelines/:pipelineId',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            final pipelineId = int.parse(state.pathParameters['pipelineId']!);
+            final projectPath =
+                state.uri.queryParameters['projectPath'] ??
+                'Project $projectId';
+            return PipelineDetailScreen(
+              projectId: projectId,
+              projectPath: projectPath,
+              pipelineId: pipelineId,
+              repository: pipelinesRepository,
+            );
+          },
+        ),
     ],
   );
 }

@@ -32,6 +32,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   `flutter_markdown_plus` intercepts every use of a registered built-in tag, even when its builder returns `null`, so this can blank ordinary content; `test/core/markdown/mermaid/gs_mermaid_test.dart` protects ordinary fenced code blocks from that regression.
 - Liquid glass: `GlassSurface` (`lib/core/glass/glass_surface.dart`) is the single glass primitive and isolation seam; compose it rather than using `BackdropFilter` directly.
   See `docs/research/glass-spike.md` for the benchmark procedure, measured cost model, and open real-device validation.
+- GitLab CI states and the fixed Pajamas circular badge mapping live in `lib/core/ci/`; reuse `CiStatusBadge` anywhere pipeline or job state appears so glyphs, colors, and semantics stay consistent.
 - The license is intentionally unset ("License: TBD" in `README.md`).
   Do not add a `LICENSE` file or pick a license without an explicit decision recorded as a new ADR in `docs/decisions/`.
   This is distinct from the vendored third-party licenses in `design/`, which govern only the files they accompany regardless of what license this repository eventually adopts.

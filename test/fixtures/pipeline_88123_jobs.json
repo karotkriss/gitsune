@@ -1,0 +1,98 @@
+[
+  {
+    "id": 501,
+    "name": "build:android",
+    "stage": "build",
+    "status": "success",
+    "allow_failure": false,
+    "duration": 138,
+    "queued_duration": 4,
+    "started_at": "2026-08-02T09:41:10Z",
+    "finished_at": "2026-08-02T09:43:28Z",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/jobs/501"
+  },
+  {
+    "id": 502,
+    "name": "test:flutter",
+    "stage": "test",
+    "status": "running",
+    "allow_failure": false,
+    "duration": 48,
+    "queued_duration": 2,
+    "started_at": "2026-08-02T09:57:12Z",
+    "finished_at": null,
+    "web_url": "https://gitlab.example.com/gitsune/app/-/jobs/502"
+  },
+  {
+    "id": 503,
+    "name": "test:integration",
+    "stage": "test",
+    "status": "failed",
+    "allow_failure": false,
+    "duration": 91,
+    "queued_duration": 3,
+    "started_at": "2026-08-02T09:45:00Z",
+    "finished_at": "2026-08-02T09:46:31Z",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/jobs/503"
+  },
+  {
+    "id": 504,
+    "name": "lint:dart",
+    "stage": "test",
+    "status": "pending",
+    "allow_failure": false,
+    "duration": null,
+    "queued_duration": 22,
+    "started_at": null,
+    "finished_at": null,
+    "web_url": "https://gitlab.example.com/gitsune/app/-/jobs/504"
+  },
+  {
+    "id": 505,
+    "name": "docs:links",
+    "stage": "test",
+    "status": "skipped",
+    "allow_failure": true,
+    "duration": null,
+    "queued_duration": null,
+    "started_at": null,
+    "finished_at": null,
+    "web_url": "https://gitlab.example.com/gitsune/app/-/jobs/505"
+  },
+  {
+    "id": 506,
+    "name": "deploy:review",
+    "stage": "deploy",
+    "status": "manual",
+    "allow_failure": true,
+    "duration": null,
+    "queued_duration": null,
+    "started_at": null,
+    "finished_at": null,
+    "web_url": "https://gitlab.example.com/gitsune/app/-/jobs/506"
+  },
+  {
+    "id": 507,
+    "name": "deploy:production",
+    "stage": "deploy",
+    "status": "scheduled",
+    "allow_failure": false,
+    "duration": null,
+    "queued_duration": null,
+    "started_at": null,
+    "finished_at": null,
+    "web_url": "https://gitlab.example.com/gitsune/app/-/jobs/507"
+  },
+  {
+    "id": 508,
+    "name": "cleanup:review",
+    "stage": "cleanup",
+    "status": "canceled",
+    "allow_failure": true,
+    "duration": 12,
+    "queued_duration": 1,
+    "started_at": "2026-08-02T09:47:00Z",
+    "finished_at": "2026-08-02T09:47:12Z",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/jobs/508"
+  }
+]
