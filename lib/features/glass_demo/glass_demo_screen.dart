@@ -11,9 +11,12 @@ enum GlassDemoMode { none, modest, heavy, both }
 /// stand-in), heavy glass as a large overlay panel (modal/sheet stand-in).
 /// Not wired into app navigation; driven by `integration_test/`.
 class GlassDemoScreen extends StatelessWidget {
-  const GlassDemoScreen({super.key, this.mode = GlassDemoMode.both});
+  const GlassDemoScreen({super.key, this.mode = GlassDemoMode.both, this.controller});
 
   final GlassDemoMode mode;
+
+  /// Lets the perf test drive identical programmatic scrolls in every mode.
+  final ScrollController? controller;
 
   static const _tileColors = [
     Color(0xFF8C3B00),
@@ -33,6 +36,7 @@ class GlassDemoScreen extends StatelessWidget {
         children: [
           // Busy opaque content so the blur has real work to do.
           ListView.builder(
+            controller: controller,
             itemCount: 400,
             itemBuilder: (context, index) {
               final color = _tileColors[index % _tileColors.length];
