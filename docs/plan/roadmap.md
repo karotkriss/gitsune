@@ -83,9 +83,10 @@ Stand up the project so that every later phase implements against a stable targe
 - The `dio`-based API client skeleton: per-instance base URL and interceptor seams for token injection and one-time 401 refresh-and-retry, with auth wired in during phase one.
 
 **Parallel dependency, starts with this phase: the liquid-glass implementation spike.**
-The dark-only theme and the shell's overlay components depend on a proven way to render liquid glass in Flutter (heavier app-wide than a typical translucent chrome layer, with overlays, Drawer and Modal, carrying the heaviest glass treatment) at 60fps on mid-range Android under Impeller.
-This is a de-risking spike run alongside the scaffold rather than a blocker on it: non-glass scaffolding proceeds immediately, and the spike's chosen approach (a blur/backdrop technique or a vetted package, with its performance ceiling documented) feeds the shell and theme components before they are finalized.
-If the spike finds no approach that holds the frame budget, it reports that early so the overlay treatment can be dialed back before it is built on.
+The dark-only theme and the shell's overlay components depend on E1.2 choosing an isolated Flutter approach and characterizing its performance under Impeller.
+This is a de-risking spike run alongside the scaffold rather than a blocker on it: non-glass scaffolding proceeds immediately, and the chosen approach and documented performance ceiling feed the shell and theme components before they are finalized.
+The spike's method, emulator evidence, and limitations live in [`docs/research/glass-spike.md`](../research/glass-spike.md); real-device 60fps validation at full fidelity remains part of E16.2.
+If that validation finds no approach that holds the frame budget, the overlay treatment must be dialed back before release.
 
 **Exit criteria:**
 

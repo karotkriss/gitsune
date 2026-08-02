@@ -11,7 +11,11 @@ enum GlassDemoMode { none, modest, heavy, both }
 /// stand-in), heavy glass as a large overlay panel (modal/sheet stand-in).
 /// Not wired into app navigation; driven by `integration_test/`.
 class GlassDemoScreen extends StatelessWidget {
-  const GlassDemoScreen({super.key, this.mode = GlassDemoMode.both, this.controller});
+  const GlassDemoScreen({
+    super.key,
+    this.mode = GlassDemoMode.both,
+    this.controller,
+  });
 
   final GlassDemoMode mode;
 
@@ -28,7 +32,8 @@ class GlassDemoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showModest = mode == GlassDemoMode.modest || mode == GlassDemoMode.both;
+    final showModest =
+        mode == GlassDemoMode.modest || mode == GlassDemoMode.both;
     final showHeavy = mode == GlassDemoMode.heavy || mode == GlassDemoMode.both;
 
     return Scaffold(

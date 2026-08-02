@@ -46,7 +46,7 @@ Every task inherits the operating principles in `docs/plan/roadmap.md` (fixtures
 | Task | Acceptance | Depends on |
 | --- | --- | --- |
 | E1.1 Design-token theme layer: tanuki-orange accent, dark-only, Pajamas semantic ramps, GitLab Sans and Mono | the theme exposes accent, semantic, and typography tokens, a token-swatch golden passes, and swapping the token file re-brands the app with no other code change | E0.1, design system landed |
-| E1.2 Liquid-glass implementation spike (runs in parallel with E0/E1) | a chosen Flutter approach for modest app-wide and heavy overlay glass is proven at 60fps on a mid-range Android reference device under Impeller, with its performance ceiling documented, or an early report that the heavy treatment must be reduced | none |
+| E1.2 Liquid-glass implementation spike (runs in parallel with E0/E1) | a chosen Flutter approach isolates modest app-wide and heavy overlay glass behind one seam, preserves full sigma-24 fidelity, and documents reproducible Impeller emulator evidence, its performance ceiling, and the open real-device validation | none |
 | E1.3 App shell: four-tab bottom nav (Home, To-Dos/Notifications, Explore/Search, Profile), routing, empty themed screens | all four tabs navigate and a golden of each empty dark-theme screen passes | E1.1 |
 | E1.4 Home shortcut-tile grid (editable and reorderable): Issues, MRs, To-Do List, Pipelines, Projects, Groups | tiles render with Pajamas ramp colors and GitLab glyphs, reordering persists, and a golden passes | E1.3 |
 | E1.5 Glass overlay components (modal, drawer, sheet) built on the spike's approach | overlay components render heavy glass within the spike's documented budget and a golden passes | E1.2, E1.3 |
@@ -187,5 +187,5 @@ All signing material lives outside the repository and is scoped away from PR job
 | Task | Acceptance | Depends on |
 | --- | --- | --- |
 | E16.1 Accessibility pass (touch targets, contrast, screen-reader labels) | key screens meet touch-target and contrast targets and carry screen-reader labels | E5.4, E6.3, E7.4, E8.3, E9.2, E10.2, E11.2, E12.6, E13.2, E14.2 |
-| E16.2 Performance pass (long lists under Impeller, image decode-at-display-size, glass within budget) | long lists scroll smoothly, images decode at display size, and glass overlays stay within the spike's budget | E5.4, E6.3, E7.4, E8.3, E9.2, E10.2, E11.2, E12.6, E13.2, E14.2, E1.2 |
+| E16.2 Performance pass (long lists under Impeller, image decode-at-display-size, glass within budget) | long lists scroll smoothly, images decode at display size, and both sigma-24 glass intensities sustain 60fps on a mid-range Android reference device under Impeller or the treatment is reduced before release | E5.4, E6.3, E7.4, E8.3, E9.2, E10.2, E11.2, E12.6, E13.2, E14.2, E1.2 |
 | E16.3 Security pass (token storage, OAuth flow, no-live-instance guarantee) | a review of token storage and the OAuth flow is clean, and no test or build path touches a live instance | E2.1, E2.2, E2.3, E2.4, E2.5, E2.6 |

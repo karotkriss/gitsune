@@ -9,7 +9,9 @@ Native-first frosted glass, no third-party glass dependency.
 - The single primitive is `GlassSurface` in `lib/core/glass/glass_surface.dart`: a `ClipRRect` -> `BackdropFilter` -> tinted `DecoratedBox` stack.
 - The filter is `ImageFilter.compose` of a Gaussian blur (sigma 24: the design system's `--gs-glass-blur: blur(24px)`, whose length is the Gaussian standard deviation itself per the Filter Effects spec) and a saturation color matrix (`saturate(1.8)`).
 - The two ruled intensities map to the dark-theme design tokens in `design/tokens/semantic.css`: `GlassIntensity.modest` uses `--gs-glass-bg` (rgba(24,23,29,.55)) for app-wide floating chrome, and `GlassIntensity.heavy` uses `--gs-glass-bg-strong` (rgba(30,29,36,.85)) for overlays.
-- **Isolation seam:** `GlassSurface` is the only public boundary; call sites pass `intensity` and `child` and never see the filter. A future refractive implementation (the deferred "liquid" part of the direction) replaces `GlassSurface.build` without touching any caller. E1.5's overlay components must compose `GlassSurface` rather than reaching for `BackdropFilter` directly.
+- **Isolation seam:** `GlassSurface` is the only public boundary; call sites pass `intensity` and `child` and never see the filter.
+  A future refractive implementation (the deferred "liquid" part of the direction) replaces `GlassSurface.build` without touching any caller.
+  E1.5's overlay components must compose `GlassSurface` rather than reaching for `BackdropFilter` directly.
 
 Both intensities share one blur; they differ only in tint opacity, which is free.
 Heavier-looking glass is not intrinsically slower glass: the cost drivers are blur sigma and blurred area, not tint.
@@ -31,7 +33,8 @@ flutter drive --profile --no-dds \
 for `<mode>` in `none` (baseline), `modest`, `heavy`, `both`; each run writes `build/glass_<mode>.timeline_summary.json`.
 Method notes learned the hard way:
 
-- `--no-dds` is required: with DDS on the host, the in-app `traceAction` cannot reach the VM service and the run fails with "Failed to connect to VM Service".
+- `--no-dds` is required.
+  With DDS on the host, the in-app `traceAction` cannot reach the VM service and the run fails with "Failed to connect to VM Service".
 - Scrolling is driven by a `ScrollController` (`animateTo`, 3 s down, 3 s up, linear) so every mode does identical work; a synthetic fling gesture lands on the centered glass overlay instead of the list and silently measures a static screen.
 - One mode per app launch keeps the reported timeline payload small.
 
@@ -51,16 +54,18 @@ Readings:
 
 - **The baseline already misses the 16.7 ms budget on most frames (48 of 57).** A software rasterizer cannot demonstrate 60 fps on this scene, so this emulator can neither prove nor refute the 60 fps acceptance for any mode; the useful signal is the delta between modes.
 - Glass is expensive on this software rasterizer, roughly 3-4x the baseline raster time in every glass mode.
-- The differences between glass modes (6-7 ms between modest, heavy, and both) are smaller than run-to-run variability on this shared-host emulator (the no-glass baseline itself moved by more than that between sessions), so without repeated samples the data supports no finer causal conclusion about blurred area or the cost of an additional region.
+- The differences between glass modes (6-7 ms between modest, heavy, and both) are smaller than run-to-run variability on this shared-host emulator (the no-glass baseline itself moved by more than that between sessions).
+  Without repeated samples, the data supports no finer causal conclusion about blurred area or the cost of an additional region.
 - The backdrop filter executes on the raster thread by construction (the blur is applied when the layer tree is rasterized); the per-mode average UI-build times in the table are too noisy across runs to establish whether total UI-thread timing is affected.
-- No pathological behavior: no crashes, no exponential cliff, animations completed in every mode. On a software rasterizer a backdrop blur costing a multiple of the whole rest of the frame is the expected shape, not an early-failure signal.
+- No pathological behavior: no crashes, no exponential cliff, animations completed in every mode.
+  On a software rasterizer a backdrop blur costing a multiple of the whole rest of the frame is the expected shape, not an early-failure signal.
 
 ### What the emulator can and cannot tell us
 
-Absolute times here are dominated by SwiftShader's CPU rasterization and do not transfer to phone GPUs, where a sigma-24 Gaussian over a bounded region is a routine fragment-shader workload.
+Absolute times here are dominated by SwiftShader's CPU rasterization and do not establish how a phone GPU will perform at sigma 24.
 What does transfer: the cost is a per-frame backdrop pass on the raster thread, and tint strength is free.
 
-**Open item (deferred):** the E1.2 acceptance verdict, both intensities at 60 fps on a mid-range Android reference device under Impeller, is explicitly **not claimed here**; it needs the same benchmark run on real hardware once a device is available.
+**Open item (deferred):** the real-device verdict, both intensities at 60 fps on a mid-range Android reference device under Impeller, is explicitly **not claimed here**; it needs the same benchmark run on real hardware once a device is available.
 Until then the heavy treatment is provisionally viable: the emulator shows no fundamental jank cliff, but device-grade proof is outstanding.
 
 ## Performance ceiling and knobs
