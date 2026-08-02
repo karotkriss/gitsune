@@ -1,12 +1,16 @@
 # Gitsune Design System
 
-Gitsune is a planned open-source, cross-platform (Flutter) GitLab client for phones and tablets — self-hosted instances are first-class, OAuth-first, full feature breadth (MR review, CI/CD, issues, to-dos, code browsing), and **no project-operated servers, ever**. GitLab has never shipped an official mobile app; Gitsune fills that gap.
+Gitsune is a cross-platform Flutter GitLab client for phones and tablets.
+Self-hosted instances are first-class, authentication is OAuth-first, the planned feature breadth includes MR review, CI/CD, issues, to-dos, and code browsing, and the project operates **no servers, ever**.
+GitLab has never shipped an official mobile app; Gitsune fills that gap.
 
 **The one-line rule: GitHub Mobile decides how the app moves; Pajamas (GitLab's design system) decides how it speaks and what things are called. The 2026 look is dark-mode-only "liquid glass" for v1: GitLab-orange accent, glass chrome floating over opaque content, heaviest on overlays.**
 
 ## Sources
 
-- Repo (docs-only, no app code yet): <https://github.com/karotkriss/gitsune> — read `docs/research/design-direction.md` and `docs/design/design-references.md` (surface-by-surface reference screenshots with Mobbin links) to design better against this product. `docs/plan/v1-scope.md` lists every v1 capability.
+- Repo: <https://github.com/karotkriss/gitsune>.
+  Read `docs/research/design-direction.md` and `docs/design/design-references.md` (surface-by-surface reference screenshots with Mobbin links) to design against this product.
+  `docs/plan/v1-scope.md` lists every v1 capability.
 - Pajamas: <https://design.gitlab.com> (color, type-fundamentals, iconography, components, brand-voice)
 - Token values vendored verbatim from npm `@gitlab/ui@135.1.1` (`vendor/gitlab-tokens.css`, `.dark.css` — reference only, not imported); fonts from `@gitlab/fonts@1.3.1`; icons/illustrations from `@gitlab/svgs@3.163.0`. All open source.
 - One deliberate divergence: the maintainer's direction sets **brand orange** (from the current GitLab tanuki: #fca326/#fc6d26/#e24329) as the interactive & brand color — superseding both the repo's original blue-confirm rule and gitlab-ui's neutral buttons (`docs/decisions/0007-interactive-color-orange-over-blue.md`). Blue remains the info/progress *status* color (running pipelines, MR-merged badges); purple is retired to data-viz and the upstream illustration set.
