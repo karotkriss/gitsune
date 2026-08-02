@@ -61,15 +61,25 @@ class _GsSyntaxWebViewState extends State<GsSyntaxWebView> {
     final source = widget.source;
     final languageId = widget.languageId;
     final css = gsSyntaxCss(widget.theme);
-    final highlightJs = await rootBundle.loadString(
+    final highlightJsFuture = rootBundle.loadString(
       'assets/syntax/highlight.min.js',
     );
+    final fontDataFuture = rootBundle.load('assets/fonts/GitLabMono.ttf');
+    final highlightJs = await highlightJsFuture;
+    final fontData = await fontDataFuture;
     if (!mounted || generation != _loadGeneration) {
       return;
     }
+    final fontBase64 = base64Encode(
+      fontData.buffer.asUint8List(
+        fontData.offsetInBytes,
+        fontData.lengthInBytes,
+      ),
+    );
     await _controller.loadHtmlString(
       _buildHtml(
         highlightJs: highlightJs,
+        fontBase64: fontBase64,
         source: source,
         languageId: languageId,
         css: css,
@@ -85,6 +95,7 @@ class _GsSyntaxWebViewState extends State<GsSyntaxWebView> {
 
 String _buildHtml({
   required String highlightJs,
+  required String fontBase64,
   required String source,
   required String languageId,
   required String css,
@@ -95,7 +106,12 @@ String _buildHtml({
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<style>$css</style>
+<style>
+@font-face {
+  font-family: 'GitLab Mono';
+  src: url(data:font/ttf;base64,$fontBase64) format('truetype');
+}
+$css</style>
 </head>
 <body>
 <pre><code id="code"></code></pre>

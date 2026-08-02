@@ -48,6 +48,18 @@ void main() {
     expect(platform.controller.loadedHtml.last, contains('def second(): pass'));
     expect(platform.controller.loadedHtml.last, contains('"python"'));
     expect(platform.controller.loadedHtml.last, isNot(contains('const first')));
+    expect(
+      platform.controller.loadedHtml.last,
+      contains("font-family: 'GitLab Mono';"),
+    );
+    expect(
+      platform.controller.loadedHtml.last,
+      contains('src: url(data:font/ttf;base64,'),
+    );
+    expect(
+      platform.controller.loadedHtml.last,
+      contains("font-family: 'GitLab Mono', monospace"),
+    );
   });
 }
 

@@ -78,8 +78,9 @@ String gsSyntaxCss(GsTheme gs) {
       'background: ${_hex(gs.codeBg)}; }',
     )
     ..writeln(
-      'code { font-family: monospace; font-size: 13px; line-height: 20px; '
-      'white-space: pre; color: ${_hex(gs.textDefault)}; }',
+      "code { font-family: 'GitLab Mono', monospace; font-size: 13px; "
+      'line-height: 20px; white-space: pre; '
+      'color: ${_hex(gs.textDefault)}; }',
     );
   for (final MapEntry(key: group, value: scopes) in _scopeGroups.entries) {
     final style = group == 'codeComment' ? 'italic' : 'normal';
