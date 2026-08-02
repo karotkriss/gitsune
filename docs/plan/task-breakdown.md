@@ -45,7 +45,7 @@ Every task inherits the operating principles in `docs/plan/roadmap.md` (fixtures
 
 | Task | Acceptance | Depends on |
 | --- | --- | --- |
-| E1.1 Design-token theme layer: tanuki-orange accent, dark-only, Pajamas semantic ramps, GitLab Sans and Mono, importing nothing | the theme exposes accent, semantic, and typography tokens, a token-swatch golden passes, and swapping the token file re-brands the app with no other code change | E0.1, design system landed |
+| E1.1 Design-token theme layer: tanuki-orange accent, dark-only, Pajamas semantic ramps, GitLab Sans and Mono | the theme exposes accent, semantic, and typography tokens, a token-swatch golden passes, and swapping the token file re-brands the app with no other code change | E0.1, design system landed |
 | E1.2 Liquid-glass implementation spike (runs in parallel with E0/E1) | a chosen Flutter approach for modest app-wide and heavy overlay glass is proven at 60fps on a mid-range Android reference device under Impeller, with its performance ceiling documented, or an early report that the heavy treatment must be reduced | none |
 | E1.3 App shell: four-tab bottom nav (Home, To-Dos/Notifications, Explore/Search, Profile), routing, empty themed screens | all four tabs navigate and a golden of each empty dark-theme screen passes | E1.1 |
 | E1.4 Home shortcut-tile grid (editable and reorderable): Issues, MRs, To-Do List, Pipelines, Projects, Groups | tiles render with Pajamas ramp colors and GitLab glyphs, reordering persists, and a golden passes | E1.3 |
