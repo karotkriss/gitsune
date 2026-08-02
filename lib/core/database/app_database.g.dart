@@ -374,16 +374,447 @@ class LocalCacheEntriesCompanion extends UpdateCompanion<LocalCacheEntry> {
   }
 }
 
+class $CurrentUserProfilesTable extends CurrentUserProfiles
+    with TableInfo<$CurrentUserProfilesTable, CurrentUserProfile> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CurrentUserProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _usernameMeta = const VerificationMeta(
+    'username',
+  );
+  @override
+  late final GeneratedColumn<String> username = GeneratedColumn<String>(
+    'username',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _avatarUrlMeta = const VerificationMeta(
+    'avatarUrl',
+  );
+  @override
+  late final GeneratedColumn<String> avatarUrl = GeneratedColumn<String>(
+    'avatar_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    username,
+    name,
+    avatarUrl,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'current_user_profiles';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CurrentUserProfile> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('username')) {
+      context.handle(
+        _usernameMeta,
+        username.isAcceptableOrUnknown(data['username']!, _usernameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_usernameMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('avatar_url')) {
+      context.handle(
+        _avatarUrlMeta,
+        avatarUrl.isAcceptableOrUnknown(data['avatar_url']!, _avatarUrlMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {instanceHost, accountId};
+  @override
+  CurrentUserProfile map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CurrentUserProfile(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      username: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}username'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      avatarUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}avatar_url'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CurrentUserProfilesTable createAlias(String alias) {
+    return $CurrentUserProfilesTable(attachedDatabase, alias);
+  }
+}
+
+class CurrentUserProfile extends DataClass
+    implements Insertable<CurrentUserProfile> {
+  final String instanceHost;
+  final String accountId;
+  final String username;
+  final String name;
+  final String? avatarUrl;
+  final DateTime updatedAt;
+  const CurrentUserProfile({
+    required this.instanceHost,
+    required this.accountId,
+    required this.username,
+    required this.name,
+    this.avatarUrl,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    map['username'] = Variable<String>(username);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || avatarUrl != null) {
+      map['avatar_url'] = Variable<String>(avatarUrl);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  CurrentUserProfilesCompanion toCompanion(bool nullToAbsent) {
+    return CurrentUserProfilesCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      username: Value(username),
+      name: Value(name),
+      avatarUrl: avatarUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(avatarUrl),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CurrentUserProfile.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CurrentUserProfile(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      username: serializer.fromJson<String>(json['username']),
+      name: serializer.fromJson<String>(json['name']),
+      avatarUrl: serializer.fromJson<String?>(json['avatarUrl']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'username': serializer.toJson<String>(username),
+      'name': serializer.toJson<String>(name),
+      'avatarUrl': serializer.toJson<String?>(avatarUrl),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  CurrentUserProfile copyWith({
+    String? instanceHost,
+    String? accountId,
+    String? username,
+    String? name,
+    Value<String?> avatarUrl = const Value.absent(),
+    DateTime? updatedAt,
+  }) => CurrentUserProfile(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    username: username ?? this.username,
+    name: name ?? this.name,
+    avatarUrl: avatarUrl.present ? avatarUrl.value : this.avatarUrl,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  CurrentUserProfile copyWithCompanion(CurrentUserProfilesCompanion data) {
+    return CurrentUserProfile(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      username: data.username.present ? data.username.value : this.username,
+      name: data.name.present ? data.name.value : this.name,
+      avatarUrl: data.avatarUrl.present ? data.avatarUrl.value : this.avatarUrl,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CurrentUserProfile(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('username: $username, ')
+          ..write('name: $name, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    instanceHost,
+    accountId,
+    username,
+    name,
+    avatarUrl,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CurrentUserProfile &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.username == this.username &&
+          other.name == this.name &&
+          other.avatarUrl == this.avatarUrl &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CurrentUserProfilesCompanion extends UpdateCompanion<CurrentUserProfile> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<String> username;
+  final Value<String> name;
+  final Value<String?> avatarUrl;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const CurrentUserProfilesCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.username = const Value.absent(),
+    this.name = const Value.absent(),
+    this.avatarUrl = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CurrentUserProfilesCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    required String username,
+    required String name,
+    this.avatarUrl = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       username = Value(username),
+       name = Value(name),
+       updatedAt = Value(updatedAt);
+  static Insertable<CurrentUserProfile> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<String>? username,
+    Expression<String>? name,
+    Expression<String>? avatarUrl,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (username != null) 'username': username,
+      if (name != null) 'name': name,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CurrentUserProfilesCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<String>? username,
+    Value<String>? name,
+    Value<String?>? avatarUrl,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CurrentUserProfilesCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      username: username ?? this.username,
+      name: name ?? this.name,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (username.present) {
+      map['username'] = Variable<String>(username.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (avatarUrl.present) {
+      map['avatar_url'] = Variable<String>(avatarUrl.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CurrentUserProfilesCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('username: $username, ')
+          ..write('name: $name, ')
+          ..write('avatarUrl: $avatarUrl, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $LocalCacheEntriesTable localCacheEntries =
       $LocalCacheEntriesTable(this);
+  late final $CurrentUserProfilesTable currentUserProfiles =
+      $CurrentUserProfilesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [localCacheEntries];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    localCacheEntries,
+    currentUserProfiles,
+  ];
 }
 
 typedef $$LocalCacheEntriesTableCreateCompanionBuilder =
@@ -597,10 +1028,249 @@ typedef $$LocalCacheEntriesTableProcessedTableManager =
       LocalCacheEntry,
       PrefetchHooks Function()
     >;
+typedef $$CurrentUserProfilesTableCreateCompanionBuilder =
+    CurrentUserProfilesCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      required String username,
+      required String name,
+      Value<String?> avatarUrl,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CurrentUserProfilesTableUpdateCompanionBuilder =
+    CurrentUserProfilesCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<String> username,
+      Value<String> name,
+      Value<String?> avatarUrl,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$CurrentUserProfilesTableFilterComposer
+    extends Composer<_$AppDatabase, $CurrentUserProfilesTable> {
+  $$CurrentUserProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get username => $composableBuilder(
+    column: $table.username,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CurrentUserProfilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CurrentUserProfilesTable> {
+  $$CurrentUserProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get username => $composableBuilder(
+    column: $table.username,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get avatarUrl => $composableBuilder(
+    column: $table.avatarUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CurrentUserProfilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CurrentUserProfilesTable> {
+  $$CurrentUserProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<String> get username =>
+      $composableBuilder(column: $table.username, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get avatarUrl =>
+      $composableBuilder(column: $table.avatarUrl, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CurrentUserProfilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CurrentUserProfilesTable,
+          CurrentUserProfile,
+          $$CurrentUserProfilesTableFilterComposer,
+          $$CurrentUserProfilesTableOrderingComposer,
+          $$CurrentUserProfilesTableAnnotationComposer,
+          $$CurrentUserProfilesTableCreateCompanionBuilder,
+          $$CurrentUserProfilesTableUpdateCompanionBuilder,
+          (
+            CurrentUserProfile,
+            BaseReferences<
+              _$AppDatabase,
+              $CurrentUserProfilesTable,
+              CurrentUserProfile
+            >,
+          ),
+          CurrentUserProfile,
+          PrefetchHooks Function()
+        > {
+  $$CurrentUserProfilesTableTableManager(
+    _$AppDatabase db,
+    $CurrentUserProfilesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CurrentUserProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CurrentUserProfilesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CurrentUserProfilesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<String> username = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> avatarUrl = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CurrentUserProfilesCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                username: username,
+                name: name,
+                avatarUrl: avatarUrl,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                required String username,
+                required String name,
+                Value<String?> avatarUrl = const Value.absent(),
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CurrentUserProfilesCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                username: username,
+                name: name,
+                avatarUrl: avatarUrl,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CurrentUserProfilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CurrentUserProfilesTable,
+      CurrentUserProfile,
+      $$CurrentUserProfilesTableFilterComposer,
+      $$CurrentUserProfilesTableOrderingComposer,
+      $$CurrentUserProfilesTableAnnotationComposer,
+      $$CurrentUserProfilesTableCreateCompanionBuilder,
+      $$CurrentUserProfilesTableUpdateCompanionBuilder,
+      (
+        CurrentUserProfile,
+        BaseReferences<
+          _$AppDatabase,
+          $CurrentUserProfilesTable,
+          CurrentUserProfile
+        >,
+      ),
+      CurrentUserProfile,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$LocalCacheEntriesTableTableManager get localCacheEntries =>
       $$LocalCacheEntriesTableTableManager(_db, _db.localCacheEntries);
+  $$CurrentUserProfilesTableTableManager get currentUserProfiles =>
+      $$CurrentUserProfilesTableTableManager(_db, _db.currentUserProfiles);
 }
