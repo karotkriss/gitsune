@@ -11,7 +11,7 @@ The maintainer's review confirmed and strengthened this direction: glass should 
 
 This decision is about visual direction and weighting, not about how the effect gets built.
 Liquid glass (background blur, saturation, translucency) is real-time compositing work, and its cost and even its availability vary a great deal by rendering surface: a Flutter app's backdrop-blur support differs across platforms and widget stacks, differs again between a native OS chrome element and a custom-rendered one, and carries a real performance cost that has not yet been evaluated against Gitsune's actual target devices.
-None of that engineering has been done yet, because no application code exists in this repository yet (`docs/plan/phase-plan.md`); this decision record is intentionally silent on it.
+The initial Flutter scaffold deliberately leaves that engineering to the liquid-glass implementation spike; this decision record is intentionally silent on it.
 
 ## Decision
 
