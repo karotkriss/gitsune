@@ -36,7 +36,28 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build apk --debug
+      - run: flutter build apk --flavor play --debug
+
+  build-android-fdroid:
+    name: Build sanity (Android, F-Droid flavor)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --flavor fdroid --debug
+      - name: Verify fdroid flavor has no proprietary push dependency
+        working-directory: android
+        run: |
+          ./gradlew :app:dependencies --configuration fdroidDebugRuntimeClasspath -q > /tmp/fdroid-deps.txt
+          if grep -iE 'firebase|google-services|com\.google\.android\.gms' /tmp/fdroid-deps.txt; then
+            echo "::error::Proprietary push dependency (FCM/Firebase/GMS) found in the fdroid flavor's dependency tree"
+            exit 1
+          fi
 
   build-ios:
     name: Build sanity (iOS)
