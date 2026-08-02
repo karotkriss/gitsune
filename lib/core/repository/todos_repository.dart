@@ -25,6 +25,7 @@ class TodosRepository implements OfflineFirstRepository<List<TodoItem>> {
   final AppDatabase database;
   final Dio client;
   final AccountKey account;
+  Future<void> _refreshQueue = Future<void>.value();
 
   @override
   Stream<List<TodoItem>> watch() {
@@ -39,7 +40,16 @@ class TodosRepository implements OfflineFirstRepository<List<TodoItem>> {
   }
 
   @override
-  Future<void> refresh() async {
+  Future<void> refresh() {
+    final refresh = _refreshQueue.then((_) => _performRefresh());
+    _refreshQueue = refresh.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
+    return refresh;
+  }
+
+  Future<void> _performRefresh() async {
     final paginator = KeysetPaginator<TodoItemsCompanion>(
       dio: client,
       initialUri: _todosListUri(client),

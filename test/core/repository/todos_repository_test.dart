@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/native.dart';
@@ -201,6 +203,53 @@ void main() {
     final todos = await repository.watch().first;
     expect(todos, hasLength(1));
     expect(todos.single.body, 'Cached to-do');
+  });
+
+  test('overlapping refreshes commit snapshots in request order', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    final firstRequestStarted = Completer<void>();
+    final releaseFirstRequest = Completer<void>();
+    var requestCount = 0;
+    server.handle('GET /api/v4/todos', (request) async {
+      requestCount += 1;
+      final todo = List<Map<String, dynamic>>.from(
+        Fixtures.json('todos_page2') as List,
+      ).single;
+      if (requestCount == 1) {
+        firstRequestStarted.complete();
+        await releaseFirstRequest.future;
+        todo['body'] = 'Older snapshot';
+      } else {
+        todo['body'] = 'Newer snapshot';
+      }
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode([todo]));
+      await request.response.close();
+    });
+
+    final client = createGitLabClient(
+      account: account,
+      baseUrl: server.baseUri.resolve('/api/v4'),
+      readToken: (_) async => 'tok',
+      refreshToken: (_) async => fail('refresh should not be called'),
+    );
+    final repository = TodosRepository(
+      database: db,
+      client: client,
+      account: account,
+    );
+
+    final firstRefresh = repository.refresh();
+    await firstRequestStarted.future;
+    final secondRefresh = repository.refresh();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    releaseFirstRequest.complete();
+    await Future.wait([firstRefresh, secondRefresh]);
+
+    expect(requestCount, 2);
+    final todos = await repository.watch().first;
+    expect(todos.single.body, 'Newer snapshot');
   });
 
   test('the composite key is instanceHost + accountId + todoId', () {
