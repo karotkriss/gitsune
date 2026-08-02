@@ -99,39 +99,36 @@ void main() {
     expect(todos.single.body, 'Cached to-do');
   });
 
-  test(
-    'a refresh paginates the whole collection, writes through, and the '
-    'stream re-emits',
-    () async {
-      final server = await FakeGitLabServer.start();
-      addTearDown(server.close);
-      registerTwoTodoPages(server);
+  test('a refresh paginates the whole collection, writes through, and the '
+      'stream re-emits', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    registerTwoTodoPages(server);
 
-      final client = createGitLabClient(
-        account: account,
-        baseUrl: server.baseUri.resolve('/api/v4'),
-        readToken: (_) async => 'tok',
-        refreshToken: (_) async => fail('refresh should not be called'),
-      );
-      final repository = TodosRepository(
-        database: db,
-        client: client,
-        account: account,
-      );
+    final client = createGitLabClient(
+      account: account,
+      baseUrl: server.baseUri.resolve('/api/v4'),
+      readToken: (_) async => 'tok',
+      refreshToken: (_) async => fail('refresh should not be called'),
+    );
+    final repository = TodosRepository(
+      database: db,
+      client: client,
+      account: account,
+    );
 
-      final emissions = repository.watch().map((todos) => todos.length);
-      final expectation = expectLater(emissions, emitsInOrder([0, 3]));
+    final emissions = repository.watch().map((todos) => todos.length);
+    final expectation = expectLater(emissions, emitsInOrder([0, 3]));
 
-      await repository.refresh();
+    await repository.refresh();
 
-      await expectation;
+    await expectation;
 
-      final todos = await repository.watch().first;
-      expect(todos.map((t) => t.todoId), [102, 101, 88101]);
-      expect(todos.first.targetTitle, 'Add instance switcher sheet');
-      expect(todos.last.targetType, 'Pipeline');
-    },
-  );
+    final todos = await repository.watch().first;
+    expect(todos.map((t) => t.todoId), [102, 101, 88101]);
+    expect(todos.first.targetTitle, 'Add instance switcher sheet');
+    expect(todos.last.targetType, 'Pipeline');
+  });
 
   test('a subsequent refresh replaces to-dos no longer returned', () async {
     final server = await FakeGitLabServer.start();

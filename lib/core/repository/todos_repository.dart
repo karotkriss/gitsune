@@ -48,7 +48,7 @@ class TodosRepository implements OfflineFirstRepository<List<TodoItem>> {
     final refresh = _refreshQueue.then((_) => _performRefresh());
     _refreshQueue = refresh.then<void>(
       (_) {},
-      onError: (Object _, StackTrace __) {},
+      onError: (Object _, StackTrace _) {},
     );
     return refresh;
   }
@@ -88,13 +88,12 @@ class TodosRepository implements OfflineFirstRepository<List<TodoItem>> {
 
 Uri _todosListUri(Dio client) {
   final base = Uri.parse(client.options.baseUrl);
-  final path = base.path.endsWith('/') ? '${base.path}todos' : '${base.path}/todos';
+  final path = base.path.endsWith('/')
+      ? '${base.path}todos'
+      : '${base.path}/todos';
   return base.replace(
     path: path,
-    queryParameters: {
-      'page': '1',
-      'per_page': '100',
-    },
+    queryParameters: {'page': '1', 'per_page': '100'},
   );
 }
 

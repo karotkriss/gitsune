@@ -62,7 +62,12 @@ class TodoItems extends Table with AccountScoped {
 }
 
 @DriftDatabase(
-  tables: [LocalCacheEntries, CurrentUserProfiles, PaginationCursors, TodoItems],
+  tables: [
+    LocalCacheEntries,
+    CurrentUserProfiles,
+    PaginationCursors,
+    TodoItems,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'gitsune'));
