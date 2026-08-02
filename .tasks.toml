@@ -1,0 +1,4 @@
+backend = "github"
+
+[github]
+repo = "karotkriss/gitsune"
