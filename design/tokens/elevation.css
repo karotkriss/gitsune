@@ -1,5 +1,5 @@
 /* Shadows are quiet and gray-based; dark theme deepens the same shadows rather than recoloring.
-   Focus ring: inner keyline in the surface color, 2px blue outer ring. */
+   Focus ring: inner keyline in the surface color, 2px brand-orange outer ring. */
 :root{
 --gl-shadow-color:var(--gl-color-alpha-dark-16);
 --gl-shadow-sm:0 0 2px 0 var(--gl-shadow-color),0 1px 4px 0 var(--gl-shadow-color);

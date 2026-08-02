@@ -1,7 +1,7 @@
 /* Pajamas base palette — values verbatim from @gitlab/ui@135.1.1 design tokens (vendor/gitlab-tokens.css).
-   Five semantic ramps + neutrals. Semantics are fixed product-wide: blue=current/active/progress,
+   Five semantic ramps + neutrals. Semantics are fixed product-wide: blue=info/progress status,
    green=success/done/approved, orange=warning/pending, red=critical/failed/destructive,
-   purple=brand (illustrations & empty states, never the interactive color). */
+   purple=data-viz/illustrations (never the interactive or brand color). */
 :root{
 --gl-color-blue-50:#e9f3fc;--gl-color-blue-100:#cbe2f9;--gl-color-blue-200:#9dc7f1;--gl-color-blue-300:#63a6e9;--gl-color-blue-400:#428fdc;--gl-color-blue-500:#1f75cb;--gl-color-blue-600:#2f68b4;--gl-color-blue-700:#2f5ca0;--gl-color-blue-800:#284779;--gl-color-blue-900:#213454;--gl-color-blue-950:#1d283e;
 --gl-color-green-50:#ecf4ee;--gl-color-green-100:#c3e6cd;--gl-color-green-200:#91d4a8;--gl-color-green-300:#52b87a;--gl-color-green-400:#2da160;--gl-color-green-500:#108548;--gl-color-green-600:#2f7549;--gl-color-green-700:#306440;--gl-color-green-800:#225131;--gl-color-green-900:#1e3e28;--gl-color-green-950:#17291c;
