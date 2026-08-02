@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../core/icons/gs_icons.dart';
 import '../explore/explore_screen.dart';
 import '../home/home_screen.dart';
+import '../issues/data/issue_models.dart';
+import '../issues/data/issues_repository.dart';
+import '../issues/presentation/issue_detail_screen.dart';
+import '../issues/presentation/issue_list_screen.dart';
 import '../profile/profile_screen.dart';
 import '../todos/todos_screen.dart';
 
@@ -12,9 +16,17 @@ import '../todos/todos_screen.dart';
 ///
 /// A fresh router per app instance (rather than a shared global) so app
 /// restarts and tests never inherit a previous instance's location.
-GoRouter buildAppRouter() {
+///
+/// [issuesRepository] enables the project issue routes once the account and
+/// project composition root owns a signed-in GitLab client. Keeping that
+/// dependency optional lets the shell boot before E2's account wiring lands,
+/// without hiding the route contract E6.1 exposes to project navigation.
+GoRouter buildAppRouter({
+  IssuesRepository? issuesRepository,
+  String initialLocation = '/home',
+}) {
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: initialLocation,
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
@@ -53,6 +65,45 @@ GoRouter buildAppRouter() {
           ),
         ],
       ),
+      if (issuesRepository != null) ...[
+        GoRoute(
+          path: '/projects/:projectId/issues',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            final projectPath =
+                state.uri.queryParameters['projectPath'] ??
+                'Project $projectId';
+            return IssueListScreen(
+              projectId: projectId,
+              projectPath: projectPath,
+              repository: issuesRepository,
+              onIssueTap: (issue) => context.push(
+                Uri(
+                  path: '/projects/$projectId/issues/${issue.iid}',
+                  queryParameters: {'projectPath': projectPath},
+                ).toString(),
+                extra: issue,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/projects/:projectId/issues/:issueIid',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            final projectPath =
+                state.uri.queryParameters['projectPath'] ??
+                'Project $projectId';
+            return IssueDetailScreen(
+              projectId: projectId,
+              projectPath: projectPath,
+              issueIid: int.parse(state.pathParameters['issueIid']!),
+              repository: issuesRepository,
+              initialIssue: state.extra is Issue ? state.extra! as Issue : null,
+            );
+          },
+        ),
+      ],
     ],
   );
 }
