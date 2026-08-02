@@ -17,8 +17,7 @@ class LocalCacheEntries extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId, cacheKey};
 }
 
-/// The current-user profile, one row per account: E3.3's concrete proof of
-/// the offline-first repository pattern (see `lib/core/repository/`).
+/// Cached current-user profiles, scoped to one row per account.
 class CurrentUserProfiles extends Table with AccountScoped {
   TextColumn get username => text()();
   TextColumn get name => text()();
