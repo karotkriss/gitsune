@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// Home tab. Placeholder until E1.4 adds the shortcut-tile grid.
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+/// Explore/Search tab. Placeholder until E10 builds search and explore.
+class ExploreScreen extends StatelessWidget {
+  const ExploreScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Align(
             alignment: Alignment.topLeft,
-            child: Text('Home', style: gs.screenTitle),
+            child: Text('Explore', style: gs.screenTitle),
           ),
         ),
       ),
