@@ -28,20 +28,37 @@ class CurrentUserProfiles extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId};
 }
 
-@DriftDatabase(tables: [LocalCacheEntries, CurrentUserProfiles])
+/// The persisted resume token for one account's keyset-paginated collection
+/// (e.g. `projects`), so an interrupted listing can resume across app
+/// restarts. See `core/network/pagination_cursor_store.dart`.
+class PaginationCursors extends Table with AccountScoped {
+  TextColumn get collectionKey => text()();
+  TextColumn get cursorUri => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId, collectionKey};
+}
+
+@DriftDatabase(
+  tables: [LocalCacheEntries, CurrentUserProfiles, PaginationCursors],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'gitsune'));
 
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (migrator, from, _) async {
       if (from < 2) {
         await migrator.createTable(currentUserProfiles);
+      }
+      if (from < 3) {
+        await migrator.createTable(paginationCursors);
       }
     },
   );
