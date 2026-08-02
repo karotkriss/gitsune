@@ -36,5 +36,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (migrator, from, _) async {
+      if (from < 2) {
+        await migrator.createTable(currentUserProfiles);
+      }
+    },
+  );
 }
