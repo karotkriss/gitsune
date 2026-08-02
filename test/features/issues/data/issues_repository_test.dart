@@ -69,14 +69,15 @@ void main() {
   test('loads issue detail and paginates its chronological notes', () async {
     final server = await FakeGitLabServer.start();
     addTearDown(server.close);
-    server.handle('GET /api/v4/projects/7/issues/142', (request) async {
+    server.handle('GET /api/v4/projects/7/issues', (request) async {
+      expect(request.uri.queryParameters, containsPair('iids[]', '142'));
       expect(
         request.uri.queryParameters,
         containsPair('with_labels_details', 'true'),
       );
       request.response.statusCode = HttpStatus.ok;
       request.response.headers.contentType = ContentType.json;
-      request.response.write(Fixtures.raw('issue_142'));
+      request.response.write('[${Fixtures.raw('issue_142')}]');
       await request.response.close();
     });
     server.handle('GET /api/v4/projects/7/issues/142/notes', (request) async {
@@ -109,6 +110,8 @@ void main() {
     expect(issue.title, 'Keep draft comments after reconnecting');
     expect(issue.milestoneTitle, 'v1.0');
     expect(issue.assignees.single.username, 'suki');
+    expect(issue.labels.first.colorHex, '#7B58CF');
+    expect(issue.labels.first.textColorHex, '#FFFFFF');
     expect(firstNotes.items.single.id, 9001);
     expect(firstNotes.items.single.system, isTrue);
     expect(firstNotes.hasMore, isTrue);

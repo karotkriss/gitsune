@@ -95,12 +95,19 @@ class GitLabIssuesRepository implements IssuesRepository {
 
   @override
   Future<Issue> loadIssue(int projectId, int issueIid) async {
-    final response = await _client.getUri<Map<String, dynamic>>(
-      _apiUri('projects/$projectId/issues/$issueIid', {
+    final response = await _client.getUri<List<dynamic>>(
+      _apiUri('projects/$projectId/issues', {
+        'iids[]': '$issueIid',
         'with_labels_details': 'true',
       }),
     );
-    return Issue.fromJson(response.data!);
+    final issues = response.data!;
+    if (issues.length != 1) {
+      throw StateError(
+        'Expected one issue with IID $issueIid, received ${issues.length}.',
+      );
+    }
+    return Issue.fromJson(issues.single as Map<String, dynamic>);
   }
 
   @override
