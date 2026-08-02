@@ -35,6 +35,12 @@ Gitsune has completed its documentation and design-system phases, and developmen
 The Flutter project is scaffolded (`lib/core/`, `lib/features/`); feature work is in progress per `docs/plan/roadmap.md` and `docs/plan/task-breakdown.md`.
 See `docs/plan/phase-plan.md` for the full sequencing.
 
+## Running
+
+Android uses separate `play` and `fdroid` build flavors.
+Run the Android app with `flutter run --flavor play` for the Google Play variant or `flutter run --flavor fdroid` for the F-Droid variant.
+Use the same `--flavor` option with Android `flutter build` commands.
+
 ## Testing
 
 `flutter test` runs the whole suite, unit, widget, and golden tests alike, with no external network access and no secrets required.

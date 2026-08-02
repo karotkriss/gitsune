@@ -35,6 +35,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - The license is intentionally unset ("License: TBD" in `README.md`).
   Do not add a `LICENSE` file or pick a license without an explicit decision recorded as a new ADR in `docs/decisions/`.
   This is distinct from the vendored third-party licenses in `design/`, which govern only the files they accompany regardless of what license this repository eventually adopts.
+- Android flavor commands are documented in `README.md`; `android/app/build.gradle.kts` owns the proprietary-dependency boundary, and `docs/decisions/0004-app-store-launch-scope.md` owns its rationale.
 
 ## Maintaining this file
 

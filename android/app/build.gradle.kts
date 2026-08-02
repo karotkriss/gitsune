@@ -28,8 +28,23 @@ android {
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Signing with the debug keys for now, so flavored `flutter run --release` commands work.
             signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
+    // F-Droid's inclusion policy forbids proprietary tracking or push services (notably
+    // Firebase Cloud Messaging) in the build it distributes (docs/decisions/0004-app-store-launch-scope.md).
+    // The `fdroid` flavor is that FOSS-only build; any future proprietary push dependency
+    // (E12.x) must be added only via `playImplementation`/`playCompileOnly` below, never to
+    // `implementation`/`api`, so it never reaches the fdroid flavor's dependency tree.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("fdroid") {
+            dimension = "distribution"
+        }
+        create("play") {
+            dimension = "distribution"
         }
     }
 }
@@ -38,6 +53,11 @@ kotlin {
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
+}
+
+dependencies {
+    // Proprietary push (e.g. Firebase Cloud Messaging, added under E12.x) is scoped to the
+    // `play` flavor only, e.g.: playImplementation("com.google.firebase:firebase-messaging:...")
 }
 
 flutter {
