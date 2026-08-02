@@ -11,7 +11,7 @@ Publishing this roadmap does not open the gate; it defines what the work is once
 ## Scope this roadmap covers
 
 The v1 feature set is the eleven-item list in `docs/decisions/0003-v1-scope.md`, built in a dependency order that front-loads the differentiators (authentication, notifications, merge request review, CI/CD, issues) while respecting what each surface depends on.
-Everything the roadmap references traces to a settled decision:
+The roadmap's feature and platform commitments trace to these settled decisions:
 
 - Authentication: `docs/decisions/0001-auth-posture.md` (OAuth2 with PKCE, gitlab.com one-tap, guided self-hosted registration, de-emphasized PAT fallback, multi-instance and multi-account sessions).
 - Notifications: `docs/decisions/0002-notification-architecture.md` (layered, no project-operated servers, native-push seam).
@@ -247,5 +247,5 @@ Ship to all three stores at once per `docs/decisions/0004-app-store-launch-scope
 ## First buildable slices
 
 When development opens, phase zero is where it starts.
-The tasks with no upstream code dependency (the scaffold, the CI skeleton, the fixtures harness, the design-token theme, the app shell, the `dio` client skeleton) plus the parallel liquid-glass spike are the first pickable work.
-They are enumerated in `docs/plan/task-breakdown.md` under epics E0, E1, and E3, and they are staged rather than started until the maintainer opens phase three.
+The scaffold and the parallel liquid-glass spike are the first pickable implementation tasks; the remaining phase-zero tasks follow their dependencies in `docs/plan/task-breakdown.md`.
+All of them remain staged until the maintainer opens phase three.

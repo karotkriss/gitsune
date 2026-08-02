@@ -50,7 +50,7 @@ Every task inherits the operating principles in `docs/plan/roadmap.md` (fixtures
 | E1.3 App shell: four-tab bottom nav (Home, To-Dos/Notifications, Explore/Search, Profile), routing, empty themed screens | all four tabs navigate and a golden of each empty dark-theme screen passes | E1.1 |
 | E1.4 Home shortcut-tile grid (editable and reorderable): Issues, MRs, To-Do List, Pipelines, Projects, Groups | tiles render with Pajamas ramp colors and GitLab glyphs, reordering persists, and a golden passes | E1.3 |
 | E1.5 Glass overlay components (modal, drawer, sheet) built on the spike's approach | overlay components render heavy glass within the spike's documented budget and a golden passes | E1.2, E1.3 |
-| E1.6 Reconcile `docs/research/design-direction.md` with the closed design review | the doc no longer contradicts the shipped design system on interactive accent, theme scope, and liquid-glass adoption, with the superseded positions updated | none |
+| E1.6 Reconcile `docs/research/design-direction.md` with the closed design review | the doc no longer contradicts the shipped design system on interactive accent, theme scope, and liquid-glass adoption, with the superseded positions updated | design system landed |
 
 ## E2: Authentication and sessions (Phase 1)
 
