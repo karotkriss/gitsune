@@ -33,10 +33,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - The license is intentionally unset ("License: TBD" in `README.md`).
   Do not add a `LICENSE` file or pick a license without an explicit decision recorded as a new ADR in `docs/decisions/`.
   This is distinct from the vendored third-party licenses in `design/`, which govern only the files they accompany regardless of what license this repository eventually adopts.
-- `android/app/build.gradle.kts` declares two product flavors on a `distribution` dimension: `fdroid` (FOSS-only, no proprietary push) and `play`.
-  Any future proprietary push dependency (e.g. Firebase Cloud Messaging, under E12.x) must be added only via `playImplementation`/`playCompileOnly` in that file's `dependencies` block, never `implementation`/`api`, so it never reaches the fdroid flavor.
-  `flutter build`/`run` now require `--flavor fdroid` or `--flavor play`; CI's `build-android-fdroid` job (`.github/workflows/ci.yml`) builds the fdroid flavor and greps its Gradle dependency tree for `firebase`/`google-services`/`com.google.android.gms` to prove it stays clean.
-  See `docs/decisions/0004-app-store-launch-scope.md` for why F-Droid needs this split.
+- Android flavor commands are documented in `README.md`; `android/app/build.gradle.kts` owns the proprietary-dependency boundary, and `docs/decisions/0004-app-store-launch-scope.md` owns its rationale.
 
 ## Maintaining this file
 
