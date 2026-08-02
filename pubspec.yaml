@@ -64,6 +64,21 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # GitLab's open-source brand faces (OFL), converted from the woff2 files
+  # vendored in design/assets/fonts; see assets/fonts/README.md. Variable
+  # fonts: one file carries every weight via the wght axis.
+  fonts:
+    - family: GitLab Sans
+      fonts:
+        - asset: assets/fonts/GitLabSans.ttf
+        - asset: assets/fonts/GitLabSans-Italic.ttf
+          style: italic
+    - family: GitLab Mono
+      fonts:
+        - asset: assets/fonts/GitLabMono.ttf
+        - asset: assets/fonts/GitLabMono-Italic.ttf
+          style: italic
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

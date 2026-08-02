@@ -33,7 +33,7 @@ These hold across every phase and are not restated per task.
 - **Feature-first, single package.**
   A `core` layer owns networking, the local database, auth, shared models, and the design-token theme.
   Feature modules depend on `core` and never on each other in reverse.
-  The design-token theme imports nothing, so the brand layer stays independently swappable and testable.
+  The theme dependency boundary and independently swappable brand layer are defined in `docs/research/technology-assessment.md`.
 - **Account scoping is a composite key.**
   Instance host plus account identifier keys the network client, every database row, and every per-account provider.
   Switching accounts is a single state change that tears down the previous account's client and state.
