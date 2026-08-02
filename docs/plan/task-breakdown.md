@@ -141,7 +141,8 @@ Implementation detail: `docs/research/auth-blueprint.md`.
 
 ## E12: Notification delivery layers (Phase 5)
 
-Architecture: `docs/decisions/0002-notification-architecture.md`. The project operates no servers at any layer.
+Architecture: `docs/decisions/0002-notification-architecture.md`.
+The project operates no servers at any layer.
 
 | Task | Acceptance | Depends on |
 | --- | --- | --- |
