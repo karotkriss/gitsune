@@ -22,6 +22,8 @@ Building screens against an unsettled design language produces rework; settling 
 Development begins once the design system from phase two is in place.
 It is expected to build directly on the decisions already recorded in `docs/decisions/`, the technology choices in `docs/research/technology-assessment.md`, and the v1 scope in `docs/plan/v1-scope.md`, in roughly the priority order that document lays out.
 
+The concrete engineering sequence for this phase is `docs/plan/roadmap.md`, with the pickable-task companion in `docs/plan/task-breakdown.md`.
+
 This repository will open to code contributions at the start of this phase; it is not open to code contributions before then.
 
 ## Why this order
