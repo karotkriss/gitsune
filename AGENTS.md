@@ -15,6 +15,9 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - Design decisions that amend or supersede an earlier ADR are recorded as their own new, numbered ADR rather than by editing the original (see `docs/decisions/0007-interactive-color-orange-over-blue.md` amending `docs/research/design-direction.md`'s original color guidance); follow this pattern for future design or scope changes too.
 - Prose files in this repo use a one-sentence-per-line convention (each full sentence on its own physical line; normal Markdown structure like lists and tables is unaffected).
   `.markdownlint.jsonc` disables MD013 (line length) specifically to match this style; do not re-enable it without also reformatting every prose file.
+- The local database is `drift` (SQLite) under `lib/core/database/`: `account_scope.dart` defines the `AccountScoped` mixin (`instanceHost` + `accountId` columns) that every table inherits per the composite-key operating principle; `app_database.dart` is the `@DriftDatabase` and its generated `app_database.g.dart` is committed.
+  Regenerate after touching any table with `dart run build_runner build` (PATH needs `$HOME/flutter/bin`).
+  `sqlite3_flutter_libs` is EOL as of sqlite3 3.x, which bundles native libraries itself via Dart hooks; use `drift_flutter`'s `driftDatabase()` helper instead, and construct `AppDatabase.forTesting(NativeDatabase.memory())` for tests.
 - The license is intentionally unset ("License: TBD" in `README.md`).
   Do not add a `LICENSE` file or pick a license without an explicit decision recorded as a new ADR in `docs/decisions/`.
   This is distinct from the vendored third-party licenses in `design/`, which govern only the files they accompany regardless of what license this repository eventually adopts.
