@@ -1,0 +1,6 @@
+@@ -8,3 +8,3 @@
+ line a
+ line b
+-last line without newline
+\ No newline at end of file
++last line with newline

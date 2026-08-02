@@ -24,6 +24,9 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   Regenerate after touching any table with `dart run build_runner build` (PATH needs `$HOME/flutter/bin`).
   `sqlite3_flutter_libs` is EOL as of sqlite3 3.x, which bundles native libraries itself via Dart hooks; use `drift_flutter`'s `driftDatabase()` helper instead, and construct `AppDatabase.forTesting(NativeDatabase.memory())` for tests.
 - CI is defined in `.github/workflows/ci.yml`; keep golden tests confined to its Ubuntu checks job to avoid cross-platform pixel drift, and keep PR jobs secret-free until signing work is scoped under E15.
+- Pure-Dart, Flutter-free logic (no widgets, no `dart:ui`) belongs in its own `lib/core/<area>/` module so it stays plainly unit-testable; see `lib/core/diff/diff_hunk_parser.dart` for the pattern.
+  Text fixtures for such tests live under `test/fixtures/<area>/` and are read directly with `File(...).readAsStringSync()` at test time; they do not need a `pubspec.yaml` asset entry since they are never bundled into the app.
+  Author fixtures containing trailing-whitespace-only lines (e.g. unified-diff blank context lines) with a script (Python/`printf`), not the file-write tool, which silently strips trailing whitespace.
 - The license is intentionally unset ("License: TBD" in `README.md`).
   Do not add a `LICENSE` file or pick a license without an explicit decision recorded as a new ADR in `docs/decisions/`.
   This is distinct from the vendored third-party licenses in `design/`, which govern only the files they accompany regardless of what license this repository eventually adopts.
