@@ -9,7 +9,7 @@ injectStyle('gs-tabbar', `.gs-tabbar-item{all:unset;box-sizing:border-box;flex:1
 /** Liquid-glass capsule tab bar: floats over the scrolling content (blur samples it); active item sits in a lighter glass pill. */
 export function TabBar({ items, active, onChange, floating = true, style }) {
   return (
-    <nav style={{ position: floating ? 'absolute' : 'relative', left: floating ? 12 : undefined, right: floating ? 12 : undefined, bottom: floating ? 10 : undefined, zIndex: 30, display: 'flex', gap: 4, height: 64, padding: 6, borderRadius: 'var(--gl-border-radius-full)', background: 'var(--gs-glass-bg)', backdropFilter: 'var(--gs-glass-blur)', WebkitBackdropFilter: 'var(--gs-glass-blur)', boxShadow: 'var(--gs-glass-edge)', ...style }}>
+    <nav style={{ position: floating ? 'absolute' : 'relative', left: floating ? 12 : undefined, right: floating ? 12 : undefined, bottom: floating ? 10 : undefined, zIndex: 30, display: 'flex', gap: 4, height: 'var(--gs-tabbar-height)', padding: 6, borderRadius: 'var(--gl-border-radius-full)', background: 'var(--gs-glass-bg)', backdropFilter: 'var(--gs-glass-blur)', WebkitBackdropFilter: 'var(--gs-glass-blur)', boxShadow: 'var(--gs-glass-edge)', ...style }}>
       {items.map(it => (
         <button key={it.id} className="gs-tabbar-item" aria-current={active === it.id} onClick={() => onChange && onChange(it.id)}>
           <span style={{ position: 'relative' }}>
