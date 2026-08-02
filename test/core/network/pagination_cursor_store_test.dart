@@ -64,4 +64,42 @@ void main() {
     expect(await store.read(alice, 'projects'), 'projects-cursor');
     expect(await store.read(alice, 'issues'), 'issues-cursor');
   });
+
+  test('schema version 1 migrates without losing cached data', () async {
+    await db.close();
+    final executor = NativeDatabase.memory(
+      setup: (database) {
+        database.execute('''
+          CREATE TABLE local_cache_entries (
+            instance_host TEXT NOT NULL,
+            account_id TEXT NOT NULL,
+            cache_key TEXT NOT NULL,
+            value TEXT NOT NULL,
+            updated_at INTEGER NOT NULL,
+            PRIMARY KEY (instance_host, account_id, cache_key)
+          )
+        ''');
+        database.execute('''
+          INSERT INTO local_cache_entries
+            (instance_host, account_id, cache_key, value, updated_at)
+          VALUES ('gitlab.com', 'alice', 'projects', 'cached', 0)
+        ''');
+        database.execute('PRAGMA user_version = 1');
+      },
+    );
+    final migratedDb = AppDatabase.forTesting(executor);
+    addTearDown(migratedDb.close);
+    final migratedStore = PaginationCursorStore(migratedDb);
+
+    await migratedStore.save(alice, 'projects', 'cursor-after-migration');
+
+    expect(
+      await migratedStore.read(alice, 'projects'),
+      'cursor-after-migration',
+    );
+    expect(
+      await migratedDb.select(migratedDb.localCacheEntries).getSingle(),
+      isA<LocalCacheEntry>().having((entry) => entry.value, 'value', 'cached'),
+    );
+  });
 }

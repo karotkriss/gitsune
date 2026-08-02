@@ -45,11 +45,21 @@ Uri? nextPageUriFrom(Response<dynamic> response) {
 /// up later - persist it (e.g. via a small drift table) and pass it back
 /// through [KeysetPaginator.resume] to continue an interrupted listing.
 class KeysetPaginator<T> {
-  KeysetPaginator({
+  factory KeysetPaginator({
     required Dio dio,
     required Uri initialUri,
     required T Function(Map<String, dynamic> json) decode,
-  }) : this._(dio, initialUri, decode, initialUri);
+  }) {
+    final trustedOrigin = _configuredOriginFor(dio);
+    final safeInitialUri = _requireSameOrigin(initialUri, trustedOrigin);
+    return KeysetPaginator._(
+      dio,
+      safeInitialUri,
+      decode,
+      safeInitialUri,
+      trustedOrigin,
+    );
+  }
 
   /// Resumes a paginator from a previously persisted [resumeToken] rather
   /// than the collection's first page.
@@ -58,25 +68,43 @@ class KeysetPaginator<T> {
   /// resume token that the server later rejects (an expired/invalid
   /// cursor) is handled by [loadNext], which falls back to [initialUri]
   /// rather than failing the listing.
-  KeysetPaginator.resume({
+  factory KeysetPaginator.resume({
     required Dio dio,
     required Uri initialUri,
     required T Function(Map<String, dynamic> json) decode,
     required String? resumeToken,
-  }) : this._(
-         dio,
-         initialUri,
-         decode,
-         (resumeToken == null || resumeToken.isEmpty)
-             ? initialUri
-             : Uri.tryParse(resumeToken) ?? initialUri,
-       );
+  }) {
+    final trustedOrigin = _configuredOriginFor(dio);
+    final safeInitialUri = _requireSameOrigin(initialUri, trustedOrigin);
+    final parsedResumeToken = resumeToken == null || resumeToken.isEmpty
+        ? null
+        : Uri.tryParse(resumeToken);
+    final safeResumeUri =
+        parsedResumeToken != null &&
+            _hasSameOrigin(parsedResumeToken, trustedOrigin)
+        ? parsedResumeToken
+        : safeInitialUri;
+    return KeysetPaginator._(
+      dio,
+      safeInitialUri,
+      decode,
+      safeResumeUri,
+      trustedOrigin,
+    );
+  }
 
-  KeysetPaginator._(this._dio, this._initialUri, this._decode, this._nextUri);
+  KeysetPaginator._(
+    this._dio,
+    this._initialUri,
+    this._decode,
+    this._nextUri,
+    this._trustedOrigin,
+  );
 
   final Dio _dio;
   final Uri _initialUri;
   final T Function(Map<String, dynamic> json) _decode;
+  final Uri _trustedOrigin;
   Uri? _nextUri;
 
   /// Whether another page is available to fetch.
@@ -102,9 +130,7 @@ class KeysetPaginator<T> {
     try {
       return await _fetch(uri);
     } on DioException catch (error) {
-      final status = error.response?.statusCode;
-      final isClientError = status != null && status >= 400 && status < 500;
-      if (isClientError && uri != _initialUri) {
+      if (_isInvalidCursorError(error) && uri != _initialUri) {
         return _fetch(_initialUri);
       }
       rethrow;
@@ -116,8 +142,66 @@ class KeysetPaginator<T> {
     final items = (response.data as List<dynamic>)
         .map((item) => _decode(item as Map<String, dynamic>))
         .toList();
-    final next = nextPageUriFrom(response);
+    final nextReference = nextPageUriFrom(response);
+    final next = nextReference == null
+        ? null
+        : _requireSameOrigin(uri.resolveUri(nextReference), _trustedOrigin);
     _nextUri = next;
     return KeysetPage(items: items, nextUri: next);
   }
+}
+
+Uri _configuredOriginFor(Dio dio) {
+  final baseUri = Uri.tryParse(dio.options.baseUrl);
+  if (baseUri == null ||
+      !baseUri.hasScheme ||
+      baseUri.host.isEmpty ||
+      (baseUri.scheme != 'http' && baseUri.scheme != 'https')) {
+    throw ArgumentError.value(
+      dio.options.baseUrl,
+      'dio.options.baseUrl',
+      'Must be an absolute HTTP(S) URI.',
+    );
+  }
+  return baseUri;
+}
+
+Uri _requireSameOrigin(Uri uri, Uri trustedOrigin) {
+  if (!_hasSameOrigin(uri, trustedOrigin)) {
+    throw FormatException('Pagination URI must match the GitLab origin.', uri);
+  }
+  return uri;
+}
+
+bool _hasSameOrigin(Uri uri, Uri trustedOrigin) =>
+    uri.hasScheme &&
+    uri.host.isNotEmpty &&
+    uri.scheme == trustedOrigin.scheme &&
+    uri.host == trustedOrigin.host &&
+    uri.port == trustedOrigin.port;
+
+bool _isInvalidCursorError(DioException error) {
+  final status = error.response?.statusCode;
+  if (status == null || status < 400 || status >= 500) return false;
+  if (status == 401 || status == 403 || status == 429) return false;
+
+  final description = _errorDescription(error.response?.data).toLowerCase();
+  final describesCursor = description.contains('cursor');
+  final describesRejection =
+      description.contains('invalid') ||
+      description.contains('expired') ||
+      description.contains('stale') ||
+      description.contains('malformed');
+  return describesCursor && describesRejection;
+}
+
+String _errorDescription(Object? data) {
+  if (data is String) return data;
+  if (data is Map) {
+    return data.entries
+        .where((entry) => entry.key == 'error' || entry.key == 'message')
+        .map((entry) => entry.value.toString())
+        .join(' ');
+  }
+  return '';
 }

@@ -213,4 +213,89 @@ void main() {
 
     await expectLater(paginator.loadNext(), throwsA(isA<DioException>()));
   });
+
+  for (final status in [
+    HttpStatus.unauthorized,
+    HttpStatus.forbidden,
+    HttpStatus.tooManyRequests,
+  ]) {
+    test(
+      'a $status response from a resumed request is not restarted',
+      () async {
+        final server = await FakeGitLabServer.start();
+        addTearDown(server.close);
+        var requestCount = 0;
+        server.handle('GET /api/v4/projects', (request) async {
+          requestCount++;
+          request.response.statusCode = status;
+          request.response.write('{"error":"request_rejected"}');
+          await request.response.close();
+        });
+
+        final paginator = KeysetPaginator<_Project>.resume(
+          dio: dioFor(server),
+          initialUri: projectsUri(server),
+          decode: _Project.fromJson,
+          resumeToken: server.baseUri
+              .resolve('/api/v4/projects?cursor=page3')
+              .toString(),
+        );
+
+        await expectLater(paginator.loadNext(), throwsA(isA<DioException>()));
+        expect(requestCount, 1);
+      },
+    );
+  }
+
+  test('rejects a cross-origin next link before requesting it', () async {
+    final server = await FakeGitLabServer.start();
+    final otherServer = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    addTearDown(otherServer.close);
+    var crossOriginRequests = 0;
+    otherServer.handle('GET /steal', (request) async {
+      crossOriginRequests++;
+      request.response.statusCode = HttpStatus.ok;
+      await request.response.close();
+    });
+    server.respondJson(
+      'GET /api/v4/projects',
+      const <Object>[],
+      headers: {'Link': '<${otherServer.baseUri}/steal>; rel="next"'},
+    );
+
+    final paginator = KeysetPaginator<_Project>(
+      dio: dioFor(server),
+      initialUri: projectsUri(server),
+      decode: _Project.fromJson,
+    );
+
+    await expectLater(paginator.loadNext(), throwsA(isA<FormatException>()));
+    expect(crossOriginRequests, 0);
+  });
+
+  test('a cross-origin resume token restarts from the initial URI', () async {
+    final server = await FakeGitLabServer.start();
+    final otherServer = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    addTearDown(otherServer.close);
+    registerThreeKeysetPages(server);
+    var crossOriginRequests = 0;
+    otherServer.handle('GET /steal', (request) async {
+      crossOriginRequests++;
+      request.response.statusCode = HttpStatus.ok;
+      await request.response.close();
+    });
+
+    final paginator = KeysetPaginator<_Project>.resume(
+      dio: dioFor(server),
+      initialUri: projectsUri(server),
+      decode: _Project.fromJson,
+      resumeToken: otherServer.baseUri.resolve('/steal').toString(),
+    );
+
+    final page = await paginator.loadNext();
+    expect(page.items.map((project) => project.id), [1, 2]);
+    expect(crossOriginRequests, 0);
+  });
 }
