@@ -39,10 +39,11 @@ class GlassSurface extends StatelessWidget {
   /// `--gs-glass-border`: rgba(255,255,255,.12) (dark theme).
   static const Color borderColor = Color(0x1FFFFFFF);
 
-  /// `--gs-glass-blur: blur(24px)`. A CSS blur radius of R is a Gaussian
-  /// with standard deviation R/2, so 24px maps to sigma 12. This is the
-  /// main performance knob: cost scales with sigma and covered area.
-  static const double blurSigma = 12.0;
+  /// `--gs-glass-blur: blur(24px)`. CSS `filter: blur()`'s length is the
+  /// Gaussian standard deviation itself (Filter Effects spec), so 24px maps
+  /// to sigma 24. This is the main performance knob: cost scales with sigma
+  /// and covered area.
+  static const double blurSigma = 24.0;
 
   /// `--gs-glass-blur: saturate(1.8)` as a color-matrix filter.
   static final ui.ColorFilter _saturate = ui.ColorFilter.matrix(

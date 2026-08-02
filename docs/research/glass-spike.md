@@ -7,7 +7,7 @@ Findings from the E1.2 spike: prove out a Flutter implementation for the liquid-
 Native-first frosted glass, no third-party glass dependency.
 
 - The single primitive is `GlassSurface` in `lib/core/glass/glass_surface.dart`: a `ClipRRect` -> `BackdropFilter` -> tinted `DecoratedBox` stack.
-- The filter is `ImageFilter.compose` of a Gaussian blur (sigma 12, from the design system's `--gs-glass-blur: blur(24px)`; a CSS blur radius R is a Gaussian with standard deviation R/2) and a saturation color matrix (`saturate(1.8)`).
+- The filter is `ImageFilter.compose` of a Gaussian blur (sigma 24: the design system's `--gs-glass-blur: blur(24px)`, whose length is the Gaussian standard deviation itself per the Filter Effects spec) and a saturation color matrix (`saturate(1.8)`).
 - The two ruled intensities map to the dark-theme design tokens in `design/tokens/semantic.css`: `GlassIntensity.modest` uses `--gs-glass-bg` (rgba(24,23,29,.55)) for app-wide floating chrome, and `GlassIntensity.heavy` uses `--gs-glass-bg-strong` (rgba(30,29,36,.85)) for overlays.
 - **Isolation seam:** `GlassSurface` is the only public boundary; call sites pass `intensity` and `child` and never see the filter. A future refractive implementation (the deferred "liquid" part of the direction) replaces `GlassSurface.build` without touching any caller. E1.5's overlay components must compose `GlassSurface` rather than reaching for `BackdropFilter` directly.
 
@@ -42,22 +42,23 @@ The engine logs `Using the Impeller rendering backend (OpenGLES)`, but the emula
 
 | Mode | avg raster ms | 90th pct raster ms | avg UI-build ms | raster frames over 16 ms budget |
 | --- | --- | --- | --- | --- |
-| none (baseline) | 32.5 | 43.0 | 32.3 | 53 / 54 |
-| modest | 66.8 | 75.6 | 42.3 | 50 / 50 |
-| heavy | 84.4 | 98.0 | 25.5 | 46 / 46 |
-| both | 101.7 | 116.7 | 30.2 | 42 / 42 |
+| none (baseline) | 21.3 | 26.6 | 12.4 | 48 / 57 |
+| modest | 79.3 | 102.3 | 32.9 | 48 / 48 |
+| heavy | 85.6 | 128.3 | 34.9 | 46 / 46 |
+| both | 92.3 | 100.4 | 22.5 | 44 / 44 |
 
 Readings:
 
-- **The baseline already misses the 16.7 ms budget on every frame.** A software rasterizer cannot hit 60 fps on this scene at all, so this emulator can neither prove nor refute the 60 fps acceptance for any mode; the useful signal is the delta between modes.
-- Glass cost is real and scales with blurred area: the small modest capsule adds ~34 ms of software raster time, the much larger heavy overlay ~52 ms, and both together ~69 ms. Same sigma everywhere; area is the multiplier.
-- UI-thread build times are unaffected by glass (the differences across rows are scroll-content noise); the entire cost lands on the raster thread, as expected for a backdrop filter.
-- No pathological behavior: no crashes, no exponential cliff, animations completed in every mode. On a software rasterizer a backdrop blur costing 1-2x the whole rest of the frame is the expected shape, not an early-failure signal.
+- **The baseline already misses the 16.7 ms budget on most frames (48 of 57).** A software rasterizer cannot demonstrate 60 fps on this scene, so this emulator can neither prove nor refute the 60 fps acceptance for any mode; the useful signal is the delta between modes.
+- Glass is expensive on this software rasterizer, roughly 3-4x the baseline raster time in every glass mode.
+- The differences between glass modes (6-7 ms between modest, heavy, and both) are smaller than run-to-run variability on this shared-host emulator (the no-glass baseline itself moved by more than that between sessions), so without repeated samples the data supports no finer causal conclusion about blurred area or the cost of an additional region.
+- The backdrop filter executes on the raster thread by construction (the blur is applied when the layer tree is rasterized); the per-mode average UI-build times in the table are too noisy across runs to establish whether total UI-thread timing is affected.
+- No pathological behavior: no crashes, no exponential cliff, animations completed in every mode. On a software rasterizer a backdrop blur costing a multiple of the whole rest of the frame is the expected shape, not an early-failure signal.
 
 ### What the emulator can and cannot tell us
 
-Absolute times here are dominated by SwiftShader's CPU rasterization and do not transfer to phone GPUs, where a sigma-12 Gaussian over a bounded region is a routine fragment-shader workload.
-The relative picture (cost proportional to blurred area, raster-thread-only, tint-free) does transfer.
+Absolute times here are dominated by SwiftShader's CPU rasterization and do not transfer to phone GPUs, where a sigma-24 Gaussian over a bounded region is a routine fragment-shader workload.
+What does transfer: the cost is a per-frame backdrop pass on the raster thread, and tint strength is free.
 
 **Open item (deferred):** the E1.2 acceptance verdict, both intensities at 60 fps on a mid-range Android reference device under Impeller, is explicitly **not claimed here**; it needs the same benchmark run on real hardware once a device is available.
 Until then the heavy treatment is provisionally viable: the emulator shows no fundamental jank cliff, but device-grade proof is outstanding.
@@ -70,4 +71,4 @@ Until then the heavy treatment is provisionally viable: the emulator shows no fu
   2. Lower `GlassSurface.blurSigma` (fidelity to the 24 px token degrades gracefully).
   3. Drop the saturation matrix (keeps the frost, loses the color pop).
   4. For the heavy tier, fall back to a near-opaque tint without blur; its .85 tint already hides most background detail, so blur contributes least there.
-- Multiple simultaneous glass regions each pay their own backdrop pass (measured: modest + heavy costs roughly the sum of the two). E1.5 should keep at most one heavy overlay live at a time, which the modal/drawer interaction model already implies.
+- Multiple simultaneous glass regions each pay their own backdrop pass. E1.5 should keep at most one heavy overlay live at a time, which the modal/drawer interaction model already implies.
