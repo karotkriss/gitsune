@@ -1,0 +1,12 @@
+[
+  {
+    "id": 5,
+    "name": "Project Five",
+    "path_with_namespace": "group/project-five"
+  },
+  {
+    "id": 6,
+    "name": "Project Six",
+    "path_with_namespace": "group/project-six"
+  }
+]
