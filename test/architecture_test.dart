@@ -17,11 +17,8 @@ void main() {
       final featuresUri = Directory(
         '${projectDir.path}/lib/features',
       ).absolute.uri.normalizePath();
-      // Only core files are resolved, so only include them: resolving the full
-      // dependency graph grows with every added package and can blow past the
-      // default 30-second test timeout otherwise.
       final collection = AnalysisContextCollection(
-        includedPaths: [coreDir.path],
+        includedPaths: [projectDir.path],
         sdkPath: _dartSdkPath(),
       );
       final violations = <String>[];
@@ -64,7 +61,10 @@ void main() {
             '${violations.join('\n')}',
       );
     },
-    timeout: const Timeout(Duration(minutes: 5)),
+    // Full analyzer resolution of every file under lib/core; that grows with
+    // core itself, so the default 30s timeout gets tight well before this is
+    // actually CPU-bound.
+    timeout: const Timeout(Duration(minutes: 2)),
   );
 }
 

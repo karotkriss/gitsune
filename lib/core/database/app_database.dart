@@ -17,7 +17,19 @@ class LocalCacheEntries extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId, cacheKey};
 }
 
-@DriftDatabase(tables: [LocalCacheEntries])
+/// The current-user profile, one row per account: E3.3's concrete proof of
+/// the offline-first repository pattern (see `lib/core/repository/`).
+class CurrentUserProfiles extends Table with AccountScoped {
+  TextColumn get username => text()();
+  TextColumn get name => text()();
+  TextColumn get avatarUrl => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId};
+}
+
+@DriftDatabase(tables: [LocalCacheEntries, CurrentUserProfiles])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'gitsune'));
 
