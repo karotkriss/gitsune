@@ -4,10 +4,10 @@ import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/core/theme/token_set.dart';
 import 'package:gitsune/core/theme/tokens.dart';
 
-/// Re-branding proof: the theme derives entirely from the token set in
-/// `tokens.dart`, so swapping that one file (it only defines `gsTokens`)
-/// re-brands the app with no other code change. Here the swap is simulated
-/// by building the theme from an alternate token set.
+/// Re-branding proof: swapping `tokens.dart` re-brands the app's colors and
+/// font family names with no other code change. A rebrand fork also registers
+/// its own font assets in `pubspec.yaml`; that is an asset addition, not a code
+/// change. Here the token-file swap is simulated with an alternate token set.
 void main() {
   test('default theme derives from the token file', () {
     final theme = buildAppTheme();
@@ -36,7 +36,22 @@ void main() {
       orange: gsTokens.orange,
       red: gsTokens.red,
       purple: gsTokens.brand,
-      neutral: gsTokens.neutral,
+      neutral: GsNeutralRamp(
+        shade0: gsTokens.neutral.shade10,
+        shade10: gsTokens.neutral.shade0,
+        shade50: gsTokens.neutral.shade100,
+        shade100: gsTokens.neutral.shade50,
+        shade200: gsTokens.neutral.shade300,
+        shade300: gsTokens.neutral.shade200,
+        shade400: gsTokens.neutral.shade500,
+        shade500: gsTokens.neutral.shade400,
+        shade600: gsTokens.neutral.shade700,
+        shade700: gsTokens.neutral.shade600,
+        shade800: gsTokens.neutral.shade900,
+        shade900: gsTokens.neutral.shade800,
+        shade950: gsTokens.neutral.shade1000,
+        shade1000: gsTokens.neutral.shade950,
+      ),
     );
 
     final theme = buildAppTheme(fork);
@@ -52,6 +67,98 @@ void main() {
     expect(gs.statusBrand, fork.brand.shade500);
     expect(theme.textTheme.bodyMedium!.fontFamily, 'Fork Sans');
     expect(gs.mono.fontFamily, 'Fork Mono');
+
+    final scheme = theme.colorScheme;
+    expect(scheme.primaryContainer, fork.brand.shade900);
+    expect(scheme.onPrimaryContainer, fork.brand.shade200);
+    expect(scheme.primaryFixed, fork.brand.shade100);
+    expect(scheme.primaryFixedDim, fork.brand.shade300);
+    expect(scheme.onPrimaryFixed, fork.brand.shade950);
+    expect(scheme.onPrimaryFixedVariant, fork.brand.shade800);
+    expect(scheme.secondary, fork.brand.shade300);
+    expect(scheme.onSecondary, fork.neutral.shade950);
+    expect(scheme.secondaryContainer, fork.brand.shade800);
+    expect(scheme.onSecondaryContainer, fork.brand.shade100);
+    expect(scheme.secondaryFixed, fork.brand.shade100);
+    expect(scheme.secondaryFixedDim, fork.brand.shade300);
+    expect(scheme.onSecondaryFixed, fork.brand.shade950);
+    expect(scheme.onSecondaryFixedVariant, fork.brand.shade800);
+    expect(scheme.tertiary, fork.purple.shade300);
+    expect(scheme.onTertiary, fork.neutral.shade950);
+    expect(scheme.tertiaryContainer, fork.purple.shade900);
+    expect(scheme.onTertiaryContainer, fork.purple.shade200);
+    expect(scheme.tertiaryFixed, fork.purple.shade100);
+    expect(scheme.tertiaryFixedDim, fork.purple.shade300);
+    expect(scheme.onTertiaryFixed, fork.purple.shade950);
+    expect(scheme.onTertiaryFixedVariant, fork.purple.shade800);
+    expect(scheme.error, fork.red.shade300);
+    expect(scheme.onError, fork.neutral.shade950);
+    expect(scheme.errorContainer, fork.red.shade900);
+    expect(scheme.onErrorContainer, fork.red.shade200);
+    expect(scheme.surface, gs.surfaceApp);
+    expect(scheme.onSurface, gs.textDefault);
+    expect(scheme.surfaceDim, fork.neutral.shade1000);
+    expect(scheme.surfaceBright, gs.surfaceStrong);
+    expect(scheme.surfaceContainerLowest, fork.neutral.shade1000);
+    expect(scheme.surfaceContainerLow, gs.surfaceApp);
+    expect(scheme.surfaceContainer, gs.surfaceSubtle);
+    expect(scheme.surfaceContainerHigh, gs.surfaceStrong);
+    expect(scheme.surfaceContainerHighest, fork.neutral.shade700);
+    expect(scheme.onSurfaceVariant, gs.textSubtle);
+    expect(scheme.outline, gs.borderDefault);
+    expect(scheme.outlineVariant, gs.borderSubtle);
+    expect(scheme.shadow, fork.neutral.shade1000);
+    expect(scheme.scrim, gs.scrim);
+    expect(scheme.inverseSurface, fork.neutral.shade50);
+    expect(scheme.onInverseSurface, fork.neutral.shade950);
+    expect(scheme.inversePrimary, fork.brand.shade700);
+    expect(scheme.surfaceTint, fork.brand.shade500);
+
+    expect(theme.canvasColor, gs.surfaceApp);
+    expect(theme.cardColor, gs.surfaceCard);
+    expect(theme.disabledColor, gs.textDisabled);
+    expect(theme.dividerColor, gs.borderDefault);
+    expect(theme.focusColor, gs.pressOverlayStrong);
+    expect(theme.highlightColor, gs.pressOverlay);
+    expect(theme.hintColor, gs.textDisabled);
+    expect(theme.hoverColor, gs.pressOverlay);
+    expect(theme.primaryColor, fork.brand.shade500);
+    expect(theme.primaryColorDark, fork.brand.shade700);
+    expect(theme.primaryColorLight, fork.brand.shade300);
+    expect(theme.scaffoldBackgroundColor, gs.surfaceApp);
+    expect(theme.secondaryHeaderColor, gs.surfaceStrong);
+    expect(theme.shadowColor, fork.neutral.shade1000);
+    expect(theme.splashColor, gs.pressOverlayStrong);
+    expect(theme.unselectedWidgetColor, gs.textSubtle);
+    expect(theme.dialogTheme.backgroundColor, gs.surfaceSheet);
+    expect(theme.iconTheme.color, gs.textDefault);
+    expect(theme.primaryIconTheme.color, gs.onAccent);
+
+    for (final style in <TextStyle?>[
+      theme.textTheme.displayLarge,
+      theme.textTheme.displayMedium,
+      theme.textTheme.displaySmall,
+      theme.textTheme.headlineLarge,
+      theme.textTheme.headlineMedium,
+      theme.textTheme.headlineSmall,
+      theme.textTheme.titleLarge,
+      theme.textTheme.titleMedium,
+      theme.textTheme.titleSmall,
+      theme.textTheme.bodyLarge,
+      theme.textTheme.bodyMedium,
+      theme.textTheme.bodySmall,
+      theme.textTheme.labelLarge,
+      theme.textTheme.labelMedium,
+      theme.textTheme.labelSmall,
+    ]) {
+      expect(style!.fontFamily, fork.fontUi);
+      expect(style.fontVariations, isNotEmpty);
+      expect(style.fontVariations!.single.axis, 'wght');
+      expect(
+        style.fontVariations!.single.value,
+        style.fontWeight == FontWeight.w600 ? 600 : 400,
+      );
+    }
 
     // Nothing accent-colored is left on the old brand.
     for (final color in [

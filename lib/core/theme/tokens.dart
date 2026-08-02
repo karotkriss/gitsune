@@ -8,7 +8,9 @@ import 'token_set.dart';
 ///
 /// Re-branding: this file is pure data and is the only place raw brand
 /// values live. Replacing it with another file that defines a `gsTokens`
-/// [GsTokenSet] re-brands the whole app; no other code changes.
+/// [GsTokenSet] re-brands the app's colors and font family names with no other
+/// code change. A rebrand fork also registers its own font assets in
+/// `pubspec.yaml`; that is an asset addition, not a code change.
 /// `test/theme/rebrand_test.dart` proves the derivation.
 const GsTokenSet gsTokens = GsTokenSet(
   fontUi: 'GitLab Sans',
