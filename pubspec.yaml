@@ -44,6 +44,7 @@ dependencies:
   flutter_markdown_plus: ^1.0.12
   markdown: ^7.3.1
   re_highlight: ^0.0.3
+  flutter_math_fork: ^0.7.4
   webview_flutter: ^4.14.1
 
 dev_dependencies:
@@ -89,13 +90,12 @@ flutter:
 
   # The offline highlight.js bundle backing the WebView syntax-highlighting
   # fallback for oversized full-file views; see assets/syntax/README.md.
+  # Vendored Mermaid renderer for offline diagram rendering in markdown; see
+  # assets/vendor/README.md for provenance and license.
   assets:
     - assets/syntax/highlight.min.js
-
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+    - assets/vendor/mermaid/mermaid.html
+    - assets/vendor/mermaid/mermaid.min.js
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
