@@ -30,11 +30,7 @@ class GsSourceView extends StatelessWidget {
     final languageId = detectLanguageId(path);
 
     if (chooseSyntaxEngine(source) == SyntaxEngine.webView) {
-      return GsSyntaxWebView(
-        source: source,
-        languageId: languageId,
-        theme: gs,
-      );
+      return GsSyntaxWebView(source: source, languageId: languageId, theme: gs);
     }
 
     final base = gs.mono.copyWith(color: gs.textDefault);

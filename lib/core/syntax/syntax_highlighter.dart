@@ -1,10 +1,10 @@
 /// The native, per-line syntax-highlighting engine (`re_highlight`).
 ///
-/// [highlightCodeLine] is the single entry point both diff rendering (E7.2,
-/// decorating [DiffLine.content] from `lib/core/diff/diff_hunk_parser.dart`)
-/// and full-file rendering (E9.2, one call per source line) call into; it has
-/// no notion of "diff" or "file", only a line of code and a language id from
-/// [detectLanguageId].
+/// [highlightCodeLine] is the single entry point intended for future diff
+/// rendering (E7.2, decorating [DiffLine.content] from
+/// `lib/core/diff/diff_hunk_parser.dart`) and full-file rendering (E9.2, one
+/// call per source line). It has no notion of "diff" or "file", only a line
+/// of code and a language id from [detectLanguageId].
 library;
 
 import 'package:flutter/painting.dart';
@@ -31,8 +31,9 @@ enum SyntaxEngine { native, webView }
 const int kNativeSyntaxCharThreshold = 200 * 1024;
 
 /// Picks the engine a full-file view should use for [source], purely by
-/// size. Diffs and ordinary files always use [SyntaxEngine.native]; only a
-/// full-file view above [kNativeSyntaxCharThreshold] gets [SyntaxEngine.webView].
+/// size. This selector is only for full-file views; diff rendering always uses
+/// the per-line native API directly. A full-file view above
+/// [kNativeSyntaxCharThreshold] gets [SyntaxEngine.webView].
 SyntaxEngine chooseSyntaxEngine(String source) =>
     source.length > kNativeSyntaxCharThreshold
     ? SyntaxEngine.webView

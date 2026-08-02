@@ -19,8 +19,9 @@ void main() {
   test('comment scopes render italic', () {
     expect(gsSyntaxCss(gs), contains('.hljs-comment { color:'));
     expect(
-      RegExp(r'\.hljs-comment \{ color: [^;]+; font-style: italic; \}')
-          .hasMatch(gsSyntaxCss(gs)),
+      RegExp(
+        r'\.hljs-comment \{ color: [^;]+; font-style: italic; \}',
+      ).hasMatch(gsSyntaxCss(gs)),
       isTrue,
     );
   });
