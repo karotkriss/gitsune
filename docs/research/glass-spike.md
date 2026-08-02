@@ -6,53 +6,68 @@ Findings from the E1.2 spike: prove out a Flutter implementation for the liquid-
 
 Native-first frosted glass, no third-party glass dependency.
 
-- The single primitive is `lib/core/glass/glass_surface.dart` (`GlassSurface`), a `ClipRRect` -> `BackdropFilter` -> tinted `DecoratedBox` stack.
-- The filter is `ImageFilter.compose` of a Gaussian blur (sigma 12, from the design system's `--gs-glass-blur: blur(24px)`, CSS radius R = 2·sigma) and a saturation color matrix (`saturate(1.8)`).
-- The two ruled intensities map to the dark-theme design tokens in `design/tokens/semantic.css`: `GlassIntensity.modest` uses `--gs-glass-bg` (rgba(24,23,29,.55)) for app-wide floating chrome, `GlassIntensity.heavy` uses `--gs-glass-bg-strong` (rgba(30,29,36,.85)) for overlays.
-- **Isolation seam:** `GlassSurface` is the only public boundary; call sites pass `intensity` and `child` and never see the filter. A future refractive implementation (the deferred "liquid" part) replaces `GlassSurface.build` without touching any caller. E1.5's overlay components must compose `GlassSurface` rather than using `BackdropFilter` directly.
+- The single primitive is `GlassSurface` in `lib/core/glass/glass_surface.dart`: a `ClipRRect` -> `BackdropFilter` -> tinted `DecoratedBox` stack.
+- The filter is `ImageFilter.compose` of a Gaussian blur (sigma 12, from the design system's `--gs-glass-blur: blur(24px)`; a CSS blur radius R is a Gaussian with standard deviation R/2) and a saturation color matrix (`saturate(1.8)`).
+- The two ruled intensities map to the dark-theme design tokens in `design/tokens/semantic.css`: `GlassIntensity.modest` uses `--gs-glass-bg` (rgba(24,23,29,.55)) for app-wide floating chrome, and `GlassIntensity.heavy` uses `--gs-glass-bg-strong` (rgba(30,29,36,.85)) for overlays.
+- **Isolation seam:** `GlassSurface` is the only public boundary; call sites pass `intensity` and `child` and never see the filter. A future refractive implementation (the deferred "liquid" part of the direction) replaces `GlassSurface.build` without touching any caller. E1.5's overlay components must compose `GlassSurface` rather than reaching for `BackdropFilter` directly.
 
-Both intensities share one blur; they differ only in tint opacity, which costs nothing extra. Heavier glass is therefore not slower glass; the cost drivers are blur sigma and blurred area.
+Both intensities share one blur; they differ only in tint opacity, which is free.
+Heavier-looking glass is not intrinsically slower glass: the cost drivers are blur sigma and blurred area, not tint.
 
 ## Demo and method
 
-`lib/features/glass_demo/glass_demo_screen.dart` scrolls a 400-row list of gradient tiles (busy opaque content, per the "glass never on glass, content stays opaque" guideline) under a modest glass capsule (tab-bar stand-in) and a heavy glass overlay panel (modal stand-in).
+`lib/features/glass_demo/glass_demo_screen.dart` scrolls a 400-row list of gradient tiles (busy opaque content, per the brand-glass guideline: glass never on glass, content stays opaque) under a modest glass capsule (tab-bar stand-in) and a heavy glass overlay panel (modal stand-in).
 
-Frame times come from `integration_test/glass_perf_test.dart` run in profile mode:
+Frame times come from `integration_test/glass_perf_test.dart`, run in profile mode one mode at a time:
 
 ```sh
-flutter drive --profile \
+flutter build apk --profile --target=integration_test/glass_perf_test.dart --dart-define=GLASS_MODE=<mode>
+flutter drive --profile --no-dds \
+  --use-application-binary=build/app/outputs/flutter-apk/app-profile.apk \
   --driver=test_driver/perf_driver.dart \
   --target=integration_test/glass_perf_test.dart
 ```
 
-The test flings the list up and down five times each under four modes (no glass, modest only, heavy only, both) and captures a Dart timeline per mode via `traceAction`; the driver writes one `build/glass_<mode>.timeline_summary.json` per mode with build/raster percentiles.
+for `<mode>` in `none` (baseline), `modest`, `heavy`, `both`; each run writes `build/glass_<mode>.timeline_summary.json`.
+Method notes learned the hard way:
+
+- `--no-dds` is required: with DDS on the host, the in-app `traceAction` cannot reach the VM service and the run fails with "Failed to connect to VM Service".
+- Scrolling is driven by a `ScrollController` (`animateTo`, 3 s down, 3 s up, linear) so every mode does identical work; a synthetic fling gesture lands on the centered glass overlay instead of the list and silently measures a static screen.
+- One mode per app launch keeps the reported timeline payload small.
 
 ## Measured behavior (Android emulator)
 
-Environment: AVD `crew-android-35` (Android 15, x86_64, headless), Flutter 3.44.8, profile mode, Impeller (TODO: confirm backend from logcat).
+Environment: AVD `crew-android-35`, Android 15 x86_64, headless emulator, Flutter 3.44.8, profile mode.
+The engine logs `Using the Impeller rendering backend (OpenGLES)`, but the emulator's GL is **SwiftShader** (software rendering on the host CPU; the emulator boots with `gles_mode_selected:swangle`), so every number below is a CPU-rasterized frame time.
 
-| Mode | avg build ms | 90th build ms | avg raster ms | 90th raster ms | frames > 16 ms budget |
-| --- | --- | --- | --- | --- | --- |
-| none (baseline) | TODO | TODO | TODO | TODO | TODO |
-| modest | TODO | TODO | TODO | TODO | TODO |
-| heavy | TODO | TODO | TODO | TODO | TODO |
-| both | TODO | TODO | TODO | TODO | TODO |
+| Mode | avg raster ms | 90th pct raster ms | avg UI-build ms | raster frames over 16 ms budget |
+| --- | --- | --- | --- | --- |
+| none (baseline) | 32.5 | 43.0 | 32.3 | 53 / 54 |
+| modest | 66.8 | 75.6 | 42.3 | 50 / 50 |
+| heavy | 84.4 | 98.0 | 25.5 | 46 / 46 |
+| both | 101.7 | 116.7 | 30.2 | 42 / 42 |
 
-TODO: verdict paragraph.
+Readings:
+
+- **The baseline already misses the 16.7 ms budget on every frame.** A software rasterizer cannot hit 60 fps on this scene at all, so this emulator can neither prove nor refute the 60 fps acceptance for any mode; the useful signal is the delta between modes.
+- Glass cost is real and scales with blurred area: the small modest capsule adds ~34 ms of software raster time, the much larger heavy overlay ~52 ms, and both together ~69 ms. Same sigma everywhere; area is the multiplier.
+- UI-thread build times are unaffected by glass (the differences across rows are scroll-content noise); the entire cost lands on the raster thread, as expected for a backdrop filter.
+- No pathological behavior: no crashes, no exponential cliff, animations completed in every mode. On a software rasterizer a backdrop blur costing 1-2x the whole rest of the frame is the expected shape, not an early-failure signal.
 
 ### What the emulator can and cannot tell us
 
-All numbers above come from an x86_64 emulator whose GPU work is host-rendered; absolute frame times do not transfer to phone hardware, and the emulator's graphics stack differs from a real device's GPU and driver.
-The numbers are useful relatively: the delta between baseline and each glass mode isolates what the glass costs on this rendering stack, and a fundamental jank cliff would still show up here.
+Absolute times here are dominated by SwiftShader's CPU rasterization and do not transfer to phone GPUs, where a sigma-12 Gaussian over a bounded region is a routine fragment-shader workload.
+The relative picture (cost proportional to blurred area, raster-thread-only, tint-free) does transfer.
 
-**Open item (deferred):** the E1.2 acceptance verdict of 60fps on a mid-range Android reference device is explicitly not claimed here; it needs a profile-mode run of the same benchmark on real hardware once a device is available. Until then, treat the budget below as provisional.
+**Open item (deferred):** the E1.2 acceptance verdict, both intensities at 60 fps on a mid-range Android reference device under Impeller, is explicitly **not claimed here**; it needs the same benchmark run on real hardware once a device is available.
+Until then the heavy treatment is provisionally viable: the emulator shows no fundamental jank cliff, but device-grade proof is outstanding.
 
 ## Performance ceiling and knobs
 
-- The dominant cost is the backdrop blur's full-screen-texture readback per glass region per frame; it scales with blurred area and sigma, not with the number of widgets under it.
-- Knobs, in order of preference if real-device numbers miss 60fps:
+- The dominant cost is the backdrop readback + blur per glass region per frame; it scales with blurred area and sigma, not with the number of widgets under the glass.
+- Knobs, in order of preference if real-device numbers miss 60 fps:
   1. Reduce blurred area (smaller overlay panels; the capsule bar is already small).
-  2. Lower `GlassSurface.blurSigma` (visual fidelity to the token degrades gracefully).
+  2. Lower `GlassSurface.blurSigma` (fidelity to the 24 px token degrades gracefully).
   3. Drop the saturation matrix (keeps the frost, loses the color pop).
-  4. Fall back to near-opaque tint without blur for the modest tier (the heavy tier's `.85` tint already hides most detail, so blur matters least there).
-- Multiple simultaneous glass regions each pay their own backdrop pass; E1.5 should keep at most one heavy overlay live at a time (which the modal/drawer model already implies).
+  4. For the heavy tier, fall back to a near-opaque tint without blur; its .85 tint already hides most background detail, so blur contributes least there.
+- Multiple simultaneous glass regions each pay their own backdrop pass (measured: modest + heavy costs roughly the sum of the two). E1.5 should keep at most one heavy overlay live at a time, which the modal/drawer interaction model already implies.
