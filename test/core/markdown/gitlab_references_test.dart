@@ -6,7 +6,7 @@ import 'package:markdown/markdown.dart' as md;
 /// and returns every GitLab reference that resolved, in document order.
 List<GitLabReference> refsIn(String markdown) {
   final doc = md.Document(
-    inlineSyntaxes: [GitLabReferenceSyntax()],
+    inlineSyntaxes: gitLabReferenceSyntaxes(),
     extensionSet: md.ExtensionSet.gitHubFlavored,
   );
   final refs = <GitLabReference>[];
@@ -74,6 +74,17 @@ void main() {
     expect(refsIn(r'\#123'), isEmpty);
     expect(refsIn(r'\@user'), isEmpty);
     expect(refsIn(r'\!456 and \~label'), isEmpty);
+  });
+
+  test('does not resolve references inside links or image alt text', () {
+    expect(refsIn('[#123](https://example.com)'), isEmpty);
+    expect(refsIn('[**@user**](https://example.com)'), isEmpty);
+    expect(refsIn('![issue #123](image.png)'), isEmpty);
+  });
+
+  test('does not partially resolve unsupported scoped labels', () {
+    expect(refsIn('~a::b'), isEmpty);
+    expect(refsIn('~group.label::child'), isEmpty);
   });
 
   test('resolves references outside a code span alongside one inside', () {

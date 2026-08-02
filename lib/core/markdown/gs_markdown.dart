@@ -9,7 +9,7 @@ import 'gitlab_references.dart';
 /// Body text inherits GitLab Sans from the app [TextTheme]; code spans and
 /// blocks use the [GsTheme.mono] style on [GsTheme.codeBg]. GitLab references
 /// (`#123`, `!456`, `@user`, `~label`) render as tappable links via
-/// [GitLabReferenceSyntax] and surface through [onReferenceTap]; ordinary
+/// [gitLabReferenceSyntaxes] and surface through [onReferenceTap]; ordinary
 /// links surface through [onLinkTap]. Navigation belongs to the calling
 /// screen, not here.
 class GsMarkdown extends StatelessWidget {
@@ -30,7 +30,7 @@ class GsMarkdown extends StatelessWidget {
     final gs = theme.extension<GsTheme>()!;
     return MarkdownBody(
       data: data,
-      inlineSyntaxes: [GitLabReferenceSyntax()],
+      inlineSyntaxes: gitLabReferenceSyntaxes(),
       styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
         a: TextStyle(color: gs.link),
         code: gs.mono.copyWith(backgroundColor: gs.codeBg),

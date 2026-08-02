@@ -10,6 +10,13 @@ const _sigils = {
   GitLabReferenceType.label: '~',
 };
 
+/// Inline syntaxes required to resolve GitLab references without creating
+/// nested links inside authored markdown links.
+List<md.InlineSyntax> gitLabReferenceSyntaxes() => [
+  GitLabReferenceSyntax(),
+  _GitLabLinkSyntax(),
+];
+
 /// A resolved GitLab text reference: `#123`, `!456`, `@user`, or `~label`.
 ///
 /// Text-level resolution only; looking the target up against an instance is
@@ -76,6 +83,7 @@ class GitLabReferenceSyntax extends md.InlineSyntax {
   static const _name = '[A-Za-z0-9_](?:[A-Za-z0-9_.-]*[A-Za-z0-9_])?';
   static const _pattern =
       '(?<![A-Za-z0-9_])'
+      '(?!~$_name::)'
       '(?:[#!](\\d+)(?![A-Za-z0-9_])|[@~]($_name))';
 
   @override
@@ -87,5 +95,34 @@ class GitLabReferenceSyntax extends md.InlineSyntax {
       md.Element.text('a', ref.text)..attributes['href'] = ref.href,
     );
     return true;
+  }
+}
+
+class _GitLabLinkSyntax extends md.LinkSyntax {
+  @override
+  md.Node createNode(
+    String destination,
+    String? title, {
+    required List<md.Node> Function() getChildren,
+  }) => super.createNode(
+    destination,
+    title,
+    getChildren: () {
+      final children = getChildren();
+      _replaceReferencesWithText(children);
+      return children;
+    },
+  );
+}
+
+void _replaceReferencesWithText(List<md.Node> nodes) {
+  for (var index = 0; index < nodes.length; index++) {
+    final node = nodes[index];
+    if (node is! md.Element) continue;
+    if (GitLabReference.fromHref(node.attributes['href']) != null) {
+      nodes[index] = md.Text(node.textContent);
+    } else if (node.children != null) {
+      _replaceReferencesWithText(node.children!);
+    }
   }
 }

@@ -4,30 +4,36 @@ import 'package:gitsune/core/markdown/gitlab_references.dart';
 import 'package:gitsune/core/markdown/gs_markdown.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 
-Widget host(String data, {ValueChanged<GitLabReference>? onReferenceTap, ValueChanged<Uri>? onLinkTap}) =>
-    MaterialApp(
-      theme: buildAppTheme(),
-      home: Scaffold(
-        body: GsMarkdown(
-          data: data,
-          onReferenceTap: onReferenceTap,
-          onLinkTap: onLinkTap,
-        ),
-      ),
-    );
+Widget host(
+  String data, {
+  ValueChanged<GitLabReference>? onReferenceTap,
+  ValueChanged<Uri>? onLinkTap,
+}) => MaterialApp(
+  theme: buildAppTheme(),
+  home: Scaffold(
+    body: GsMarkdown(
+      data: data,
+      onReferenceTap: onReferenceTap,
+      onLinkTap: onLinkTap,
+    ),
+  ),
+);
 
 void main() {
-  testWidgets('tapping a reference invokes onReferenceTap with the typed reference', (tester) async {
-    GitLabReference? tapped;
-    await tester.pumpWidget(
-      host('Fixes #123 for @dev', onReferenceTap: (ref) => tapped = ref),
-    );
-    await tester.tapOnText(find.textRange.ofSubstring('#123'));
-    expect(tapped, const GitLabReference(GitLabReferenceType.issue, '123'));
+  testWidgets(
+    'tapping a reference invokes onReferenceTap with the typed reference',
+    (tester) async {
+      GitLabReference? tapped;
+      await tester.pumpWidget(
+        host('Fixes #123 for @dev', onReferenceTap: (ref) => tapped = ref),
+      );
+      await tester.tapOnText(find.textRange.ofSubstring('#123'));
+      expect(tapped, const GitLabReference(GitLabReferenceType.issue, '123'));
 
-    await tester.tapOnText(find.textRange.ofSubstring('@dev'));
-    expect(tapped, const GitLabReference(GitLabReferenceType.user, 'dev'));
-  });
+      await tester.tapOnText(find.textRange.ofSubstring('@dev'));
+      expect(tapped, const GitLabReference(GitLabReferenceType.user, 'dev'));
+    },
+  );
 
   testWidgets('tapping an ordinary link invokes onLinkTap', (tester) async {
     Uri? tapped;
@@ -38,7 +44,26 @@ void main() {
     expect(tapped, Uri.parse('https://example.com'));
   });
 
-  testWidgets('code spans render in GitLab Mono on the code background', (tester) async {
+  testWidgets('reference text inside a link uses the authored destination', (
+    tester,
+  ) async {
+    GitLabReference? reference;
+    Uri? link;
+    await tester.pumpWidget(
+      host(
+        '[#123](https://example.com)',
+        onReferenceTap: (value) => reference = value,
+        onLinkTap: (value) => link = value,
+      ),
+    );
+    await tester.tapOnText(find.textRange.ofSubstring('#123'));
+    expect(reference, isNull);
+    expect(link, Uri.parse('https://example.com'));
+  });
+
+  testWidgets('code spans render in GitLab Mono on the code background', (
+    tester,
+  ) async {
     await tester.pumpWidget(host('run `flutter test` now'));
     final gs = buildAppTheme().extension<GsTheme>()!;
     final codeStyle = _spanStyleFor(tester, 'flutter test');
@@ -46,7 +71,9 @@ void main() {
     expect(codeStyle?.backgroundColor, gs.codeBg);
   });
 
-  testWidgets('body text renders in the UI font from the theme', (tester) async {
+  testWidgets('body text renders in the UI font from the theme', (
+    tester,
+  ) async {
     await tester.pumpWidget(host('plain body text'));
     final style = _spanStyleFor(tester, 'plain body text');
     expect(style?.fontFamily, buildAppTheme().textTheme.bodyMedium!.fontFamily);
