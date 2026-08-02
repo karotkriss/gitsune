@@ -7,8 +7,8 @@ import '../network/keyset_paginator.dart';
 import 'offline_first_repository.dart';
 
 /// The to-dos repository on GitLab's Todos API (`GET /api/v4/todos`),
-/// account-scoped and keyset-paginated (E3.4) across the whole collection on
-/// every [refresh].
+/// account-scoped and paginated across the whole collection on every [refresh]
+/// by reusing the E3.4 paginator's `Link` header traversal.
 ///
 /// [watch] is the reactive stream that phase five's background poller
 /// (E12.1) will also read from to decide what's new since its last poll;
@@ -39,6 +39,10 @@ class TodosRepository implements OfflineFirstRepository<List<TodoItem>> {
     return query.watch();
   }
 
+  /// Replaces the cache from GitLab's offset-paginated Todos endpoint.
+  ///
+  /// A server-side insertion or removal between page fetches can duplicate or
+  /// skip a row in one pass, which is acceptable for this periodic full resync.
   @override
   Future<void> refresh() {
     final refresh = _refreshQueue.then((_) => _performRefresh());
@@ -86,10 +90,8 @@ Uri _todosListUri(Dio client) {
   return base.replace(
     path: path,
     queryParameters: {
-      'pagination': 'keyset',
+      'page': '1',
       'per_page': '100',
-      'order_by': 'id',
-      'sort': 'desc',
     },
   );
 }

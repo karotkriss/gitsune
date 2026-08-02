@@ -26,25 +26,27 @@ void main() {
 
   tearDown(() => db.close());
 
-  /// Serves two keyset-paginated pages of to-dos, mirroring GitLab's real
+  /// Serves two offset-paginated pages of to-dos, mirroring GitLab's real
   /// behavior: a `Link: <...>; rel="next"` header on every page but the
   /// last.
   void registerTwoTodoPages(FakeGitLabServer server) {
-    const fixtureByCursor = {null: 'todos_page1', 'page2': 'todos_page2'};
-    const nextCursorByCursor = {null: 'page2', 'page2': null};
+    const fixtureByPage = {'1': 'todos_page1', '2': 'todos_page2'};
 
     server.handle('GET /api/v4/todos', (request) async {
-      final cursor = request.uri.queryParameters['cursor'];
-      final nextCursor = nextCursorByCursor[cursor];
+      final page = request.uri.queryParameters['page'] ?? '1';
+      expect(request.uri.queryParameters['per_page'], '100');
+      expect(request.uri.queryParameters.containsKey('pagination'), isFalse);
+      expect(request.uri.queryParameters.containsKey('order_by'), isFalse);
+      expect(request.uri.queryParameters.containsKey('sort'), isFalse);
       request.response.statusCode = 200;
       request.response.headers.contentType = ContentType.json;
-      if (nextCursor != null) {
+      if (page == '1') {
         final nextUri = server.baseUri.resolve(
-          '/api/v4/todos?cursor=$nextCursor',
+          '/api/v4/todos?page=2&per_page=100',
         );
         request.response.headers.set('Link', '<$nextUri>; rel="next"');
       }
-      request.response.write(Fixtures.raw(fixtureByCursor[cursor]!));
+      request.response.write(Fixtures.raw(fixtureByPage[page]!));
       await request.response.close();
     });
   }
