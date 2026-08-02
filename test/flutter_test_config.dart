@@ -14,7 +14,11 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   setUpAll(() async {
     final bytes = await File('test/golden/fonts/Ahem.ttf').readAsBytes();
     final data = ByteData.view(bytes.buffer, bytes.offsetInBytes, bytes.length);
-    for (final family in const ['Roboto', '.SF UI Text', '.SF UI Display']) {
+    for (final family in const [
+      'Roboto',
+      'CupertinoSystemText',
+      'CupertinoSystemDisplay',
+    ]) {
       await (FontLoader(family)..addFont(Future.value(data))).load();
     }
   });
