@@ -1,7 +1,7 @@
 # Gitsune v1 roadmap
 
 This is the plan of record for building Gitsune v1.
-It is the concrete engineering sequence for phase three (development) of `docs/plan/phase-plan.md`, and it assumes every decision in `docs/decisions/` is settled and the design system from phase two has landed.
+It is the concrete engineering sequence for phase three (development) of `docs/plan/phase-plan.md`, and it assumes every decision in `docs/decisions/` is settled while the design system is landing via a separate change.
 The companion task breakdown lives in `docs/plan/task-breakdown.md`: this file defines the phases and their exit criteria, and that file lists the pickable tasks under each epic.
 
 Development has not started.
@@ -34,12 +34,12 @@ These hold across every phase and are not restated per task.
 
 ## Design system input and the one reconciliation it requires
 
-Development implements against the design system that closed out phase two: a **tanuki-orange interactive accent**, a **dark-only** v1 theme, and a **liquid-glass treatment that is modest app-wide and heavy on overlays** (modals, drawers, sheets).
+The closed design review settled the decisions that development implements against while the design system is landing: a **tanuki-orange interactive accent**, a **dark-only** v1 theme, and a **liquid-glass treatment that is modest app-wide and heavy on overlays** (modals, drawers, sheets).
 Structure, component naming, typography, iconography, and terminology continue to follow GitLab's Pajamas language as recorded in `docs/research/design-direction.md`: GitLab Sans and GitLab Mono, monospace on every git reference, Pajamas component names, and the product nouns (Merge Request, Pipeline, To-Do List, Project, Group, Approvals).
 Because v1 is dark-only, the semantic color ramps (green for success, red for critical, and so on) are retained while the interactive accent is tanuki-orange rather than the blue the earlier research doc recommended.
 
 `docs/research/design-direction.md` predates that design review and still states the superseded positions (blue interactive accent, light and dark designed together, liquid glass out of scope).
-A task in the design-system epic reconciles that doc with the closed design review so the repository stops contradicting itself; the roadmap itself follows the newer, settled design system.
+A task in the design-system epic reconciles that doc with the closed design review so the repository stops contradicting itself; the roadmap itself follows the newer, settled design decisions.
 
 ## Phase map
 
@@ -66,7 +66,7 @@ Stand up the project so that every later phase implements against a stable targe
 - Flutter project scaffold with the feature-first single-package structure: a `core` layer (networking, database, auth, models, theme) and empty feature-module slots, with Riverpod wired as the state layer.
 - GitHub Actions CI: format, analyze, test, and build-sanity for Android, iOS, and the F-Droid build flavor, all secret-free.
 - The fixtures-first test harness: a recorded-fixture loader, the in-process fake HTTP server, and golden-test infrastructure configured for the dark theme with cross-machine font stability.
-- The design-token theme layer from the landed design system (tanuki-orange interactive accent, dark-only, Pajamas semantic ramps, GitLab Sans and GitLab Mono).
+- The design-token theme layer implementing the settled design decisions (tanuki-orange interactive accent, dark-only, Pajamas semantic ramps, GitLab Sans and GitLab Mono).
 - The app shell: the four-tab bottom navigation (Home, To-Dos/Notifications, Explore/Search, Profile), routing, and empty themed screens.
 - The `dio`-based API client skeleton: per-instance base URL and interceptor seams for token injection and one-time 401 refresh-and-retry, with auth wired in during phase one.
 

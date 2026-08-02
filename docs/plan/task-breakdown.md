@@ -38,7 +38,7 @@ Every task inherits the operating principles in `docs/plan/roadmap.md` (fixtures
 | --- | --- | --- |
 | E0.1 Scaffold Flutter project, feature-first single package, Riverpod wired | `flutter analyze` is clean on an app that boots to an empty themed screen, and the `core`-versus-feature boundary is enforced (features import `core`, never the reverse) | none |
 | E0.2 Fixtures-first test harness: recorded-fixture loader, in-process fake HTTP server, golden infra (dark, font-stable) | one command runs unit, widget, and golden tests with no network and no secrets, and a sample fixture test plus a sample golden pass in CI | E0.1 |
-| E0.3 GitHub Actions CI: format, analyze, test, build-sanity for Android, iOS, F-Droid flavor, secret-free | PR CI is green on the scaffold across all three build targets and references no secrets | E0.1, E0.2 |
+| E0.3 GitHub Actions CI: format, analyze, test, build-sanity for Android and iOS, secret-free | PR CI is green on the scaffold for the Android and iOS build targets and references no secrets | E0.1, E0.2 |
 | E0.4 F-Droid build-flavor scaffold with proprietary push dependencies removed | the F-Droid flavor builds in CI and contains no FCM or other proprietary push dependency | E0.1, E0.3 |
 
 ## E1: Design system integration and app shell (Phase 0)
@@ -185,6 +185,6 @@ All signing material lives outside the repository and is scoped away from PR job
 
 | Task | Acceptance | Depends on |
 | --- | --- | --- |
-| E16.1 Accessibility pass (touch targets, contrast, screen-reader labels) | key screens meet touch-target and contrast targets and carry screen-reader labels | all feature phases |
-| E16.2 Performance pass (long lists under Impeller, image decode-at-display-size, glass within budget) | long lists scroll smoothly, images decode at display size, and glass overlays stay within the spike's budget | all feature phases, E1.2 |
-| E16.3 Security pass (token storage, OAuth flow, no-live-instance guarantee) | a review of token storage and the OAuth flow is clean, and no test or build path touches a live instance | E2.x |
+| E16.1 Accessibility pass (touch targets, contrast, screen-reader labels) | key screens meet touch-target and contrast targets and carry screen-reader labels | E5.4, E6.3, E7.4, E8.3, E9.2, E10.2, E11.2, E12.6, E13.2, E14.2 |
+| E16.2 Performance pass (long lists under Impeller, image decode-at-display-size, glass within budget) | long lists scroll smoothly, images decode at display size, and glass overlays stay within the spike's budget | E5.4, E6.3, E7.4, E8.3, E9.2, E10.2, E11.2, E12.6, E13.2, E14.2, E1.2 |
+| E16.3 Security pass (token storage, OAuth flow, no-live-instance guarantee) | a review of token storage and the OAuth flow is clean, and no test or build path touches a live instance | E2.1, E2.2, E2.3, E2.4, E2.5, E2.6 |
