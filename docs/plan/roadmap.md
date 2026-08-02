@@ -46,7 +46,7 @@ These hold across every phase and are not restated per task.
 
 ## Design system input
 
-The closed design review settled the decisions that development implements against in the completed design system: a **tanuki-orange interactive accent**, a **dark-only** v1 theme, and a **liquid-glass treatment that is modest app-wide and heavy on overlays** (modals, drawers, sheets).
+The closed design review settled the decisions that development implements against in the completed design system: a **tanuki-orange interactive accent**, a **dark-only** v1 theme, and a **liquid-glass treatment that is heavier app-wide than a typical translucent chrome layer, with overlays (Drawer and Modal) carrying the heaviest glass treatment**.
 Structure, component naming, typography, iconography, and terminology continue to follow GitLab's Pajamas language as recorded in `docs/research/design-direction.md`: GitLab Sans and GitLab Mono, monospace on every git reference, Pajamas component names, and the product nouns (Merge Request, Pipeline, To-Do List, Project, Group, Approvals).
 Because v1 is dark-only, the semantic color ramps (green for success, red for critical, and so on) are retained while the interactive accent is tanuki-orange rather than the blue the earlier research doc recommended.
 
@@ -83,7 +83,7 @@ Stand up the project so that every later phase implements against a stable targe
 - The `dio`-based API client skeleton: per-instance base URL and interceptor seams for token injection and one-time 401 refresh-and-retry, with auth wired in during phase one.
 
 **Parallel dependency, starts with this phase: the liquid-glass implementation spike.**
-The dark-only theme and the shell's overlay components depend on a proven way to render liquid glass in Flutter (modest app-wide, heavy on overlays) at 60fps on mid-range Android under Impeller.
+The dark-only theme and the shell's overlay components depend on a proven way to render liquid glass in Flutter (heavier app-wide than a typical translucent chrome layer, with overlays, Drawer and Modal, carrying the heaviest glass treatment) at 60fps on mid-range Android under Impeller.
 This is a de-risking spike run alongside the scaffold rather than a blocker on it: non-glass scaffolding proceeds immediately, and the spike's chosen approach (a blur/backdrop technique or a vetted package, with its performance ceiling documented) feeds the shell and theme components before they are finalized.
 If the spike finds no approach that holds the frame budget, it reports that early so the overlay treatment can be dialed back before it is built on.
 
