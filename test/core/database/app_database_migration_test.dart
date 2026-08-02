@@ -58,5 +58,24 @@ void main() {
       await database.select(database.currentUserProfiles).get(),
       hasLength(1),
     );
+
+    await database
+        .into(database.todoItems)
+        .insert(
+          TodoItemsCompanion.insert(
+            instanceHost: 'gitlab.example.com',
+            accountId: 'alice',
+            todoId: 42,
+            authorName: 'Alice',
+            authorUsername: 'alice',
+            actionName: 'assigned',
+            targetType: 'Issue',
+            targetUrl: 'https://gitlab.example.com/group/app/-/issues/42',
+            body: 'Migrated to-do table is writable',
+            state: 'pending',
+            createdAt: DateTime.utc(2026, 8, 2),
+          ),
+        );
+    expect(await database.select(database.todoItems).get(), hasLength(1));
   });
 }

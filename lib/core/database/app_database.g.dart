@@ -1183,6 +1183,902 @@ class PaginationCursorsCompanion extends UpdateCompanion<PaginationCursor> {
   }
 }
 
+class $TodoItemsTable extends TodoItems
+    with TableInfo<$TodoItemsTable, TodoItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TodoItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _todoIdMeta = const VerificationMeta('todoId');
+  @override
+  late final GeneratedColumn<int> todoId = GeneratedColumn<int>(
+    'todo_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _projectPathWithNamespaceMeta =
+      const VerificationMeta('projectPathWithNamespace');
+  @override
+  late final GeneratedColumn<String> projectPathWithNamespace =
+      GeneratedColumn<String>(
+        'project_path_with_namespace',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _authorNameMeta = const VerificationMeta(
+    'authorName',
+  );
+  @override
+  late final GeneratedColumn<String> authorName = GeneratedColumn<String>(
+    'author_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _authorUsernameMeta = const VerificationMeta(
+    'authorUsername',
+  );
+  @override
+  late final GeneratedColumn<String> authorUsername = GeneratedColumn<String>(
+    'author_username',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _authorAvatarUrlMeta = const VerificationMeta(
+    'authorAvatarUrl',
+  );
+  @override
+  late final GeneratedColumn<String> authorAvatarUrl = GeneratedColumn<String>(
+    'author_avatar_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _actionNameMeta = const VerificationMeta(
+    'actionName',
+  );
+  @override
+  late final GeneratedColumn<String> actionName = GeneratedColumn<String>(
+    'action_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetTypeMeta = const VerificationMeta(
+    'targetType',
+  );
+  @override
+  late final GeneratedColumn<String> targetType = GeneratedColumn<String>(
+    'target_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetIidMeta = const VerificationMeta(
+    'targetIid',
+  );
+  @override
+  late final GeneratedColumn<int> targetIid = GeneratedColumn<int>(
+    'target_iid',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _targetTitleMeta = const VerificationMeta(
+    'targetTitle',
+  );
+  @override
+  late final GeneratedColumn<String> targetTitle = GeneratedColumn<String>(
+    'target_title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _targetUrlMeta = const VerificationMeta(
+    'targetUrl',
+  );
+  @override
+  late final GeneratedColumn<String> targetUrl = GeneratedColumn<String>(
+    'target_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    todoId,
+    projectPathWithNamespace,
+    authorName,
+    authorUsername,
+    authorAvatarUrl,
+    actionName,
+    targetType,
+    targetIid,
+    targetTitle,
+    targetUrl,
+    body,
+    state,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'todo_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TodoItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('todo_id')) {
+      context.handle(
+        _todoIdMeta,
+        todoId.isAcceptableOrUnknown(data['todo_id']!, _todoIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_todoIdMeta);
+    }
+    if (data.containsKey('project_path_with_namespace')) {
+      context.handle(
+        _projectPathWithNamespaceMeta,
+        projectPathWithNamespace.isAcceptableOrUnknown(
+          data['project_path_with_namespace']!,
+          _projectPathWithNamespaceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('author_name')) {
+      context.handle(
+        _authorNameMeta,
+        authorName.isAcceptableOrUnknown(data['author_name']!, _authorNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_authorNameMeta);
+    }
+    if (data.containsKey('author_username')) {
+      context.handle(
+        _authorUsernameMeta,
+        authorUsername.isAcceptableOrUnknown(
+          data['author_username']!,
+          _authorUsernameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_authorUsernameMeta);
+    }
+    if (data.containsKey('author_avatar_url')) {
+      context.handle(
+        _authorAvatarUrlMeta,
+        authorAvatarUrl.isAcceptableOrUnknown(
+          data['author_avatar_url']!,
+          _authorAvatarUrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('action_name')) {
+      context.handle(
+        _actionNameMeta,
+        actionName.isAcceptableOrUnknown(data['action_name']!, _actionNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_actionNameMeta);
+    }
+    if (data.containsKey('target_type')) {
+      context.handle(
+        _targetTypeMeta,
+        targetType.isAcceptableOrUnknown(data['target_type']!, _targetTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetTypeMeta);
+    }
+    if (data.containsKey('target_iid')) {
+      context.handle(
+        _targetIidMeta,
+        targetIid.isAcceptableOrUnknown(data['target_iid']!, _targetIidMeta),
+      );
+    }
+    if (data.containsKey('target_title')) {
+      context.handle(
+        _targetTitleMeta,
+        targetTitle.isAcceptableOrUnknown(
+          data['target_title']!,
+          _targetTitleMeta,
+        ),
+      );
+    }
+    if (data.containsKey('target_url')) {
+      context.handle(
+        _targetUrlMeta,
+        targetUrl.isAcceptableOrUnknown(data['target_url']!, _targetUrlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetUrlMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_stateMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {instanceHost, accountId, todoId};
+  @override
+  TodoItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TodoItem(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      todoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}todo_id'],
+      )!,
+      projectPathWithNamespace: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}project_path_with_namespace'],
+      ),
+      authorName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}author_name'],
+      )!,
+      authorUsername: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}author_username'],
+      )!,
+      authorAvatarUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}author_avatar_url'],
+      ),
+      actionName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action_name'],
+      )!,
+      targetType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_type'],
+      )!,
+      targetIid: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target_iid'],
+      ),
+      targetTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_title'],
+      ),
+      targetUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_url'],
+      )!,
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      )!,
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TodoItemsTable createAlias(String alias) {
+    return $TodoItemsTable(attachedDatabase, alias);
+  }
+}
+
+class TodoItem extends DataClass implements Insertable<TodoItem> {
+  final String instanceHost;
+  final String accountId;
+  final int todoId;
+  final String? projectPathWithNamespace;
+  final String authorName;
+  final String authorUsername;
+  final String? authorAvatarUrl;
+  final String actionName;
+  final String targetType;
+  final int? targetIid;
+  final String? targetTitle;
+  final String targetUrl;
+  final String body;
+  final String state;
+  final DateTime createdAt;
+  const TodoItem({
+    required this.instanceHost,
+    required this.accountId,
+    required this.todoId,
+    this.projectPathWithNamespace,
+    required this.authorName,
+    required this.authorUsername,
+    this.authorAvatarUrl,
+    required this.actionName,
+    required this.targetType,
+    this.targetIid,
+    this.targetTitle,
+    required this.targetUrl,
+    required this.body,
+    required this.state,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    map['todo_id'] = Variable<int>(todoId);
+    if (!nullToAbsent || projectPathWithNamespace != null) {
+      map['project_path_with_namespace'] = Variable<String>(
+        projectPathWithNamespace,
+      );
+    }
+    map['author_name'] = Variable<String>(authorName);
+    map['author_username'] = Variable<String>(authorUsername);
+    if (!nullToAbsent || authorAvatarUrl != null) {
+      map['author_avatar_url'] = Variable<String>(authorAvatarUrl);
+    }
+    map['action_name'] = Variable<String>(actionName);
+    map['target_type'] = Variable<String>(targetType);
+    if (!nullToAbsent || targetIid != null) {
+      map['target_iid'] = Variable<int>(targetIid);
+    }
+    if (!nullToAbsent || targetTitle != null) {
+      map['target_title'] = Variable<String>(targetTitle);
+    }
+    map['target_url'] = Variable<String>(targetUrl);
+    map['body'] = Variable<String>(body);
+    map['state'] = Variable<String>(state);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  TodoItemsCompanion toCompanion(bool nullToAbsent) {
+    return TodoItemsCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      todoId: Value(todoId),
+      projectPathWithNamespace: projectPathWithNamespace == null && nullToAbsent
+          ? const Value.absent()
+          : Value(projectPathWithNamespace),
+      authorName: Value(authorName),
+      authorUsername: Value(authorUsername),
+      authorAvatarUrl: authorAvatarUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(authorAvatarUrl),
+      actionName: Value(actionName),
+      targetType: Value(targetType),
+      targetIid: targetIid == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetIid),
+      targetTitle: targetTitle == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetTitle),
+      targetUrl: Value(targetUrl),
+      body: Value(body),
+      state: Value(state),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory TodoItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TodoItem(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      todoId: serializer.fromJson<int>(json['todoId']),
+      projectPathWithNamespace: serializer.fromJson<String?>(
+        json['projectPathWithNamespace'],
+      ),
+      authorName: serializer.fromJson<String>(json['authorName']),
+      authorUsername: serializer.fromJson<String>(json['authorUsername']),
+      authorAvatarUrl: serializer.fromJson<String?>(json['authorAvatarUrl']),
+      actionName: serializer.fromJson<String>(json['actionName']),
+      targetType: serializer.fromJson<String>(json['targetType']),
+      targetIid: serializer.fromJson<int?>(json['targetIid']),
+      targetTitle: serializer.fromJson<String?>(json['targetTitle']),
+      targetUrl: serializer.fromJson<String>(json['targetUrl']),
+      body: serializer.fromJson<String>(json['body']),
+      state: serializer.fromJson<String>(json['state']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'todoId': serializer.toJson<int>(todoId),
+      'projectPathWithNamespace': serializer.toJson<String?>(
+        projectPathWithNamespace,
+      ),
+      'authorName': serializer.toJson<String>(authorName),
+      'authorUsername': serializer.toJson<String>(authorUsername),
+      'authorAvatarUrl': serializer.toJson<String?>(authorAvatarUrl),
+      'actionName': serializer.toJson<String>(actionName),
+      'targetType': serializer.toJson<String>(targetType),
+      'targetIid': serializer.toJson<int?>(targetIid),
+      'targetTitle': serializer.toJson<String?>(targetTitle),
+      'targetUrl': serializer.toJson<String>(targetUrl),
+      'body': serializer.toJson<String>(body),
+      'state': serializer.toJson<String>(state),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  TodoItem copyWith({
+    String? instanceHost,
+    String? accountId,
+    int? todoId,
+    Value<String?> projectPathWithNamespace = const Value.absent(),
+    String? authorName,
+    String? authorUsername,
+    Value<String?> authorAvatarUrl = const Value.absent(),
+    String? actionName,
+    String? targetType,
+    Value<int?> targetIid = const Value.absent(),
+    Value<String?> targetTitle = const Value.absent(),
+    String? targetUrl,
+    String? body,
+    String? state,
+    DateTime? createdAt,
+  }) => TodoItem(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    todoId: todoId ?? this.todoId,
+    projectPathWithNamespace: projectPathWithNamespace.present
+        ? projectPathWithNamespace.value
+        : this.projectPathWithNamespace,
+    authorName: authorName ?? this.authorName,
+    authorUsername: authorUsername ?? this.authorUsername,
+    authorAvatarUrl: authorAvatarUrl.present
+        ? authorAvatarUrl.value
+        : this.authorAvatarUrl,
+    actionName: actionName ?? this.actionName,
+    targetType: targetType ?? this.targetType,
+    targetIid: targetIid.present ? targetIid.value : this.targetIid,
+    targetTitle: targetTitle.present ? targetTitle.value : this.targetTitle,
+    targetUrl: targetUrl ?? this.targetUrl,
+    body: body ?? this.body,
+    state: state ?? this.state,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  TodoItem copyWithCompanion(TodoItemsCompanion data) {
+    return TodoItem(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      todoId: data.todoId.present ? data.todoId.value : this.todoId,
+      projectPathWithNamespace: data.projectPathWithNamespace.present
+          ? data.projectPathWithNamespace.value
+          : this.projectPathWithNamespace,
+      authorName: data.authorName.present
+          ? data.authorName.value
+          : this.authorName,
+      authorUsername: data.authorUsername.present
+          ? data.authorUsername.value
+          : this.authorUsername,
+      authorAvatarUrl: data.authorAvatarUrl.present
+          ? data.authorAvatarUrl.value
+          : this.authorAvatarUrl,
+      actionName: data.actionName.present
+          ? data.actionName.value
+          : this.actionName,
+      targetType: data.targetType.present
+          ? data.targetType.value
+          : this.targetType,
+      targetIid: data.targetIid.present ? data.targetIid.value : this.targetIid,
+      targetTitle: data.targetTitle.present
+          ? data.targetTitle.value
+          : this.targetTitle,
+      targetUrl: data.targetUrl.present ? data.targetUrl.value : this.targetUrl,
+      body: data.body.present ? data.body.value : this.body,
+      state: data.state.present ? data.state.value : this.state,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TodoItem(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('todoId: $todoId, ')
+          ..write('projectPathWithNamespace: $projectPathWithNamespace, ')
+          ..write('authorName: $authorName, ')
+          ..write('authorUsername: $authorUsername, ')
+          ..write('authorAvatarUrl: $authorAvatarUrl, ')
+          ..write('actionName: $actionName, ')
+          ..write('targetType: $targetType, ')
+          ..write('targetIid: $targetIid, ')
+          ..write('targetTitle: $targetTitle, ')
+          ..write('targetUrl: $targetUrl, ')
+          ..write('body: $body, ')
+          ..write('state: $state, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    instanceHost,
+    accountId,
+    todoId,
+    projectPathWithNamespace,
+    authorName,
+    authorUsername,
+    authorAvatarUrl,
+    actionName,
+    targetType,
+    targetIid,
+    targetTitle,
+    targetUrl,
+    body,
+    state,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TodoItem &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.todoId == this.todoId &&
+          other.projectPathWithNamespace == this.projectPathWithNamespace &&
+          other.authorName == this.authorName &&
+          other.authorUsername == this.authorUsername &&
+          other.authorAvatarUrl == this.authorAvatarUrl &&
+          other.actionName == this.actionName &&
+          other.targetType == this.targetType &&
+          other.targetIid == this.targetIid &&
+          other.targetTitle == this.targetTitle &&
+          other.targetUrl == this.targetUrl &&
+          other.body == this.body &&
+          other.state == this.state &&
+          other.createdAt == this.createdAt);
+}
+
+class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<int> todoId;
+  final Value<String?> projectPathWithNamespace;
+  final Value<String> authorName;
+  final Value<String> authorUsername;
+  final Value<String?> authorAvatarUrl;
+  final Value<String> actionName;
+  final Value<String> targetType;
+  final Value<int?> targetIid;
+  final Value<String?> targetTitle;
+  final Value<String> targetUrl;
+  final Value<String> body;
+  final Value<String> state;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const TodoItemsCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.todoId = const Value.absent(),
+    this.projectPathWithNamespace = const Value.absent(),
+    this.authorName = const Value.absent(),
+    this.authorUsername = const Value.absent(),
+    this.authorAvatarUrl = const Value.absent(),
+    this.actionName = const Value.absent(),
+    this.targetType = const Value.absent(),
+    this.targetIid = const Value.absent(),
+    this.targetTitle = const Value.absent(),
+    this.targetUrl = const Value.absent(),
+    this.body = const Value.absent(),
+    this.state = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TodoItemsCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    required int todoId,
+    this.projectPathWithNamespace = const Value.absent(),
+    required String authorName,
+    required String authorUsername,
+    this.authorAvatarUrl = const Value.absent(),
+    required String actionName,
+    required String targetType,
+    this.targetIid = const Value.absent(),
+    this.targetTitle = const Value.absent(),
+    required String targetUrl,
+    required String body,
+    required String state,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       todoId = Value(todoId),
+       authorName = Value(authorName),
+       authorUsername = Value(authorUsername),
+       actionName = Value(actionName),
+       targetType = Value(targetType),
+       targetUrl = Value(targetUrl),
+       body = Value(body),
+       state = Value(state),
+       createdAt = Value(createdAt);
+  static Insertable<TodoItem> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<int>? todoId,
+    Expression<String>? projectPathWithNamespace,
+    Expression<String>? authorName,
+    Expression<String>? authorUsername,
+    Expression<String>? authorAvatarUrl,
+    Expression<String>? actionName,
+    Expression<String>? targetType,
+    Expression<int>? targetIid,
+    Expression<String>? targetTitle,
+    Expression<String>? targetUrl,
+    Expression<String>? body,
+    Expression<String>? state,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (todoId != null) 'todo_id': todoId,
+      if (projectPathWithNamespace != null)
+        'project_path_with_namespace': projectPathWithNamespace,
+      if (authorName != null) 'author_name': authorName,
+      if (authorUsername != null) 'author_username': authorUsername,
+      if (authorAvatarUrl != null) 'author_avatar_url': authorAvatarUrl,
+      if (actionName != null) 'action_name': actionName,
+      if (targetType != null) 'target_type': targetType,
+      if (targetIid != null) 'target_iid': targetIid,
+      if (targetTitle != null) 'target_title': targetTitle,
+      if (targetUrl != null) 'target_url': targetUrl,
+      if (body != null) 'body': body,
+      if (state != null) 'state': state,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TodoItemsCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<int>? todoId,
+    Value<String?>? projectPathWithNamespace,
+    Value<String>? authorName,
+    Value<String>? authorUsername,
+    Value<String?>? authorAvatarUrl,
+    Value<String>? actionName,
+    Value<String>? targetType,
+    Value<int?>? targetIid,
+    Value<String?>? targetTitle,
+    Value<String>? targetUrl,
+    Value<String>? body,
+    Value<String>? state,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return TodoItemsCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      todoId: todoId ?? this.todoId,
+      projectPathWithNamespace:
+          projectPathWithNamespace ?? this.projectPathWithNamespace,
+      authorName: authorName ?? this.authorName,
+      authorUsername: authorUsername ?? this.authorUsername,
+      authorAvatarUrl: authorAvatarUrl ?? this.authorAvatarUrl,
+      actionName: actionName ?? this.actionName,
+      targetType: targetType ?? this.targetType,
+      targetIid: targetIid ?? this.targetIid,
+      targetTitle: targetTitle ?? this.targetTitle,
+      targetUrl: targetUrl ?? this.targetUrl,
+      body: body ?? this.body,
+      state: state ?? this.state,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (todoId.present) {
+      map['todo_id'] = Variable<int>(todoId.value);
+    }
+    if (projectPathWithNamespace.present) {
+      map['project_path_with_namespace'] = Variable<String>(
+        projectPathWithNamespace.value,
+      );
+    }
+    if (authorName.present) {
+      map['author_name'] = Variable<String>(authorName.value);
+    }
+    if (authorUsername.present) {
+      map['author_username'] = Variable<String>(authorUsername.value);
+    }
+    if (authorAvatarUrl.present) {
+      map['author_avatar_url'] = Variable<String>(authorAvatarUrl.value);
+    }
+    if (actionName.present) {
+      map['action_name'] = Variable<String>(actionName.value);
+    }
+    if (targetType.present) {
+      map['target_type'] = Variable<String>(targetType.value);
+    }
+    if (targetIid.present) {
+      map['target_iid'] = Variable<int>(targetIid.value);
+    }
+    if (targetTitle.present) {
+      map['target_title'] = Variable<String>(targetTitle.value);
+    }
+    if (targetUrl.present) {
+      map['target_url'] = Variable<String>(targetUrl.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TodoItemsCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('todoId: $todoId, ')
+          ..write('projectPathWithNamespace: $projectPathWithNamespace, ')
+          ..write('authorName: $authorName, ')
+          ..write('authorUsername: $authorUsername, ')
+          ..write('authorAvatarUrl: $authorAvatarUrl, ')
+          ..write('actionName: $actionName, ')
+          ..write('targetType: $targetType, ')
+          ..write('targetIid: $targetIid, ')
+          ..write('targetTitle: $targetTitle, ')
+          ..write('targetUrl: $targetUrl, ')
+          ..write('body: $body, ')
+          ..write('state: $state, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1192,6 +2088,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CurrentUserProfilesTable(this);
   late final $PaginationCursorsTable paginationCursors =
       $PaginationCursorsTable(this);
+  late final $TodoItemsTable todoItems = $TodoItemsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1200,6 +2097,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     localCacheEntries,
     currentUserProfiles,
     paginationCursors,
+    todoItems,
   ];
 }
 
@@ -1868,6 +2766,406 @@ typedef $$PaginationCursorsTableProcessedTableManager =
       PaginationCursor,
       PrefetchHooks Function()
     >;
+typedef $$TodoItemsTableCreateCompanionBuilder =
+    TodoItemsCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      required int todoId,
+      Value<String?> projectPathWithNamespace,
+      required String authorName,
+      required String authorUsername,
+      Value<String?> authorAvatarUrl,
+      required String actionName,
+      required String targetType,
+      Value<int?> targetIid,
+      Value<String?> targetTitle,
+      required String targetUrl,
+      required String body,
+      required String state,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$TodoItemsTableUpdateCompanionBuilder =
+    TodoItemsCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<int> todoId,
+      Value<String?> projectPathWithNamespace,
+      Value<String> authorName,
+      Value<String> authorUsername,
+      Value<String?> authorAvatarUrl,
+      Value<String> actionName,
+      Value<String> targetType,
+      Value<int?> targetIid,
+      Value<String?> targetTitle,
+      Value<String> targetUrl,
+      Value<String> body,
+      Value<String> state,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$TodoItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $TodoItemsTable> {
+  $$TodoItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get todoId => $composableBuilder(
+    column: $table.todoId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get projectPathWithNamespace => $composableBuilder(
+    column: $table.projectPathWithNamespace,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get authorName => $composableBuilder(
+    column: $table.authorName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get authorUsername => $composableBuilder(
+    column: $table.authorUsername,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get authorAvatarUrl => $composableBuilder(
+    column: $table.authorAvatarUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actionName => $composableBuilder(
+    column: $table.actionName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get targetType => $composableBuilder(
+    column: $table.targetType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get targetIid => $composableBuilder(
+    column: $table.targetIid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get targetTitle => $composableBuilder(
+    column: $table.targetTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get targetUrl => $composableBuilder(
+    column: $table.targetUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TodoItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TodoItemsTable> {
+  $$TodoItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get todoId => $composableBuilder(
+    column: $table.todoId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get projectPathWithNamespace => $composableBuilder(
+    column: $table.projectPathWithNamespace,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get authorName => $composableBuilder(
+    column: $table.authorName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get authorUsername => $composableBuilder(
+    column: $table.authorUsername,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get authorAvatarUrl => $composableBuilder(
+    column: $table.authorAvatarUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actionName => $composableBuilder(
+    column: $table.actionName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetType => $composableBuilder(
+    column: $table.targetType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get targetIid => $composableBuilder(
+    column: $table.targetIid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetTitle => $composableBuilder(
+    column: $table.targetTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetUrl => $composableBuilder(
+    column: $table.targetUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TodoItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TodoItemsTable> {
+  $$TodoItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<int> get todoId =>
+      $composableBuilder(column: $table.todoId, builder: (column) => column);
+
+  GeneratedColumn<String> get projectPathWithNamespace => $composableBuilder(
+    column: $table.projectPathWithNamespace,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get authorName => $composableBuilder(
+    column: $table.authorName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get authorUsername => $composableBuilder(
+    column: $table.authorUsername,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get authorAvatarUrl => $composableBuilder(
+    column: $table.authorAvatarUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get actionName => $composableBuilder(
+    column: $table.actionName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get targetType => $composableBuilder(
+    column: $table.targetType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get targetIid =>
+      $composableBuilder(column: $table.targetIid, builder: (column) => column);
+
+  GeneratedColumn<String> get targetTitle => $composableBuilder(
+    column: $table.targetTitle,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get targetUrl =>
+      $composableBuilder(column: $table.targetUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$TodoItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TodoItemsTable,
+          TodoItem,
+          $$TodoItemsTableFilterComposer,
+          $$TodoItemsTableOrderingComposer,
+          $$TodoItemsTableAnnotationComposer,
+          $$TodoItemsTableCreateCompanionBuilder,
+          $$TodoItemsTableUpdateCompanionBuilder,
+          (TodoItem, BaseReferences<_$AppDatabase, $TodoItemsTable, TodoItem>),
+          TodoItem,
+          PrefetchHooks Function()
+        > {
+  $$TodoItemsTableTableManager(_$AppDatabase db, $TodoItemsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TodoItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TodoItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TodoItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<int> todoId = const Value.absent(),
+                Value<String?> projectPathWithNamespace = const Value.absent(),
+                Value<String> authorName = const Value.absent(),
+                Value<String> authorUsername = const Value.absent(),
+                Value<String?> authorAvatarUrl = const Value.absent(),
+                Value<String> actionName = const Value.absent(),
+                Value<String> targetType = const Value.absent(),
+                Value<int?> targetIid = const Value.absent(),
+                Value<String?> targetTitle = const Value.absent(),
+                Value<String> targetUrl = const Value.absent(),
+                Value<String> body = const Value.absent(),
+                Value<String> state = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TodoItemsCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                todoId: todoId,
+                projectPathWithNamespace: projectPathWithNamespace,
+                authorName: authorName,
+                authorUsername: authorUsername,
+                authorAvatarUrl: authorAvatarUrl,
+                actionName: actionName,
+                targetType: targetType,
+                targetIid: targetIid,
+                targetTitle: targetTitle,
+                targetUrl: targetUrl,
+                body: body,
+                state: state,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                required int todoId,
+                Value<String?> projectPathWithNamespace = const Value.absent(),
+                required String authorName,
+                required String authorUsername,
+                Value<String?> authorAvatarUrl = const Value.absent(),
+                required String actionName,
+                required String targetType,
+                Value<int?> targetIid = const Value.absent(),
+                Value<String?> targetTitle = const Value.absent(),
+                required String targetUrl,
+                required String body,
+                required String state,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TodoItemsCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                todoId: todoId,
+                projectPathWithNamespace: projectPathWithNamespace,
+                authorName: authorName,
+                authorUsername: authorUsername,
+                authorAvatarUrl: authorAvatarUrl,
+                actionName: actionName,
+                targetType: targetType,
+                targetIid: targetIid,
+                targetTitle: targetTitle,
+                targetUrl: targetUrl,
+                body: body,
+                state: state,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TodoItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TodoItemsTable,
+      TodoItem,
+      $$TodoItemsTableFilterComposer,
+      $$TodoItemsTableOrderingComposer,
+      $$TodoItemsTableAnnotationComposer,
+      $$TodoItemsTableCreateCompanionBuilder,
+      $$TodoItemsTableUpdateCompanionBuilder,
+      (TodoItem, BaseReferences<_$AppDatabase, $TodoItemsTable, TodoItem>),
+      TodoItem,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1878,4 +3176,6 @@ class $AppDatabaseManager {
       $$CurrentUserProfilesTableTableManager(_db, _db.currentUserProfiles);
   $$PaginationCursorsTableTableManager get paginationCursors =>
       $$PaginationCursorsTableTableManager(_db, _db.paginationCursors);
+  $$TodoItemsTableTableManager get todoItems =>
+      $$TodoItemsTableTableManager(_db, _db.todoItems);
 }

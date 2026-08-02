@@ -40,8 +40,34 @@ class PaginationCursors extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId, collectionKey};
 }
 
+/// Cached to-dos from the Todos API (`GET /api/v4/todos`), scoped per
+/// account. See `core/repository/todos_repository.dart`.
+class TodoItems extends Table with AccountScoped {
+  IntColumn get todoId => integer()();
+  TextColumn get projectPathWithNamespace => text().nullable()();
+  TextColumn get authorName => text()();
+  TextColumn get authorUsername => text()();
+  TextColumn get authorAvatarUrl => text().nullable()();
+  TextColumn get actionName => text()();
+  TextColumn get targetType => text()();
+  IntColumn get targetIid => integer().nullable()();
+  TextColumn get targetTitle => text().nullable()();
+  TextColumn get targetUrl => text()();
+  TextColumn get body => text()();
+  TextColumn get state => text()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId, todoId};
+}
+
 @DriftDatabase(
-  tables: [LocalCacheEntries, CurrentUserProfiles, PaginationCursors],
+  tables: [
+    LocalCacheEntries,
+    CurrentUserProfiles,
+    PaginationCursors,
+    TodoItems,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'gitsune'));
@@ -49,7 +75,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -59,6 +85,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await migrator.createTable(paginationCursors);
+      }
+      if (from < 4) {
+        await migrator.createTable(todoItems);
       }
     },
   );
