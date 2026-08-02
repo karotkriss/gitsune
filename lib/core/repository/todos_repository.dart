@@ -41,8 +41,8 @@ class TodosRepository implements OfflineFirstRepository<List<TodoItem>> {
 
   /// Replaces the cache from GitLab's offset-paginated Todos endpoint.
   ///
-  /// A server-side insertion or removal between page fetches can duplicate or
-  /// skip a row in one pass, which is acceptable for this periodic full resync.
+  /// A server-side insertion or removal between page fetches can repeat or skip
+  /// a row. Repeated IDs are collapsed; skipped rows wait for the next resync.
   @override
   Future<void> refresh() {
     final refresh = _refreshQueue.then((_) => _performRefresh());
@@ -60,11 +60,13 @@ class TodosRepository implements OfflineFirstRepository<List<TodoItem>> {
       decode: (json) => _decodeTodo(json, account),
     );
 
-    final rows = <TodoItemsCompanion>[];
+    final rowsById = <int, TodoItemsCompanion>{};
     try {
       while (paginator.hasMore) {
         final page = await paginator.loadNext();
-        rows.addAll(page.items);
+        for (final row in page.items) {
+          rowsById[row.todoId.value] = row;
+        }
       }
     } on DioException {
       return;
@@ -78,7 +80,7 @@ class TodosRepository implements OfflineFirstRepository<List<TodoItem>> {
           ))
           .go();
       await database.batch(
-        (batch) => batch.insertAll(database.todoItems, rows),
+        (batch) => batch.insertAll(database.todoItems, rowsById.values),
       );
     });
   }

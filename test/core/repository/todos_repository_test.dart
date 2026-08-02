@@ -29,7 +29,10 @@ void main() {
   /// Serves two offset-paginated pages of to-dos, mirroring GitLab's real
   /// behavior: a `Link: <...>; rel="next"` header on every page but the
   /// last.
-  void registerTwoTodoPages(FakeGitLabServer server) {
+  void registerTwoTodoPages(
+    FakeGitLabServer server, {
+    bool repeatBoundaryTodo = false,
+  }) {
     const fixtureByPage = {'1': 'todos_page1', '2': 'todos_page2'};
 
     server.handle('GET /api/v4/todos', (request) async {
@@ -46,7 +49,13 @@ void main() {
         );
         request.response.headers.set('Link', '<$nextUri>; rel="next"');
       }
-      request.response.write(Fixtures.raw(fixtureByPage[page]!));
+      if (repeatBoundaryTodo && page == '2') {
+        final items = Fixtures.json(fixtureByPage[page]!) as List<dynamic>;
+        final firstPage = Fixtures.json('todos_page1') as List<dynamic>;
+        request.response.write(jsonEncode([...items, firstPage.last]));
+      } else {
+        request.response.write(Fixtures.raw(fixtureByPage[page]!));
+      }
       await request.response.close();
     });
   }
@@ -163,6 +172,29 @@ void main() {
 
     final todos = await repository.watch().first;
     expect(todos.map((t) => t.todoId), [88101]);
+  });
+
+  test('a repeated to-do across offset pages does not abort refresh', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    registerTwoTodoPages(server, repeatBoundaryTodo: true);
+
+    final client = createGitLabClient(
+      account: account,
+      baseUrl: server.baseUri.resolve('/api/v4'),
+      readToken: (_) async => 'tok',
+      refreshToken: (_) async => fail('refresh should not be called'),
+    );
+    final repository = TodosRepository(
+      database: db,
+      client: client,
+      account: account,
+    );
+
+    await repository.refresh();
+
+    final todos = await repository.watch().first;
+    expect(todos.map((t) => t.todoId), [102, 101, 88101]);
   });
 
   test('a network failure leaves cached data served (offline-first)', () async {
