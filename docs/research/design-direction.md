@@ -5,8 +5,9 @@ This document summarizes the design research behind Gitsune's visual and interac
 Claims are sourced inline.
 Claims not backed by a cited source are marked `[inferred]`.
 
-**Amended:** the interactive-color guidance below (blue, in Part 1's Color section and Part 3's "Merge action color" row) is superseded by `docs/decisions/0007-interactive-color-orange-over-blue.md`, which sets brand orange as Gitsune's interactive and brand color.
-This document is left as written otherwise, since it remains an accurate record of the phase-one research.
+**Amended:** three positions below were settled differently once a concrete design system existed to design against: interactive color, theme scope, and liquid glass.
+Each superseded position is marked in place with a note pointing to the governing decision record.
+This document is otherwise left as written, since it remains an accurate record of the phase-one research.
 
 ## Part 1: the design-language baseline (Pajamas, translated to mobile)
 
@@ -21,6 +22,9 @@ All colors meet WCAG AA contrast requirements.
 
 For Gitsune, the semantic mapping is the identity to preserve exactly: a passed pipeline is green, a running one is blue, a failed one is red, and a pending one is orange, everywhere in the app, with no decorative reassignment.
 Interactive color is blue, which happens to match GitHub Mobile's own interactive color, so the two design languages agree here without any translation needed.
+
+*Superseded: Gitsune's interactive color is brand orange, not blue, so the app reads as its own color identity rather than one borrowed from GitHub Mobile or Pajamas' generic progress color; see `docs/decisions/0007-interactive-color-orange-over-blue.md`.
+Blue is retained, unchanged, as the info/progress status color.*
 
 Source: design.gitlab.com/product-foundations/color
 
@@ -76,6 +80,8 @@ An unreachable or non-GitLab URL produces a clear inline error rather than a sil
 This deliberately avoids two weaker patterns seen elsewhere: burying the instance-URL field behind a secondary link, or gating self-hosted entry behind a settings-menu "Enterprise account" afterthought.
 Visuals stay neutral and quiet: a light surface, GitLab Sans, one blue confirm action, purple reserved for the logo or an illustration.
 
+*Superseded: v1 ships dark mode only, with light mode deferred to a later feature release (`docs/decisions/0008-dark-mode-only-v1.md`), and the confirm action is brand orange, not blue (`docs/decisions/0007-interactive-color-orange-over-blue.md`).*
+
 ### Home and project navigation
 
 The home screen adopts a shortcut-tile pattern (a grid of colored icon tiles mapped to Issues, Merge Requests, To-Do List, Pipelines, Projects, and Groups), editable and reorderable by the user, with tile colors drawn from the Pajamas ramps and glyphs from GitLab's own icon set.
@@ -96,6 +102,9 @@ This is the highest-leverage screen in the app, per the v1 priority order in `do
 The anatomy: a state badge, monospace source-to-target branch chips, a changed-files summary, a collapsible Pipelines section (GitLab's equivalent of "Checks"), a collapsible Approvals section showing required-approval counts, and a merge box combining pipeline status, approval status, and mergeability into one clear action area.
 Diff review keeps a hunk-per-file layout with a jump-to-file control and line-level comment entry, rendered in GitLab Mono.
 Two deliberate departures from more common mobile patterns, both driven by Pajamas: the merge action button is blue, not green, because Pajamas reserves green for an achieved success state and blue for an in-progress action; and the unresolved-discussion count surfaces directly in the merge box, since GitLab blocks merges on unresolved threads by default `[inferred, based on GitLab's product behavior]`.
+
+*Superseded: the merge action button is brand orange, not blue; see `docs/decisions/0007-interactive-color-orange-over-blue.md`.
+The green-vs-blue reasoning stands as the record of why blue was originally chosen over green.*
 
 ### Code browser
 
@@ -128,13 +137,18 @@ Adding a new account reuses the sign-in screen from the first surface, unchanged
 
 The one-line summary: GitHub Mobile decides how the app moves; Pajamas decides how it looks, speaks, and what things are called.
 
+*Superseded: the "Merge action color" row's resolution is superseded by brand orange as the merge button color; see `docs/decisions/0007-interactive-color-orange-over-blue.md`.
+The "Closed" state color row is unaffected, since that blue is status color, not interactive color.*
+
 ## Starting kit
 
 1. Pull Pajamas' color ramps, both typefaces, and the icon set (UI, status, pipeline, and file-type collections) as design tokens; all are public and open source and can live directly in this repository once a design system exists.
 2. The seven surfaces to design first, in order: sign-in, home, the to-do inbox, merge request view, diff review, issue view, and the account switcher.
    Sign-in and the switcher are where Gitsune differentiates most; the rest deliberately track GitHub Mobile's proven anatomy.
 3. Design light and dark themes together from the start; Pajamas' color system is explicitly built for both.
+   *Superseded: v1 ships dark mode only, with light mode deferred to a later feature release; see `docs/decisions/0008-dark-mode-only-v1.md`.*
 4. Auth mechanics, the offline/error model, and the cross-platform framework's effect on font and system-component fidelity are all design-affecting but owned by separate decisions; see `docs/decisions/0001-auth-posture.md` and `docs/research/technology-assessment.md`.
+   Liquid glass was likewise out of scope for this research; it is now settled by `docs/decisions/0009-liquid-glass-direction.md`, which specifies a floating-chrome treatment, heavier app-wide and heaviest on overlays.
 
 ## See also
 
