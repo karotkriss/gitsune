@@ -28,6 +28,8 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - Pure-Dart, Flutter-free logic (no widgets, no `dart:ui`) belongs in its own `lib/core/<area>/` module so it stays plainly unit-testable; see `lib/core/diff/diff_hunk_parser.dart` for the pattern.
   Text fixtures for such tests live under `test/fixtures/<area>/` and are read directly with `File(...).readAsStringSync()` at test time; they do not need a `pubspec.yaml` asset entry since they are never bundled into the app.
   Author fixtures containing trailing-whitespace-only lines (e.g. unified-diff blank context lines) with a script (Python/`printf`), not the file-write tool, which silently strips trailing whitespace.
+- Extend `lib/core/markdown/gs_markdown.dart` with custom syntax tags rather than registering `MarkdownElementBuilder`s for built-in tags such as `pre`, `code`, or `p`.
+  `flutter_markdown_plus` intercepts every use of a registered built-in tag, even when its builder returns `null`, so this can blank ordinary content; `test/core/markdown/mermaid/gs_mermaid_test.dart` protects ordinary fenced code blocks from that regression.
 - The license is intentionally unset ("License: TBD" in `README.md`).
   Do not add a `LICENSE` file or pick a license without an explicit decision recorded as a new ADR in `docs/decisions/`.
   This is distinct from the vendored third-party licenses in `design/`, which govern only the files they accompany regardless of what license this repository eventually adopts.

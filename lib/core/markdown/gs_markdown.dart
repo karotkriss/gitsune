@@ -3,6 +3,10 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
 import '../theme/app_theme.dart';
 import 'gitlab_references.dart';
+import 'math/gs_math_builder.dart';
+import 'math/gs_math_syntax.dart';
+import 'mermaid/gs_mermaid_builder.dart';
+import 'mermaid/gs_mermaid_syntax.dart';
 
 /// GitLab-flavored markdown body, themed from the token layer.
 ///
@@ -12,6 +16,11 @@ import 'gitlab_references.dart';
 /// [gitLabReferenceSyntaxes] and surface through [onReferenceTap]; ordinary
 /// links surface through [onLinkTap]. Navigation belongs to the calling
 /// screen, not here.
+///
+/// Math (`$...$` inline, `$$...$$` block) renders via [GsMathInlineBuilder]
+/// and [GsMathBlockBuilder]; Mermaid fenced code blocks (` ```mermaid `)
+/// render via [GsMermaidBlockBuilder]. Both degrade to the raw source in a
+/// code block rather than throwing; see `docs/plan/task-breakdown.md` E4.2.
 class GsMarkdown extends StatelessWidget {
   const GsMarkdown({
     super.key,
@@ -30,7 +39,14 @@ class GsMarkdown extends StatelessWidget {
     final gs = theme.extension<GsTheme>()!;
     return MarkdownBody(
       data: data,
-      inlineSyntaxes: gitLabReferenceSyntaxes(),
+      inlineSyntaxes: [...gitLabReferenceSyntaxes(), GsMathInlineSyntax()],
+      blockSyntaxes: const [GsMermaidBlockSyntax(), GsMathBlockSyntax()],
+      builders: {
+        gsMermaidBlockTag: GsMermaidBlockBuilder(),
+        gsMathBlockTag: GsMathBlockBuilder(),
+        gsMathFallbackTag: GsMathFallbackBuilder(),
+        gsMathInlineTag: GsMathInlineBuilder(),
+      },
       styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
         a: TextStyle(color: gs.link),
         code: gs.mono.copyWith(backgroundColor: gs.codeBg),
