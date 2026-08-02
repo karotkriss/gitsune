@@ -10,16 +10,19 @@ class GsMermaidBlockSyntax extends md.BlockSyntax {
   const GsMermaidBlockSyntax();
 
   static final _open = RegExp(r'^(`{3,}|~{3,})\s*mermaid\s*$');
-  static final _close = RegExp(r'^(`{3,}|~{3,})\s*$');
 
   @override
   RegExp get pattern => _open;
 
   @override
   md.Node parse(md.BlockParser parser) {
+    final opener = _open.firstMatch(parser.current.content)!.group(1)!;
+    final close = RegExp(
+      '^${RegExp.escape(opener[0])}{${opener.length},}\\s*\$',
+    );
     parser.advance();
     final lines = <String>[];
-    while (!parser.isDone && !_close.hasMatch(parser.current.content)) {
+    while (!parser.isDone && !close.hasMatch(parser.current.content)) {
       lines.add(parser.current.content);
       parser.advance();
     }

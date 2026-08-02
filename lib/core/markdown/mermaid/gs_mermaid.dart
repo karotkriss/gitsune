@@ -31,46 +31,81 @@ class _GsMermaidState extends State<GsMermaid> {
   double _height = 120;
   WebViewController? _controller;
   Timer? _timeoutTimer;
+  int _generation = 0;
 
   @override
   void initState() {
     super.initState();
-    _init();
+    _startRender();
   }
 
-  void _init() {
+  @override
+  void didUpdateWidget(covariant GsMermaid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.source != oldWidget.source) _startRender();
+  }
+
+  void _startRender() {
+    final generation = ++_generation;
+    _timeoutTimer?.cancel();
+    _status = _Status.loading;
+    _height = 120;
+    _controller = null;
+    _timeoutTimer = Timer(_timeout, () => _fail(generation));
+    unawaited(_init(generation));
+  }
+
+  Future<void> _init(int generation) async {
     try {
-      final controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(Colors.transparent)
-        ..addJavaScriptChannel('GsMermaid', onMessageReceived: _onMessage)
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onPageFinished: (_) => _controller?.runJavaScript(
-              'gsRenderMermaid(${jsonEncode(widget.source)})',
-            ),
-          ),
-        )
-        ..loadFlutterAsset(_asset);
-      _controller = controller;
-      _timeoutTimer = Timer(_timeout, _onTimeout);
+      final controller = WebViewController();
+      await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+      await controller.setBackgroundColor(Colors.transparent);
+      await controller.addJavaScriptChannel(
+        'GsMermaid',
+        onMessageReceived: (message) => _onMessage(message, generation),
+      );
+      final navigationDelegate = NavigationDelegate();
+      await navigationDelegate.platform.setOnPageFinished(
+        (_) => unawaited(_render(controller, generation)),
+      );
+      await controller.setNavigationDelegate(navigationDelegate);
+      if (!_isActive(generation)) return;
+      setState(() => _controller = controller);
+      await controller.loadFlutterAsset(_asset);
     } on Object {
+      _fail(generation);
+    }
+  }
+
+  Future<void> _render(WebViewController controller, int generation) async {
+    if (!_isActive(generation)) return;
+    try {
+      await controller.runJavaScript(
+        'gsRenderMermaid(${jsonEncode(widget.source)})',
+      );
+    } on Object {
+      _fail(generation);
+    }
+  }
+
+  bool _isActive(int generation) =>
+      mounted && generation == _generation && _status == _Status.loading;
+
+  void _fail(int generation) {
+    if (!_isActive(generation)) return;
+    _timeoutTimer?.cancel();
+    setState(() {
       _status = _Status.failed;
-    }
+      _controller = null;
+    });
   }
 
-  void _onTimeout() {
-    if (mounted && _status == _Status.loading) {
-      setState(() => _status = _Status.failed);
-    }
-  }
-
-  void _onMessage(JavaScriptMessage message) {
-    if (!mounted) return;
+  void _onMessage(JavaScriptMessage message, int generation) {
+    if (!_isActive(generation)) return;
     Map<String, dynamic>? decoded;
     try {
       decoded = jsonDecode(message.message) as Map<String, dynamic>;
-    } on FormatException {
+    } on Object {
       decoded = null;
     }
     _timeoutTimer?.cancel();
@@ -81,7 +116,7 @@ class _GsMermaidState extends State<GsMermaid> {
         _height = height.clamp(40, 4000);
       });
     } else {
-      setState(() => _status = _Status.failed);
+      _fail(generation);
     }
   }
 
@@ -94,8 +129,14 @@ class _GsMermaidState extends State<GsMermaid> {
   @override
   Widget build(BuildContext context) {
     final controller = _controller;
-    if (_status == _Status.failed || controller == null) {
+    if (_status == _Status.failed) {
       return gsRawSourceFallback(context, widget.source);
+    }
+    if (controller == null) {
+      return const SizedBox(
+        height: 120,
+        child: Center(child: CircularProgressIndicator()),
+      );
     }
     return SizedBox(
       height: _status == _Status.loading ? 120 : _height,
