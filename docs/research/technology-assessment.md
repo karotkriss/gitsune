@@ -93,7 +93,7 @@ This layering does not depend on the Riverpod-versus-Bloc choice above.
 The testing approach is biased toward being fast, deterministic, and low-friction for outside contributors: a contributor should be able to run the whole test suite with one command and see it pass without network access or extra tooling.
 
 - **Unit and widget tests** cover repositories, the diff-hunk parser, GitLab-flavored-markdown reference resolution, and authentication/session/refresh logic, using a mocking library that needs no code generation step, to keep the contributor loop simple.
-- **Golden (visual regression) tests** cover the Pajamas theme components and key screens in both light and dark mode, rendered in a CI mode that avoids cross-machine font-rendering flakiness.
+- **Golden (visual regression) tests** cover the Pajamas theme components and key screens in the v1 dark theme, rendered in a CI mode that avoids cross-machine font-rendering flakiness.
 - **A small number of full-app integration tests** run on an emulator against a fake local server, covering the handful of flows that depend on real HTTP behavior: pagination headers, and the token-refresh-and-retry round trip.
 - **A GitLab instance is faked, never real, in automated tests:** the bulk of tests replay recorded, scrubbed JSON fixtures captured from real API responses; a small in-process fake HTTP server handles the few flows that need real HTTP semantics.
   No automated test ever talks to a live GitLab instance, which keeps tests hermetic and fast.

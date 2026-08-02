@@ -12,7 +12,7 @@ A cold-start contributor should be able to read the README, then `docs/decisions
 
 ## Phase 2: design system
 
-The next phase translates the design direction recorded in `docs/research/design-direction.md`, GitLab's own Pajamas design system as the visual-language baseline, GitHub Mobile's proven interaction patterns for surfaces Pajamas does not cover, and the specific resolutions where the two disagree, into a concrete, implementable design system: design tokens, component specifications, and screen-level designs for the surfaces identified as the starting kit in that document.
+The next phase translates the direction recorded in `docs/research/design-direction.md`, together with the closed design-review inputs recorded in `docs/plan/roadmap.md`, into a concrete, implementable design system: design tokens, component specifications, and screen-level designs.
 
 This phase happens before development begins, deliberately.
 Building screens against an unsettled design language produces rework; settling the design system first means development can implement against a stable target from day one.
@@ -20,7 +20,8 @@ Building screens against an unsettled design language produces rework; settling 
 ## Phase 3: development
 
 Development begins once the design system from phase two is in place.
-It is expected to build directly on the decisions already recorded in `docs/decisions/`, the technology choices in `docs/research/technology-assessment.md`, and the v1 scope in `docs/plan/v1-scope.md`, in roughly the priority order that document lays out.
+The authoritative engineering sequence for this phase is `docs/plan/roadmap.md`, with the pickable-task companion in `docs/plan/task-breakdown.md`.
+That sequence builds on the decisions in `docs/decisions/` and the technology choices in `docs/research/technology-assessment.md`.
 
 This repository will open to code contributions at the start of this phase; it is not open to code contributions before then.
 
