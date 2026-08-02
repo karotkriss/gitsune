@@ -86,7 +86,7 @@ ThemeData buildAppTheme([GsTokenSet tokens = gsTokens]) {
     primaryIconTheme: IconThemeData(color: gs.onAccent),
     buttonTheme: ButtonThemeData(
       buttonColor: gs.accent,
-      disabledColor: gs.textDisabled,
+      disabledColor: gs.surfaceSubtle,
       focusColor: gs.pressOverlayStrong,
       hoverColor: gs.pressOverlay,
       highlightColor: gs.pressOverlayStrong,

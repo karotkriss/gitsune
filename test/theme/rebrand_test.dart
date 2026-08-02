@@ -138,6 +138,12 @@ void main() {
       theme.buttonTheme.getFillColor(_PrimaryMaterialButton(onPressed: () {})),
       gs.accent,
     );
+    expect(
+      theme.buttonTheme.getDisabledFillColor(
+        const _PrimaryMaterialButton(onPressed: null),
+      ),
+      gs.surfaceSubtle,
+    );
 
     for (final textTheme in [theme.textTheme, theme.primaryTextTheme]) {
       for (final style in <TextStyle?>[
@@ -193,6 +199,6 @@ void main() {
 }
 
 class _PrimaryMaterialButton extends MaterialButton {
-  const _PrimaryMaterialButton({required VoidCallback onPressed})
-    : super(onPressed: onPressed, textTheme: ButtonTextTheme.primary);
+  const _PrimaryMaterialButton({required super.onPressed})
+    : super(textTheme: ButtonTextTheme.primary);
 }
