@@ -40,7 +40,7 @@ Gitsune builds its own diff view: GitLab's API already returns per-file unified-
 Flutter's own official markdown package was discontinued with no named successor; `flutter_markdown_plus` is the strongest maintained fork, covering GitHub-flavored markdown tables, task lists, and fenced code, but not math or diagrams.
 GitLab-flavored markdown extensions that no general package handles, references like `#123`, `!456`, `@user`, and `~label`, along with math and Mermaid diagrams, are built on top as custom extensions.
 
-**Syntax highlighting uses `re_highlight`,** the freshest broad-language option available, with the caveat that it is effectively single-maintainer and carries real staleness risk; a WebView-based fallback using a JavaScript highlighter is reserved for full-file views where correctness matters more than list-cell performance.
+**Syntax highlighting uses `re_highlight`,** the freshest broad-language option available, with the caveat that it is effectively single-maintainer and carries real staleness risk; oversized full-file views use an offline WebView-based JavaScript highlighter when native per-line rendering would be too slow, while diff lines stay on the native path.
 
 **Avatar and image-heavy lists** use `cached_network_image`, decoding images at display size rather than full resolution to avoid memory pressure.
 
