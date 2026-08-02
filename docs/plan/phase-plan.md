@@ -5,7 +5,7 @@ This sequencing is intentional, not incidental, and each phase is expected to co
 
 ## Phase 1: documentation (complete)
 
-This repository, in its current state, is the output of phase one: the market research, design direction, technology assessment, and every settled decision behind the product, recorded as the project's own architecture decision records and supporting research.
+Phase one produced the market research, design direction, technology assessment, and every settled decision behind the product, recorded as the project's own architecture decision records and supporting research.
 
 No application code exists yet, and none is expected during this phase.
 A cold-start contributor should be able to read the README, then `docs/decisions/`, then `docs/plan/`, and come away knowing exactly what Gitsune is, what has been decided, and why.
