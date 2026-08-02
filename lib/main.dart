@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/theme/app_theme.dart';
+import 'features/issues/data/issues_repository.dart';
 import 'features/shell/app_shell.dart';
 
 void main() {
@@ -10,14 +11,18 @@ void main() {
 }
 
 class GitsuneApp extends StatefulWidget {
-  const GitsuneApp({super.key});
+  const GitsuneApp({super.key, this.issuesRepository});
+
+  final IssuesRepository? issuesRepository;
 
   @override
   State<GitsuneApp> createState() => _GitsuneAppState();
 }
 
 class _GitsuneAppState extends State<GitsuneApp> {
-  late final GoRouter _router = buildAppRouter();
+  late final GoRouter _router = buildAppRouter(
+    issuesRepository: widget.issuesRepository,
+  );
 
   @override
   void dispose() {

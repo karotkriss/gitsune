@@ -1,0 +1,15 @@
+[
+  {
+    "id": 9002,
+    "body": "The reconnect fixture now covers the queued draft.",
+    "author": {
+      "id": 12,
+      "username": "suki",
+      "name": "Suki Kim",
+      "avatar_url": null
+    },
+    "created_at": "2026-08-02T07:00:00Z",
+    "system": false,
+    "internal": false
+  }
+]
