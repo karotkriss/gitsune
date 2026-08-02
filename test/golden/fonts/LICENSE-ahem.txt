@@ -1,0 +1,27 @@
+Ahem.ttf is a W3C-maintained test font: every glyph renders as a fixed-size
+box, which is why it is used here to make golden-test pixels independent of
+whatever fonts happen to be installed on the machine running the tests.
+
+Source: https://www.w3.org/Style/CSS/Test/Fonts/Ahem/COPYING
+(vendored via the Ahem.ttf shipped inside the Flutter SDK's own tooling,
+packages/flutter_tools/static/Ahem.ttf, which carries the same font unchanged)
+
+The Ahem font belongs to the public domain. In jurisdictions that do not
+recognize public domain ownership, the following Creative Commons Zero
+declaration applies:
+
+<http://creativecommons.org/publicdomain/zero/1.0/>
+
+The person who has associated a work with this document (the "Work")
+affirms that he or she (the "Affirmer") is the/an author or owner of the
+Work. The Work may be any work of authorship, including a database.
+
+The Affirmer hereby fully, permanently and irrevocably waives and
+relinquishes all of her or his copyright and related or neighboring legal
+rights in the Work available under any federal or state law, treaty or
+contract, including but not limited to moral rights, publicity and privacy
+rights, rights protecting against unfair competition and any rights
+protecting the extraction, dissemination and reuse of data, whether such
+rights are present or future, vested or contingent (the "Waiver"). The
+Affirmer makes the Waiver for the benefit of the public at large and to the
+detriment of the Affirmer's heirs or successors.
