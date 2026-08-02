@@ -47,5 +47,5 @@ The research docs are there to back up the decisions with evidence, not to be re
 
 ## Contributing
 
-Gitsune is not yet open for code contributions; development has not started.
-`docs/plan/phase-plan.md` describes what happens next and when contribution will open up.
+Internal project development is under way, but Gitsune is not yet open to outside code contributions.
+See `docs/plan/phase-plan.md` for the development sequence and contribution status.

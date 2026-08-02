@@ -17,13 +17,14 @@ Phase two translated the design direction recorded in `docs/research/design-dire
 This phase completed before development begins, deliberately.
 Building screens against an unsettled design language produces rework; settling the design system first means development can implement against a stable target from day one.
 
-## Phase 3: development (next phase)
+## Phase 3: development (active)
 
-Development begins when this phase formally opens, with the completed design system from phase two in place as its implementation target.
+Internal project development is under way, with the completed design system from phase two in place as its implementation target.
 The authoritative engineering sequence for this phase is `docs/plan/roadmap.md`, with the pickable-task companion in `docs/plan/task-breakdown.md`.
 That sequence builds on the decisions in `docs/decisions/` and the technology choices in `docs/research/technology-assessment.md`.
 
-This repository will open to code contributions at the start of this phase; it is not open to code contributions before then.
+This repository is not yet open to outside code contributions.
+This plan will record when outside contribution opens.
 
 ## Why this order
 
