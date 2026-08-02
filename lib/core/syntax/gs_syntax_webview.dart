@@ -31,6 +31,7 @@ class GsSyntaxWebView extends StatefulWidget {
 
 class _GsSyntaxWebViewState extends State<GsSyntaxWebView> {
   late final WebViewController _controller;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -41,16 +42,37 @@ class _GsSyntaxWebViewState extends State<GsSyntaxWebView> {
     unawaited(_load());
   }
 
+  @override
+  void didUpdateWidget(covariant GsSyntaxWebView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.source == widget.source &&
+        oldWidget.languageId == widget.languageId &&
+        oldWidget.theme == widget.theme) {
+      return;
+    }
+    if (oldWidget.theme != widget.theme) {
+      unawaited(_controller.setBackgroundColor(widget.theme.codeBg));
+    }
+    unawaited(_load());
+  }
+
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
+    final source = widget.source;
+    final languageId = widget.languageId;
+    final css = gsSyntaxCss(widget.theme);
     final highlightJs = await rootBundle.loadString(
       'assets/syntax/highlight.min.js',
     );
+    if (!mounted || generation != _loadGeneration) {
+      return;
+    }
     await _controller.loadHtmlString(
       _buildHtml(
         highlightJs: highlightJs,
-        source: widget.source,
-        languageId: widget.languageId,
-        css: gsSyntaxCss(widget.theme),
+        source: source,
+        languageId: languageId,
+        css: css,
       ),
     );
   }
