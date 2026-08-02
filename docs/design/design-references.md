@@ -1,8 +1,11 @@
 # Gitsune design references
 
 The Mobbin-sourced mobile design research behind Gitsune's seven surfaces, with GitLab's Pajamas design system as the visual-language bar.
-Captain-approved as-is on 2026-08-01.
+Approved as a design-research snapshot on 2026-08-01.
 Source research: the gitlab-mobile design scout report (2026-08-01); screenshots in `references/` were resolved from Mobbin's public preview CDN; five references expose no public image and remain citation links.
+
+**Amended:** the blue interactive-color guidance below is superseded by `docs/decisions/0007-interactive-color-orange-over-blue.md`, and the dual-theme v1 guidance is superseded by `docs/decisions/0008-dark-mode-only-v1.md`.
+The reference observations remain as written because they document the phase-one evidence, while those ADRs own Gitsune's current decisions.
 
 **The one-line rule: GitHub Mobile decides how it moves; Pajamas decides how it looks, speaks, and what things are called.**
 

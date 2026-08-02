@@ -1,3 +1,5 @@
+# Tabs
+
 Underline tabs for sections within a screen (MR Overview/Changes/Pipelines); active indicator is brand orange.
 
 ```jsx

@@ -1,3 +1,5 @@
+# Label
+
 GitLab issue/MR label pill; `scope::value` names render the signature two-tone scoped pill automatically.
 
 ```jsx

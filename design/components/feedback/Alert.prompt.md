@@ -1,3 +1,5 @@
+# Alert
+
 Inline feedback banner for a surface-level condition — an unreachable instance URL, a failed pipeline, an offline notice. Never celebratory; copy stays plain and factual.
 
 ```jsx

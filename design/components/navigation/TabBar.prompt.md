@@ -1,3 +1,5 @@
+# Tab bar
+
 The app's four-destination liquid-glass capsule: floats above the content (which scrolls behind the blur), active item in a lighter glass pill, orange count badge. Give the screen's scroll container ~96px bottom padding for clearance.
 
 ```jsx

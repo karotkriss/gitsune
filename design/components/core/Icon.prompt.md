@@ -1,3 +1,5 @@
+# Icon
+
 Renders a glyph from GitLab's own SVG icon set (the only sanctioned glyph source); use for every icon in the product.
 
 ```jsx

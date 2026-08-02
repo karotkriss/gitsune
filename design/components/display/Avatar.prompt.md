@@ -1,3 +1,5 @@
+# Avatar
+
 Avatar for a user (circle) or project/group (rounded square); tinted-initials fallback uses Pajamas' six avatar hues.
 
 ```jsx

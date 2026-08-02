@@ -1,3 +1,5 @@
+# Button
+
 The action button. Confirm (solid brand orange) for the primary action on a screen — including Merge, which is orange, never green; danger (solid red) strictly for destructive actions.
 
 ```jsx

@@ -1,3 +1,5 @@
+# Tile
+
 Home-screen shortcut row: colored 32px container with a white GitLab glyph. Noun→color is fixed (Issues green, Merge Requests blue, To-Do List orange, Pipelines purple).
 
 ```jsx

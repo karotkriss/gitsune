@@ -1,3 +1,5 @@
+# Modal
+
 Blocking confirmation dialog (sign out, delete comment). Destructive confirm buttons are red; everything else stays orange/neutral.
 
 ```jsx

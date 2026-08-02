@@ -1,3 +1,5 @@
+# Skeleton
+
 Shimmering placeholder bar(s) shown while content loads — the offline-first app's constant companion.
 
 ```jsx

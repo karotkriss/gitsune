@@ -19,7 +19,7 @@ Building screens against an unsettled design language produces rework; settling 
 
 ## Phase 3: development (next phase)
 
-Development begins once the design system from phase two is in place.
+Development begins when this phase formally opens, with the completed design system from phase two in place as its implementation target.
 The authoritative engineering sequence for this phase is `docs/plan/roadmap.md`, with the pickable-task companion in `docs/plan/task-breakdown.md`.
 That sequence builds on the decisions in `docs/decisions/` and the technology choices in `docs/research/technology-assessment.md`.
 
