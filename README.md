@@ -31,9 +31,8 @@ See `docs/decisions/0006-strategy-and-positioning.md` for how this shapes positi
 
 ## Current status
 
-Gitsune has completed its documentation and design-system phases.
-No application code has been written, and no scaffolding exists yet.
-Development has not formally opened yet.
+Gitsune has completed its documentation and design-system phases, and development has opened.
+The Flutter project is scaffolded (`lib/core/`, `lib/features/`); feature work is in progress per `docs/plan/roadmap.md` and `docs/plan/task-breakdown.md`.
 See `docs/plan/phase-plan.md` for the full sequencing.
 
 ## How the docs are organized
