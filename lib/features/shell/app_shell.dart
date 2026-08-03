@@ -6,6 +6,7 @@ import '../../core/icons/gs_icons.dart';
 import '../../core/repository/offline_first_repository.dart';
 import '../../core/repository/recently_viewed_repository.dart';
 import '../code/data/repository_tree_repository.dart';
+import '../code/presentation/file_view_screen.dart';
 import '../code/presentation/repository_tree_screen.dart';
 import '../explore/explore_screen.dart';
 import '../home/home_screen.dart';
@@ -195,7 +196,22 @@ GoRouter buildAppRouter({
           },
         ),
       ],
-      if (repositoryTreeRepository != null)
+      if (repositoryTreeRepository != null) ...[
+        GoRoute(
+          path: '/projects/:projectId/blob',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            return FileViewScreen(
+              projectId: projectId,
+              projectPath:
+                  state.uri.queryParameters['projectPath'] ??
+                  'Project $projectId',
+              filePath: state.uri.queryParameters['path'] ?? '',
+              ref: state.uri.queryParameters['ref'] ?? '',
+              repository: repositoryTreeRepository,
+            );
+          },
+        ),
         GoRoute(
           path: '/projects/:projectId/tree',
           builder: (context, state) {
@@ -227,6 +243,16 @@ GoRouter buildAppRouter({
                   ancestorLevels: history.ancestorLevels + 1,
                 ),
               ),
+              onFileTap: (entry) => context.push(
+                Uri(
+                  path: '/projects/$projectId/blob',
+                  queryParameters: {
+                    'projectPath': projectPath,
+                    if (ref.isNotEmpty) 'ref': ref,
+                    'path': entry.path,
+                  },
+                ).toString(),
+              ),
               // Each drill-down pushed one route, so jumping to an ancestor
               // pops one route per intervening directory level.
               onAncestorTap: (ancestorPath) {
@@ -252,6 +278,7 @@ GoRouter buildAppRouter({
             );
           },
         ),
+      ],
       if (pipelinesRepository != null) ...[
         GoRoute(
           path: '/projects/:projectId/pipelines/:pipelineId',

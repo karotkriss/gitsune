@@ -12,8 +12,8 @@ import '../data/repository_tree_repository.dart';
 /// for the current [path] and the directory's entries, folders first as
 /// GitLab orders them. Tapping a folder drills one level down via
 /// [onDirectoryTap]; tapping a breadcrumb ancestor jumps back up via
-/// [onAncestorTap] (`''` is the repository root). File taps are inert until
-/// the file view lands (E9.2).
+/// [onAncestorTap] (`''` is the repository root); tapping a file opens it
+/// via [onFileTap] (the E9.2 file view).
 class RepositoryTreeScreen extends StatefulWidget {
   const RepositoryTreeScreen({
     super.key,
@@ -23,6 +23,7 @@ class RepositoryTreeScreen extends StatefulWidget {
     this.ref = '',
     this.path = '',
     this.onDirectoryTap,
+    this.onFileTap,
     this.onAncestorTap,
   });
 
@@ -37,6 +38,7 @@ class RepositoryTreeScreen extends StatefulWidget {
   final String path;
 
   final ValueChanged<RepositoryTreeEntry>? onDirectoryTap;
+  final ValueChanged<RepositoryTreeEntry>? onFileTap;
   final ValueChanged<String>? onAncestorTap;
 
   @override
@@ -149,7 +151,7 @@ class _RepositoryTreeScreenState extends State<RepositoryTreeScreen> {
                         isLast: index == entries.length - 1,
                         onTap: entries[index].entryType == 'tree'
                             ? () => widget.onDirectoryTap?.call(entries[index])
-                            : null,
+                            : () => widget.onFileTap?.call(entries[index]),
                       ),
                     ),
                   ),

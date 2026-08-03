@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
+import 'package:gitsune/features/code/presentation/file_view_screen.dart';
 import 'package:gitsune/features/shell/app_shell.dart';
 
 import '../support/fixture_repository_tree_repository.dart';
@@ -55,7 +56,7 @@ void main() {
     expect(repository.refreshedPaths, ['', 'lib', 'lib/core', 'lib/core']);
   });
 
-  testWidgets('tapping a file stays on the directory listing', (tester) async {
+  testWidgets('tapping a file opens the file view', (tester) async {
     final repository = FixtureRepositoryTreeRepository();
     final router = buildAppRouter(
       repositoryTreeRepository: repository,
@@ -70,8 +71,14 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('tree-entry-README.md')));
     await tester.pumpAndSettle();
 
+    expect(find.byType(FileViewScreen), findsOneWidget);
+    expect(find.text('README.md'), findsOneWidget);
+    expect(repository.loadedFilePaths, ['README.md']);
+
+    // Back returns to the directory listing.
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
     expect(find.text('android'), findsOneWidget);
-    expect(repository.refreshedPaths, ['']);
   });
 
   testWidgets('a direct nested route breadcrumb navigates to its ancestor', (
