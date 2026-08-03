@@ -36,9 +36,9 @@ class CommentDraftQueue {
     required this.account,
     required this.repository,
     required Stream<void> onReconnect,
-    DateTime Function() now = DateTime.now,
+    this.now = DateTime.now,
     this.retryBackoff = const Duration(seconds: 30),
-  }) : _now = now {
+  }) {
     _reconnectSubscription = onReconnect.listen(
       (_) => unawaited(_flushBestEffort()),
     );
@@ -47,8 +47,8 @@ class CommentDraftQueue {
   final AppDatabase database;
   final AccountKey account;
   final IssuesRepository repository;
+  final DateTime Function() now;
   final Duration retryBackoff;
-  final DateTime Function() _now;
 
   final _sentController = StreamController<SentCommentDraft>.broadcast();
   late final StreamSubscription<void> _reconnectSubscription;
@@ -80,7 +80,7 @@ class CommentDraftQueue {
         ..where(_accountScope(database.commentDrafts));
       final persistedId =
           (await persistedMaximum.getSingle()).read(draftId) ?? 0;
-      final now = _now().microsecondsSinceEpoch;
+      final now = this.now().microsecondsSinceEpoch;
       await database
           .into(database.commentDrafts)
           .insert(
@@ -133,7 +133,7 @@ class CommentDraftQueue {
 
   /// Sends one draft; returns whether the pass should continue.
   Future<bool> _sendDraft(CommentDraft draft) async {
-    final now = _now();
+    final now = this.now();
     if (draft.retryAfter case final retryAfter? when now.isBefore(retryAfter)) {
       return false;
     }
