@@ -11,17 +11,17 @@ class FixtureMergeRequestsRepository implements MergeRequestsRepository {
       'merge_request_142_diffs_page2',
     ],
   }) : _firstPage = _mergeRequestsFrom('merge_requests_page1'),
-      _secondPage = _mergeRequestsFrom('merge_requests_page2'),
-      _mergeRequest = _mergeRequestFrom('merge_request_142'),
-      _pipelines = _pipelinesFrom([
-        'merge_request_142_pipelines_page1',
-        'merge_request_142_pipelines_page2',
-      ]),
-      _approvals = MergeRequestApprovals.fromJson(
-        Map<String, dynamic>.from(
-          Fixtures.json('merge_request_142_approvals') as Map,
-        ),
-      );
+       _secondPage = _mergeRequestsFrom('merge_requests_page2'),
+       _mergeRequest = _mergeRequestFrom('merge_request_142'),
+       _pipelines = _pipelinesFrom([
+         'merge_request_142_pipelines_page1',
+         'merge_request_142_pipelines_page2',
+       ]),
+       _approvals = MergeRequestApprovals.fromJson(
+         Map<String, dynamic>.from(
+           Fixtures.json('merge_request_142_approvals') as Map,
+         ),
+       );
 
   final List<String> diffFixtures;
   final List<MergeRequest> _firstPage;
@@ -76,7 +76,8 @@ class FixtureMergeRequestsRepository implements MergeRequestsRepository {
       diffFixtures
           .expand((fixture) => Fixtures.json(fixture) as List)
           .map(
-            (value) => DiffFile.fromJson(Map<String, dynamic>.from(value as Map)),
+            (value) =>
+                DiffFile.fromJson(Map<String, dynamic>.from(value as Map)),
           )
           .toList(growable: false);
 }

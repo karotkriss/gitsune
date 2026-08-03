@@ -48,9 +48,6 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   The issues scope reuses `Issue`/`IssueAuthor`/`IssueLabel` from `lib/features/issues/data/issue_models.dart`; the merge-requests scope has no canonical model to reuse yet (E7.1 not landed), so `search_models.dart` defines a minimal `SearchMergeRequest` reusing `IssueAuthor`/`IssueLabel` for its author/label shape.
   Fold this into the canonical MR model once E7.1 lands rather than keeping both.
   `buildAppRouter`'s optional `searchRepository` param swaps the Explore tab's placeholder for `SearchScreen`, the same null-until-composition-root-wiring convention as `issuesRepository`/`pipelinesRepository`.
-- Diff rendering (E7.2): `GsDiffView` in `lib/core/diff/gs_diff_view.dart` is the reusable multi-file diff renderer (MR changes now, commit views later); it composes the parser (`diff_hunk_parser.dart`), the shared `DiffFile` model (`diff_file.dart`, one JSON shape for MR and commit diff endpoints), and the per-line `highlightDiffLine` engine from `lib/core/syntax/`.
-  Every row has a fixed height, so jump-to-file is pure math (`GsDiffView.offsetForFile`) over a lazy `ListView.itemExtentBuilder`; keep new row kinds fixed-height or that seam breaks.
-  The in-app size limits (`maxInAppDiffFiles`/`maxInAppDiffLines` in `diff_file.dart`, rationale in their doc comment) gate a web-fallback affordance that opens the diff's GitLab URL via `url_launcher` (the app's first external-browser dependency; the Android `<queries>` entry in `AndroidManifest.xml` supports it).
 
 ## Maintaining this file
 

@@ -78,7 +78,7 @@ class DiffFile {
 /// rendering ceiling: GitLab's own web viewer starts collapsing and
 /// truncating diffs at a similar scale, and past roughly a hundred files or
 /// five thousand diff lines a phone-width, sequentially scrolled diff stops
-/// being reviewable - the web UI's virtualized, collapsible viewer serves it
+/// being reviewable. The web UI's virtualized, collapsible viewer serves it
 /// better. Five thousand 20px rows is also a 100k-pixel scroll extent, which
 /// keeps jump-to-file offsets and scroll performance comfortably bounded.
 const int maxInAppDiffFiles = 100;
