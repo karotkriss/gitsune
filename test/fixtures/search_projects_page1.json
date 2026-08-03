@@ -1,0 +1,20 @@
+[
+  {
+    "id": 7,
+    "name": "app",
+    "name_with_namespace": "gitsune / app",
+    "description": "The Gitsune mobile client.",
+    "avatar_url": null,
+    "star_count": 12,
+    "web_url": "https://gitlab.example.com/gitsune/app"
+  },
+  {
+    "id": 9,
+    "name": "offline-sync",
+    "name_with_namespace": "gitsune / offline-sync",
+    "description": "Shared offline-first sync primitives.",
+    "avatar_url": null,
+    "star_count": 3,
+    "web_url": "https://gitlab.example.com/gitsune/offline-sync"
+  }
+]
