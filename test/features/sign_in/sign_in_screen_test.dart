@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
@@ -40,6 +42,37 @@ void main() {
     expect(find.textContaining('try again'), findsNothing);
   });
 
+  testWidgets('ignores keyboard submissions while sign-in is active', (
+    tester,
+  ) async {
+    final completion = Completer<void>();
+    var signIns = 0;
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signIn: () {
+            signIns++;
+            return completion.future;
+          },
+        ),
+      ),
+    );
+
+    final submit = tester
+        .widget<TextField>(find.byType(TextField))
+        .onSubmitted!;
+    submit('gitlab.com');
+    submit('gitlab.com');
+    await tester.pump();
+
+    expect(signIns, 1);
+    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
+
+    completion.complete();
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isTrue);
+  });
+
   testWidgets('a URL failing the basic check shows an inline error and '
       'never signs in', (tester) async {
     await tester.pumpWidget(
@@ -61,8 +94,9 @@ void main() {
     );
   });
 
-  testWidgets('an unreachable or non-GitLab instance shows an inline error',
-      (tester) async {
+  testWidgets('an unreachable or non-GitLab instance shows an inline error', (
+    tester,
+  ) async {
     Uri? probed;
     await tester.pumpWidget(
       app(
@@ -103,8 +137,9 @@ void main() {
     expect(find.textContaining('valid instance URL'), findsNothing);
   });
 
-  testWidgets('a failed OAuth attempt surfaces inline and can be retried',
-      (tester) async {
+  testWidgets('a failed OAuth attempt surfaces inline and can be retried', (
+    tester,
+  ) async {
     var attempts = 0;
     await tester.pumpWidget(
       app(
@@ -119,10 +154,7 @@ void main() {
 
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
-    expect(
-      find.text('Sign-in was not completed. Try again.'),
-      findsOneWidget,
-    );
+    expect(find.text('Sign-in was not completed. Try again.'), findsOneWidget);
 
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();

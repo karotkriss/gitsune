@@ -36,6 +36,7 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> _continue() async {
+    if (_busy) return;
     final base = parseInstanceUrl(_instanceController.text);
     if (base == null) {
       setState(() => _error = 'Enter a valid instance URL, like gitlab.com.');
@@ -123,6 +124,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     const SizedBox(height: 6),
                     TextField(
                       controller: _instanceController,
+                      enabled: !_busy,
                       style: gs.mono.copyWith(fontSize: 15),
                       keyboardType: TextInputType.url,
                       autocorrect: false,
@@ -130,7 +132,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       onChanged: (_) {
                         if (_error != null) setState(() => _error = null);
                       },
-                      onSubmitted: (_) => _continue(),
+                      onSubmitted: _busy ? null : (_) => _continue(),
                       decoration: InputDecoration(
                         prefixIcon: Padding(
                           padding: const EdgeInsets.all(12),
