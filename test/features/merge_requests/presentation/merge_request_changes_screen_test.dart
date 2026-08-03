@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
+import 'package:gitsune/features/merge_requests/data/merge_request_models.dart';
 import 'package:gitsune/features/merge_requests/presentation/merge_request_changes_screen.dart';
 
 import '../support/fixture_merge_requests_repository.dart';
@@ -20,6 +21,13 @@ Widget _screen({
     openWebUrl: openWebUrl,
   ),
 );
+
+class _FailingDetailRepository extends FixtureMergeRequestsRepository {
+  @override
+  Future<MergeRequest> loadMergeRequest(int projectId, int mergeIid) async {
+    throw StateError('detail unavailable');
+  }
+}
 
 void main() {
   testWidgets('jump-to-file scrolls the chosen file into view', (tester) async {
@@ -73,5 +81,15 @@ void main() {
         'https://gitlab.example.com/gitsune/app/-/merge_requests/142/diffs',
       ),
     ]);
+  });
+
+  testWidgets('normal diff renders without loading merge request details', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_screen(repository: _FailingDetailRepository()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('lib/src/instance_switcher.dart'), findsOneWidget);
+    expect(find.text('Unable to load these changes.'), findsNothing);
   });
 }

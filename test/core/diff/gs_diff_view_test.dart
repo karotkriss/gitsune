@@ -10,8 +10,10 @@ List<DiffFile> _filesFrom(String fixture) => (Fixtures.json(fixture) as List)
     .map((value) => DiffFile.fromJson(Map<String, dynamic>.from(value as Map)))
     .toList(growable: false);
 
-Widget _app(Widget child) =>
-    MaterialApp(theme: buildAppTheme(), home: Scaffold(body: child));
+Widget _app(Widget child) => MaterialApp(
+  theme: buildAppTheme(),
+  home: Scaffold(body: child),
+);
 
 /// Every leaf [TextSpan] under the rendered diff, flattened.
 List<TextSpan> _spans(WidgetTester tester) {
@@ -85,5 +87,33 @@ void main() {
 
     await tester.tap(find.text('Open in browser'));
     expect(opened, 1);
+  });
+
+  testWidgets('large single-file diff builds only visible row chunks', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 500);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final source = _filesFrom('merge_request_142_diffs_page1').first;
+    final hunk = source.hunks.first;
+    final largeFile = DiffFile(
+      oldPath: source.oldPath,
+      newPath: source.newPath,
+      newFile: source.newFile,
+      renamedFile: source.renamedFile,
+      deletedFile: source.deletedFile,
+      hunks: List.filled(maxInAppDiffLines ~/ hunk.lines.length, hunk),
+    );
+
+    await tester.pumpWidget(
+      _app(GsDiffView(files: [largeFile], onOpenInBrowser: () {})),
+    );
+
+    expect(largeFile.lineCount, greaterThan(4000));
+    expect(largeFile.lineCount, lessThanOrEqualTo(maxInAppDiffLines));
+    expect(find.byType(RichText).evaluate().length, lessThan(200));
   });
 }

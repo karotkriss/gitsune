@@ -8,7 +8,7 @@ import '../theme/app_theme.dart';
 import 'diff_file.dart';
 import 'diff_hunk_parser.dart';
 
-/// Renders a multi-file unified diff, one lazily built block per file, with
+/// Renders a multi-file unified diff in lazily built row chunks, with
 /// per-line added/removed/context backgrounds and per-line syntax
 /// highlighting from the token layer.
 ///
@@ -40,6 +40,7 @@ class GsDiffView extends StatelessWidget {
   static const double _hunkHeaderHeight = 24;
   static const double _lineHeight = 20;
   static const double _fileGap = 12;
+  static const int _rowsPerChunk = 40;
 
   /// The fixed vertical extent of [file]'s rendered block.
   static double extentForFile(DiffFile file) {
@@ -69,100 +70,194 @@ class GsDiffView extends StatelessWidget {
     }
     final gs = Theme.of(context).extension<GsTheme>()!;
     final syntaxTheme = gsSyntaxTextTheme(gs);
+    final items = _buildItems(files);
     return ListView.builder(
       controller: controller,
       padding: EdgeInsets.zero,
-      itemCount: files.length,
-      itemExtentBuilder: (index, dimensions) => extentForFile(files[index]),
-      itemBuilder: (context, index) => _DiffFileBlock(
-        file: files[index],
-        syntaxTheme: syntaxTheme,
+      itemCount: items.length,
+      itemExtentBuilder: (index, dimensions) => items[index].extent,
+      itemBuilder: (context, index) => items[index].build(context, syntaxTheme),
+    );
+  }
+
+  static List<_DiffListItem> _buildItems(List<DiffFile> files) {
+    final items = <_DiffListItem>[];
+    for (final file in files) {
+      items.add(_FileHeaderItem(file));
+      final languageId = detectLanguageId(file.languagePath);
+      var rows = <_DiffContentRow>[];
+
+      void flushRows() {
+        if (rows.isEmpty) return;
+        items.add(_DiffRowsItem(rows, languageId));
+        rows = <_DiffContentRow>[];
+      }
+
+      for (final hunk in file.hunks) {
+        if (rows.length >= _rowsPerChunk) flushRows();
+        rows.add(_HunkContentRow(hunk));
+        for (final line in hunk.lines) {
+          if (rows.length >= _rowsPerChunk) flushRows();
+          rows.add(_LineContentRow(line));
+        }
+        if (rows.length >= _rowsPerChunk) flushRows();
+      }
+      flushRows();
+      items.add(const _FileGapItem());
+    }
+    return items;
+  }
+}
+
+sealed class _DiffListItem {
+  const _DiffListItem();
+
+  double get extent;
+
+  Widget build(BuildContext context, Map<String, TextStyle> syntaxTheme);
+}
+
+class _FileHeaderItem extends _DiffListItem {
+  const _FileHeaderItem(this.file);
+
+  final DiffFile file;
+
+  @override
+  double get extent => GsDiffView._fileHeaderHeight;
+
+  @override
+  Widget build(BuildContext context, Map<String, TextStyle> syntaxTheme) {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    final changeKind = file.changeKindLabel;
+    return SizedBox(
+      height: GsDiffView._fileHeaderHeight,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                file.displayPath,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: gs.mono.copyWith(
+                  color: gs.textHeading,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (changeKind != null) ...[
+              const SizedBox(width: 8),
+              Text(
+                changeKind,
+                style: gs.caption.copyWith(
+                  color: switch (changeKind) {
+                    'new' => gs.textSuccess,
+                    'deleted' => gs.textDanger,
+                    _ => gs.textSubtle,
+                  },
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _DiffFileBlock extends StatelessWidget {
-  const _DiffFileBlock({required this.file, required this.syntaxTheme});
+class _DiffRowsItem extends _DiffListItem {
+  const _DiffRowsItem(this.rows, this.languageId);
 
-  final DiffFile file;
-  final Map<String, TextStyle> syntaxTheme;
+  final List<_DiffContentRow> rows;
+  final String languageId;
 
   @override
-  Widget build(BuildContext context) {
+  double get extent => rows.fold(0, (sum, row) => sum + row.extent);
+
+  @override
+  Widget build(BuildContext context, Map<String, TextStyle> syntaxTheme) {
     final gs = Theme.of(context).extension<GsTheme>()!;
-    final languageId = detectLanguageId(file.languagePath);
-    final changeKind = file.changeKindLabel;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          height: GsDiffView._fileHeaderHeight,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    file.displayPath,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: gs.mono.copyWith(
-                      color: gs.textHeading,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                if (changeKind != null) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    changeKind,
-                    style: gs.caption.copyWith(
-                      color: switch (changeKind) {
-                        'new' => gs.textSuccess,
-                        'deleted' => gs.textDanger,
-                        _ => gs.textSubtle,
-                      },
-                    ),
-                  ),
+    return ColoredBox(
+      color: gs.codeBg,
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: IntrinsicWidth(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final row in rows)
+                    row.build(context, languageId, syntaxTheme),
                 ],
-              ],
-            ),
-          ),
-        ),
-        Expanded(
-          child: ColoredBox(
-            color: gs.codeBg,
-            child: LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
-                  child: IntrinsicWidth(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (final hunk in file.hunks) ...[
-                          _HunkHeaderRow(hunk: hunk),
-                          for (final line in hunk.lines)
-                            _DiffLineRow(
-                              line: line,
-                              languageId: languageId,
-                              syntaxTheme: syntaxTheme,
-                            ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
               ),
             ),
           ),
         ),
-        const SizedBox(height: GsDiffView._fileGap),
-      ],
+      ),
     );
   }
+}
+
+class _FileGapItem extends _DiffListItem {
+  const _FileGapItem();
+
+  @override
+  double get extent => GsDiffView._fileGap;
+
+  @override
+  Widget build(BuildContext context, Map<String, TextStyle> syntaxTheme) =>
+      const SizedBox(height: GsDiffView._fileGap);
+}
+
+sealed class _DiffContentRow {
+  const _DiffContentRow();
+
+  double get extent;
+
+  Widget build(
+    BuildContext context,
+    String languageId,
+    Map<String, TextStyle> syntaxTheme,
+  );
+}
+
+class _HunkContentRow extends _DiffContentRow {
+  const _HunkContentRow(this.hunk);
+
+  final DiffHunk hunk;
+
+  @override
+  double get extent => GsDiffView._hunkHeaderHeight;
+
+  @override
+  Widget build(
+    BuildContext context,
+    String languageId,
+    Map<String, TextStyle> syntaxTheme,
+  ) => _HunkHeaderRow(hunk: hunk);
+}
+
+class _LineContentRow extends _DiffContentRow {
+  const _LineContentRow(this.line);
+
+  final DiffLine line;
+
+  @override
+  double get extent => GsDiffView._lineHeight;
+
+  @override
+  Widget build(
+    BuildContext context,
+    String languageId,
+    Map<String, TextStyle> syntaxTheme,
+  ) => _DiffLineRow(
+    line: line,
+    languageId: languageId,
+    syntaxTheme: syntaxTheme,
+  );
 }
 
 class _HunkHeaderRow extends StatelessWidget {

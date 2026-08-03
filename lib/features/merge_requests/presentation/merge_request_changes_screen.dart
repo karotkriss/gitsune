@@ -69,10 +69,12 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
         widget.projectId,
         widget.mergeIid,
       );
-      _webUrl ??= (await widget.repository.loadMergeRequest(
-        widget.projectId,
-        widget.mergeIid,
-      )).webUrl;
+      if (_webUrl == null && isOversizedDiff(files)) {
+        _webUrl = (await widget.repository.loadMergeRequest(
+          widget.projectId,
+          widget.mergeIid,
+        )).webUrl;
+      }
       if (!mounted) return;
       setState(() {
         _files = files;
@@ -126,10 +128,10 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
   }
 
   void _jumpToFile(List<DiffFile> files, int index) {
-    final offset = GsDiffView.offsetForFile(files, index).clamp(
-      0.0,
-      _scrollController.position.maxScrollExtent,
-    );
+    final offset = GsDiffView.offsetForFile(
+      files,
+      index,
+    ).clamp(0.0, _scrollController.position.maxScrollExtent);
     _scrollController.animateTo(
       offset,
       duration: const Duration(milliseconds: 250),
