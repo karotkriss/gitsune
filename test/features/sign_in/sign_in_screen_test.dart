@@ -1,0 +1,147 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:gitsune/core/theme/app_theme.dart';
+import 'package:gitsune/features/shell/app_shell.dart';
+import 'package:gitsune/features/sign_in/sign_in_screen.dart';
+
+Widget app(SignInScreen screen) =>
+    MaterialApp(theme: buildAppTheme(), home: screen);
+
+void main() {
+  testWidgets('shows the instance field pre-filled with gitlab.com and '
+      'no credential fields', (tester) async {
+    await tester.pumpWidget(app(const SignInScreen()));
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, 'gitlab.com');
+    expect(field.obscureText, isFalse);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
+    expect(find.textContaining('assword'), findsNothing);
+    expect(find.textContaining('sername'), findsNothing);
+  });
+
+  testWidgets('Continue on gitlab.com starts OAuth directly, without '
+      'probing', (tester) async {
+    var signIns = 0;
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signIn: () async => signIns++,
+          probeInstance: (_) async => fail('gitlab.com must not be probed'),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(signIns, 1);
+    expect(find.textContaining('try again'), findsNothing);
+  });
+
+  testWidgets('a URL failing the basic check shows an inline error and '
+      'never signs in', (tester) async {
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signIn: () async => fail('must not sign in'),
+          probeInstance: (_) async => fail('must not probe'),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'not a url');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Enter a valid instance URL, like gitlab.com.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('an unreachable or non-GitLab instance shows an inline error',
+      (tester) async {
+    Uri? probed;
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signIn: () async => fail('must not sign in'),
+          probeInstance: (base) async {
+            probed = base;
+            return false;
+          },
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'gitlab.example.com');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(probed, Uri.parse('https://gitlab.example.com'));
+    expect(
+      find.text(
+        'gitlab.example.com does not answer as a GitLab instance. '
+        'Check the address and try again.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('editing the field clears the inline error', (tester) async {
+    await tester.pumpWidget(app(const SignInScreen()));
+
+    await tester.enterText(find.byType(TextField), 'not a url');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('valid instance URL'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'gitlab.com');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('valid instance URL'), findsNothing);
+  });
+
+  testWidgets('a failed OAuth attempt surfaces inline and can be retried',
+      (tester) async {
+    var attempts = 0;
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signIn: () async {
+            attempts++;
+            if (attempts == 1) throw StateError('browser dismissed');
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Sign-in was not completed. Try again.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(attempts, 2);
+    expect(find.textContaining('try again'), findsNothing);
+  });
+
+  testWidgets('the Profile tab opens the sign-in screen', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: buildAppTheme(),
+        routerConfig: buildAppRouter(initialLocation: '/profile'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sign in'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SignInScreen), findsOneWidget);
+  });
+}
