@@ -5,8 +5,8 @@
 ///
 /// See the "Offline-first through the repository layer" operating principle
 /// in `docs/plan/roadmap.md`. This is intentionally not a framework: each
-/// feature repository (issues, MRs, todos, ...) implements these two methods
-/// itself, against whatever query and endpoint shape fits its entity.
+/// cached feature repository implements these two methods itself, against
+/// whatever query and endpoint shape fits its entity.
 abstract class OfflineFirstRepository<T> {
   /// The reactive database read the UI subscribes to.
   Stream<T> watch();

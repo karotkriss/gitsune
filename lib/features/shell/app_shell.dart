@@ -8,6 +8,10 @@ import '../issues/data/issue_models.dart';
 import '../issues/data/issues_repository.dart';
 import '../issues/presentation/issue_detail_screen.dart';
 import '../issues/presentation/issue_list_screen.dart';
+import '../merge_requests/data/merge_request_models.dart';
+import '../merge_requests/data/merge_requests_repository.dart';
+import '../merge_requests/presentation/merge_request_detail_screen.dart';
+import '../merge_requests/presentation/merge_request_list_screen.dart';
 import '../pipelines/data/pipelines_repository.dart';
 import '../pipelines/presentation/pipeline_detail_screen.dart';
 import '../profile/profile_screen.dart';
@@ -19,13 +23,14 @@ import '../todos/todos_screen.dart';
 /// A fresh router per app instance (rather than a shared global) so app
 /// restarts and tests never inherit a previous instance's location.
 ///
-/// [issuesRepository] and [pipelinesRepository] enable their project routes
-/// once the account and project composition root owns a signed-in GitLab
-/// client. Keeping those dependencies optional lets the shell boot before E2's
-/// account wiring lands without hiding the route contracts exposed to project
+/// The optional feature repositories enable their project routes once the
+/// account and project composition root owns a signed-in GitLab client.
+/// Keeping those dependencies optional lets the shell boot before E2's account
+/// wiring lands without hiding the route contracts exposed to project
 /// navigation.
 GoRouter buildAppRouter({
   IssuesRepository? issuesRepository,
+  MergeRequestsRepository? mergeRequestsRepository,
   PipelinesRepository? pipelinesRepository,
   String initialLocation = '/home',
 }) {
@@ -125,6 +130,49 @@ GoRouter buildAppRouter({
             );
           },
         ),
+      if (mergeRequestsRepository != null) ...[
+        GoRoute(
+          path: '/projects/:projectId/merge_requests',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            final projectPath =
+                state.uri.queryParameters['projectPath'] ??
+                'Project $projectId';
+            return MergeRequestListScreen(
+              projectId: projectId,
+              projectPath: projectPath,
+              repository: mergeRequestsRepository,
+              onMergeRequestTap: (mergeRequest) => context.push(
+                Uri(
+                  path:
+                      '/projects/$projectId/merge_requests/'
+                      '${mergeRequest.iid}',
+                  queryParameters: {'projectPath': projectPath},
+                ).toString(),
+                extra: mergeRequest,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/projects/:projectId/merge_requests/:mergeIid',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            final projectPath =
+                state.uri.queryParameters['projectPath'] ??
+                'Project $projectId';
+            return MergeRequestDetailScreen(
+              projectId: projectId,
+              projectPath: projectPath,
+              mergeIid: int.parse(state.pathParameters['mergeIid']!),
+              repository: mergeRequestsRepository,
+              initialMergeRequest: state.extra is MergeRequest
+                  ? state.extra! as MergeRequest
+                  : null,
+            );
+          },
+        ),
+      ],
     ],
   );
 }

@@ -1,0 +1,48 @@
+[
+  {
+    "id": 50142,
+    "project_id": 7,
+    "iid": 142,
+    "title": "Add instance switcher sheet",
+    "description": "Adds a compact account switcher for multi-instance review.",
+    "state": "opened",
+    "draft": false,
+    "author": {
+      "id": 18,
+      "username": "ade",
+      "name": "Ade Ogunleye",
+      "avatar_url": null
+    },
+    "source_branch": "feat/instance-switcher",
+    "target_branch": "main",
+    "created_at": "2026-07-30T09:00:00.000Z",
+    "updated_at": "2026-08-02T08:00:00.000Z",
+    "user_notes_count": 5,
+    "labels": ["workflow::in review", "mobile"],
+    "changes_count": "4",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/merge_requests/142"
+  },
+  {
+    "id": 50141,
+    "project_id": 7,
+    "iid": 141,
+    "title": "Cache recently viewed issues",
+    "description": "",
+    "state": "merged",
+    "draft": false,
+    "author": {
+      "id": 19,
+      "username": "priya",
+      "name": "Priya Sharma",
+      "avatar_url": null
+    },
+    "source_branch": "feat/issue-cache",
+    "target_branch": "main",
+    "created_at": "2026-07-26T12:00:00.000Z",
+    "updated_at": "2026-08-01T10:00:00.000Z",
+    "user_notes_count": 2,
+    "labels": ["feature"],
+    "changes_count": "7",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/merge_requests/141"
+  }
+]
