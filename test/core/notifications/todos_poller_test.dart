@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -13,7 +14,8 @@ import '../../support/fake_gitlab_server.dart';
 import '../../support/fixtures.dart';
 
 class RecordingNotifier implements TodoNotifier {
-  final shown = <({AccountKey account, int todoId, String title, String body})>[];
+  final shown =
+      <({AccountKey account, int todoId, String title, String body})>[];
 
   @override
   Future<void> showNewTodo({
@@ -88,18 +90,21 @@ void main() {
     notifier: notifier,
   );
 
-  test('the first poll seeds ETag and last-seen state without notifying', () async {
-    await createPoller().poll();
+  test(
+    'the first poll seeds ETag and last-seen state without notifying',
+    () async {
+      await createPoller().poll();
 
-    expect(endpoint.receivedIfNoneMatch, [null]);
-    expect(notifier.shown, isEmpty);
+      expect(endpoint.receivedIfNoneMatch, [null]);
+      expect(notifier.shown, isEmpty);
 
-    final state = await db.select(db.todoPollStates).getSingle();
-    expect(state.instanceHost, account.instanceHost);
-    expect(state.accountId, account.accountId);
-    expect(state.etag, 'W/"v1"');
-    expect(jsonDecode(state.seenTodoIds), [102, 101]);
-  });
+      final state = await db.select(db.todoPollStates).getSingle();
+      expect(state.instanceHost, account.instanceHost);
+      expect(state.accountId, account.accountId);
+      expect(state.etag, 'W/"v1"');
+      expect(jsonDecode(state.seenTodoIds), [102, 101]);
+    },
+  );
 
   test('the persisted ETag is sent as If-None-Match and a 304 stays quiet '
       '(even across poller instances)', () async {
@@ -116,42 +121,44 @@ void main() {
     expect(state.etag, 'W/"v1"');
   });
 
-  test('a 200 with a new to-do fires exactly one notification for it', () async {
-    final poller = createPoller();
-    await poller.poll();
+  test(
+    'a 200 with a new to-do fires exactly one notification for it',
+    () async {
+      final poller = createPoller();
+      await poller.poll();
 
-    endpoint.etag = 'W/"v2"';
-    endpoint.todos = [
-      {
-        'id': 103,
-        'author': {'name': 'Priya Sharma', 'username': 'priya'},
-        'action_name': 'directly_addressed',
-        'target_type': 'Issue',
-        'target': {'iid': 240, 'title': 'Poller loses ETag on restart'},
-        'target_url':
-            'https://gitlab.example.com/gitsune/app/-/issues/240',
-        'body': 'Priya mentioned you',
-        'state': 'pending',
-        'created_at': '2026-08-01T09:00:00.000Z',
-      },
-      ...endpoint.todos,
-    ];
-    await poller.poll();
+      endpoint.etag = 'W/"v2"';
+      endpoint.todos = [
+        {
+          'id': 103,
+          'author': {'name': 'Priya Sharma', 'username': 'priya'},
+          'action_name': 'directly_addressed',
+          'target_type': 'Issue',
+          'target': {'iid': 240, 'title': 'Poller loses ETag on restart'},
+          'target_url': 'https://gitlab.example.com/gitsune/app/-/issues/240',
+          'body': 'Priya mentioned you',
+          'state': 'pending',
+          'created_at': '2026-08-01T09:00:00.000Z',
+        },
+        ...endpoint.todos,
+      ];
+      await poller.poll();
 
-    expect(notifier.shown, hasLength(1));
-    final shown = notifier.shown.single;
-    expect(shown.account, account);
-    expect(shown.todoId, 103);
-    expect(shown.title, 'Priya mentioned you');
-    expect(shown.body, 'Poller loses ETag on restart');
+      expect(notifier.shown, hasLength(1));
+      final shown = notifier.shown.single;
+      expect(shown.account, account);
+      expect(shown.todoId, 103);
+      expect(shown.title, 'Priya mentioned you');
+      expect(shown.body, 'Poller loses ETag on restart');
 
-    // The new to-do is now last-seen: polling the same body again (fresh
-    // ETag, so no 304 shortcut) must not re-notify.
-    endpoint.etag = 'W/"v3"';
-    await poller.poll();
-    expect(notifier.shown, hasLength(1));
-    expect(endpoint.receivedIfNoneMatch, [null, 'W/"v1"', 'W/"v2"']);
-  });
+      // The new to-do is now last-seen: polling the same body again (fresh
+      // ETag, so no 304 shortcut) must not re-notify.
+      endpoint.etag = 'W/"v3"';
+      await poller.poll();
+      expect(notifier.shown, hasLength(1));
+      expect(endpoint.receivedIfNoneMatch, [null, 'W/"v1"', 'W/"v2"']);
+    },
+  );
 
   test('poll state is account-scoped: one account never notifies for or '
       'consumes another\'s state', () async {
@@ -175,7 +182,9 @@ void main() {
     endpoint.etag = 'W/"v2"';
     endpoint.todos = [
       ...endpoint.todos,
-      (Fixtures.json('todos_page2') as List<dynamic>).cast<Map<String, dynamic>>().single,
+      (Fixtures.json('todos_page2') as List<dynamic>)
+          .cast<Map<String, dynamic>>()
+          .single,
     ];
     await createPoller().poll();
     expect(notifier.shown, hasLength(1));
@@ -201,7 +210,9 @@ void main() {
   test('TimerPollScheduler polls on its interval until stopped', () {
     fakeAsync((async) {
       var polls = 0;
-      final scheduler = TimerPollScheduler(interval: const Duration(minutes: 5));
+      final scheduler = TimerPollScheduler(
+        interval: const Duration(minutes: 5),
+      );
 
       scheduler.start(() async => polls++);
       async.elapse(const Duration(minutes: 16));
@@ -210,6 +221,38 @@ void main() {
       scheduler.stop();
       async.elapse(const Duration(minutes: 30));
       expect(polls, 3);
+    });
+  });
+
+  test('TimerPollScheduler serializes polls and recovers from errors', () {
+    fakeAsync((async) {
+      final firstPoll = Completer<void>();
+      var polls = 0;
+      final scheduler = TimerPollScheduler(
+        interval: const Duration(minutes: 5),
+      );
+
+      scheduler.start(() {
+        polls++;
+        return switch (polls) {
+          1 => firstPoll.future,
+          2 => Future<void>.error(StateError('poll failed')),
+          _ => Future<void>.value(),
+        };
+      });
+
+      async.elapse(const Duration(minutes: 15));
+      expect(polls, 1);
+
+      firstPoll.complete();
+      async.flushMicrotasks();
+      async.elapse(const Duration(minutes: 5));
+      expect(polls, 2);
+
+      async.flushMicrotasks();
+      async.elapse(const Duration(minutes: 5));
+      expect(polls, 3);
+      scheduler.stop();
     });
   });
 

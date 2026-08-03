@@ -34,17 +34,34 @@ class TimerPollScheduler implements PollScheduler {
 
   final Duration interval;
   Timer? _timer;
+  bool _pollInProgress = false;
 
   @override
   void start(Future<void> Function() poll) {
     stop();
-    _timer = Timer.periodic(interval, (_) => poll());
+    _timer = Timer.periodic(interval, (_) {
+      if (_pollInProgress) {
+        return;
+      }
+      _pollInProgress = true;
+      unawaited(_runPoll(poll));
+    });
   }
 
   @override
   void stop() {
     _timer?.cancel();
     _timer = null;
+  }
+
+  Future<void> _runPoll(Future<void> Function() poll) async {
+    try {
+      await poll();
+    } on Object {
+      return;
+    } finally {
+      _pollInProgress = false;
+    }
   }
 }
 
@@ -100,8 +117,7 @@ class TodosPoller {
       return;
     }
 
-    final items = (response.data as List<dynamic>)
-        .cast<Map<String, dynamic>>();
+    final items = (response.data as List<dynamic>).cast<Map<String, dynamic>>();
     final fetchedIds = <int>[for (final item in items) item['id'] as int];
 
     if (state != null) {
@@ -118,7 +134,8 @@ class TodosPoller {
           todoId: item['id'] as int,
           title: item['body'] as String? ?? item['action_name'] as String,
           body:
-              target?['title'] as String? ?? item['target_url'] as String? ??
+              target?['title'] as String? ??
+              item['target_url'] as String? ??
               '',
         );
       }
