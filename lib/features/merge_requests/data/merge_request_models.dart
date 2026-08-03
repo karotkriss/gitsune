@@ -68,6 +68,26 @@ class MergeRequest {
 
   String get reference => '!$iid';
 
+  /// The API-shaped JSON [fromJson] reads, for the recently-viewed cache.
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'project_id': projectId,
+    'iid': iid,
+    'title': title,
+    'description': description,
+    'state': state.name,
+    'draft': draft,
+    'author': author.toJson(),
+    'source_branch': sourceBranch,
+    'target_branch': targetBranch,
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+    'user_notes_count': userNotesCount,
+    'labels': labels,
+    'changes_count': changesCount,
+    'web_url': webUrl,
+  };
+
   String get displayStateLabel => draft ? 'Draft' : state.label;
 
   String get changedFilesLabel => switch (changesCount) {
@@ -119,6 +139,13 @@ class MergeRequestAuthor {
   final String username;
   final String name;
   final String? avatarUrl;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'username': username,
+    'name': name,
+    'avatar_url': avatarUrl,
+  };
 
   String get initials {
     final words = name.trim().split(RegExp(r'\s+'));

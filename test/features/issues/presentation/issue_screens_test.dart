@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/io.dart';
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gitsune/core/database/app_database.dart';
 import 'package:gitsune/core/markdown/gs_markdown.dart';
 import 'package:gitsune/core/network/account_key.dart';
 import 'package:gitsune/core/network/gitlab_client.dart';
+import 'package:gitsune/core/repository/recently_viewed_repository.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/issues/data/issue_models.dart';
 import 'package:gitsune/features/issues/data/issues_repository.dart';
@@ -401,6 +404,44 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.updateCalls.last.assigneeIds?.toSet(), {12, 13});
+  });
+
+  testWidgets('a recently viewed issue renders offline from the cache', (
+    tester,
+  ) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final cache = RecentlyViewedCache(
+      database: db,
+      account: const AccountKey(
+        instanceHost: 'gitlab.example.com',
+        accountId: 'alice',
+      ),
+    );
+    await cache.put(
+      RecentlyViewedType.issue,
+      7,
+      142,
+      jsonEncode(Fixtures.json('issue_142')),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: _OfflineIssuesRepository(),
+          recentlyViewedCache: cache,
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Keep draft comments after reconnecting'), findsOneWidget);
+    expect(find.text('Unable to refresh this issue.'), findsOneWidget);
   });
 
   testWidgets('a stale issue refresh cannot overwrite committed triage', (
@@ -1197,3 +1238,16 @@ Future<void> _waitForHttp<T>(WidgetTester tester, Future<T> future) async {
 }
 
 class _LoopbackHttpOverrides extends HttpOverrides {}
+
+/// A repository whose reads fail the way an offline device's would.
+class _OfflineIssuesRepository extends FixtureIssuesRepository {
+  @override
+  Future<Issue> loadIssue(int projectId, int issueIid) async {
+    throw const SocketException('offline');
+  }
+
+  @override
+  Future<IssueNotePage> loadFirstNotesPage(int projectId, int issueIid) async {
+    throw const SocketException('offline');
+  }
+}

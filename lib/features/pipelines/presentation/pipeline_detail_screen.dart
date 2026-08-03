@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/ci/ci_status.dart';
 import '../../../core/ci/ci_status_badge.dart';
 import '../../../core/icons/gs_icons.dart';
+import '../../../core/repository/recently_viewed_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/pipeline_models.dart';
 import '../data/pipelines_repository.dart';
@@ -33,6 +34,7 @@ class PipelineDetailScreen extends StatefulWidget {
     required this.projectPath,
     required this.pipelineId,
     required this.repository,
+    this.recentlyViewedCache,
     this.onJobTap,
   });
 
@@ -40,6 +42,10 @@ class PipelineDetailScreen extends StatefulWidget {
   final String projectPath;
   final int pipelineId;
   final PipelinesRepository repository;
+
+  /// Serves this pipeline offline after a previous view; null leaves the
+  /// screen network-only until the composition root wires the cache.
+  final RecentlyViewedCache? recentlyViewedCache;
 
   /// Called when a job row is tapped; null leaves the rows display-only.
   final void Function(Pipeline pipeline, PipelineJob job)? onJobTap;
@@ -56,10 +62,12 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
   int _loadGeneration = 0;
   int _mutationRevision = 0;
   final _pendingJobIds = <int>{};
+  RecentItemRepository<PipelineDetails>? _recentPipeline;
 
   @override
   void initState() {
     super.initState();
+    _rebuildRecentPipeline();
     _load();
   }
 
@@ -72,8 +80,27 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
       _screenGeneration++;
       _details = null;
       _pendingJobIds.clear();
+      _rebuildRecentPipeline();
       _load();
     }
+  }
+
+  void _rebuildRecentPipeline() {
+    final cache = widget.recentlyViewedCache;
+    _recentPipeline = cache == null
+        ? null
+        : RecentItemRepository(
+            cache: cache,
+            type: RecentlyViewedType.pipeline,
+            projectId: widget.projectId,
+            itemId: widget.pipelineId,
+            fetch: () => widget.repository.loadPipeline(
+              widget.projectId,
+              widget.pipelineId,
+            ),
+            decode: PipelineDetails.fromJson,
+            encode: (details) => details.toJson(),
+          );
   }
 
   Future<void> _load() async {
@@ -84,11 +111,28 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
       _loading = true;
       _failed = false;
     });
+    final recent = _recentPipeline;
+    if (recent != null && _details == null) {
+      // Stale-while-revalidate: serve the cached pipeline immediately while
+      // the network refresh below continues in the background.
+      final cached = await recent.readCached();
+      if (!mounted ||
+          screenGeneration != _screenGeneration ||
+          loadGeneration != _loadGeneration ||
+          mutationRevision != _mutationRevision) {
+        return;
+      }
+      if (cached != null && _details == null) {
+        setState(() => _details = cached);
+      }
+    }
     try {
-      final details = await widget.repository.loadPipeline(
-        widget.projectId,
-        widget.pipelineId,
-      );
+      final details = recent != null
+          ? await recent.load()
+          : await widget.repository.loadPipeline(
+              widget.projectId,
+              widget.pipelineId,
+            );
       if (!mounted ||
           screenGeneration != _screenGeneration ||
           loadGeneration != _loadGeneration) {

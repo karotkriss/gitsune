@@ -2654,6 +2654,490 @@ class RepositoryTreeEntriesCompanion
   }
 }
 
+class $RecentlyViewedItemsTable extends RecentlyViewedItems
+    with TableInfo<$RecentlyViewedItemsTable, RecentlyViewedItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RecentlyViewedItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _itemTypeMeta = const VerificationMeta(
+    'itemType',
+  );
+  @override
+  late final GeneratedColumn<String> itemType = GeneratedColumn<String>(
+    'item_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
+  @override
+  late final GeneratedColumn<int> projectId = GeneratedColumn<int>(
+    'project_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<int> itemId = GeneratedColumn<int>(
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastViewedAtMeta = const VerificationMeta(
+    'lastViewedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastViewedAt = GeneratedColumn<DateTime>(
+    'last_viewed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    itemType,
+    projectId,
+    itemId,
+    payload,
+    lastViewedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'recently_viewed_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RecentlyViewedItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('item_type')) {
+      context.handle(
+        _itemTypeMeta,
+        itemType.isAcceptableOrUnknown(data['item_type']!, _itemTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemTypeMeta);
+    }
+    if (data.containsKey('project_id')) {
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_projectIdMeta);
+    }
+    if (data.containsKey('item_id')) {
+      context.handle(
+        _itemIdMeta,
+        itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemIdMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('last_viewed_at')) {
+      context.handle(
+        _lastViewedAtMeta,
+        lastViewedAt.isAcceptableOrUnknown(
+          data['last_viewed_at']!,
+          _lastViewedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_lastViewedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {
+    instanceHost,
+    accountId,
+    itemType,
+    projectId,
+    itemId,
+  };
+  @override
+  RecentlyViewedItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RecentlyViewedItem(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      itemType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}item_type'],
+      )!,
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}project_id'],
+      )!,
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}item_id'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+      lastViewedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_viewed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RecentlyViewedItemsTable createAlias(String alias) {
+    return $RecentlyViewedItemsTable(attachedDatabase, alias);
+  }
+}
+
+class RecentlyViewedItem extends DataClass
+    implements Insertable<RecentlyViewedItem> {
+  final String instanceHost;
+  final String accountId;
+  final String itemType;
+  final int projectId;
+  final int itemId;
+  final String payload;
+  final DateTime lastViewedAt;
+  const RecentlyViewedItem({
+    required this.instanceHost,
+    required this.accountId,
+    required this.itemType,
+    required this.projectId,
+    required this.itemId,
+    required this.payload,
+    required this.lastViewedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    map['item_type'] = Variable<String>(itemType);
+    map['project_id'] = Variable<int>(projectId);
+    map['item_id'] = Variable<int>(itemId);
+    map['payload'] = Variable<String>(payload);
+    map['last_viewed_at'] = Variable<DateTime>(lastViewedAt);
+    return map;
+  }
+
+  RecentlyViewedItemsCompanion toCompanion(bool nullToAbsent) {
+    return RecentlyViewedItemsCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      itemType: Value(itemType),
+      projectId: Value(projectId),
+      itemId: Value(itemId),
+      payload: Value(payload),
+      lastViewedAt: Value(lastViewedAt),
+    );
+  }
+
+  factory RecentlyViewedItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RecentlyViewedItem(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      itemType: serializer.fromJson<String>(json['itemType']),
+      projectId: serializer.fromJson<int>(json['projectId']),
+      itemId: serializer.fromJson<int>(json['itemId']),
+      payload: serializer.fromJson<String>(json['payload']),
+      lastViewedAt: serializer.fromJson<DateTime>(json['lastViewedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'itemType': serializer.toJson<String>(itemType),
+      'projectId': serializer.toJson<int>(projectId),
+      'itemId': serializer.toJson<int>(itemId),
+      'payload': serializer.toJson<String>(payload),
+      'lastViewedAt': serializer.toJson<DateTime>(lastViewedAt),
+    };
+  }
+
+  RecentlyViewedItem copyWith({
+    String? instanceHost,
+    String? accountId,
+    String? itemType,
+    int? projectId,
+    int? itemId,
+    String? payload,
+    DateTime? lastViewedAt,
+  }) => RecentlyViewedItem(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    itemType: itemType ?? this.itemType,
+    projectId: projectId ?? this.projectId,
+    itemId: itemId ?? this.itemId,
+    payload: payload ?? this.payload,
+    lastViewedAt: lastViewedAt ?? this.lastViewedAt,
+  );
+  RecentlyViewedItem copyWithCompanion(RecentlyViewedItemsCompanion data) {
+    return RecentlyViewedItem(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      itemType: data.itemType.present ? data.itemType.value : this.itemType,
+      projectId: data.projectId.present ? data.projectId.value : this.projectId,
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      lastViewedAt: data.lastViewedAt.present
+          ? data.lastViewedAt.value
+          : this.lastViewedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecentlyViewedItem(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('itemType: $itemType, ')
+          ..write('projectId: $projectId, ')
+          ..write('itemId: $itemId, ')
+          ..write('payload: $payload, ')
+          ..write('lastViewedAt: $lastViewedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    instanceHost,
+    accountId,
+    itemType,
+    projectId,
+    itemId,
+    payload,
+    lastViewedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RecentlyViewedItem &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.itemType == this.itemType &&
+          other.projectId == this.projectId &&
+          other.itemId == this.itemId &&
+          other.payload == this.payload &&
+          other.lastViewedAt == this.lastViewedAt);
+}
+
+class RecentlyViewedItemsCompanion extends UpdateCompanion<RecentlyViewedItem> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<String> itemType;
+  final Value<int> projectId;
+  final Value<int> itemId;
+  final Value<String> payload;
+  final Value<DateTime> lastViewedAt;
+  final Value<int> rowid;
+  const RecentlyViewedItemsCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.itemType = const Value.absent(),
+    this.projectId = const Value.absent(),
+    this.itemId = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.lastViewedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RecentlyViewedItemsCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    required String itemType,
+    required int projectId,
+    required int itemId,
+    required String payload,
+    required DateTime lastViewedAt,
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       itemType = Value(itemType),
+       projectId = Value(projectId),
+       itemId = Value(itemId),
+       payload = Value(payload),
+       lastViewedAt = Value(lastViewedAt);
+  static Insertable<RecentlyViewedItem> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<String>? itemType,
+    Expression<int>? projectId,
+    Expression<int>? itemId,
+    Expression<String>? payload,
+    Expression<DateTime>? lastViewedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (itemType != null) 'item_type': itemType,
+      if (projectId != null) 'project_id': projectId,
+      if (itemId != null) 'item_id': itemId,
+      if (payload != null) 'payload': payload,
+      if (lastViewedAt != null) 'last_viewed_at': lastViewedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RecentlyViewedItemsCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<String>? itemType,
+    Value<int>? projectId,
+    Value<int>? itemId,
+    Value<String>? payload,
+    Value<DateTime>? lastViewedAt,
+    Value<int>? rowid,
+  }) {
+    return RecentlyViewedItemsCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      itemType: itemType ?? this.itemType,
+      projectId: projectId ?? this.projectId,
+      itemId: itemId ?? this.itemId,
+      payload: payload ?? this.payload,
+      lastViewedAt: lastViewedAt ?? this.lastViewedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (itemType.present) {
+      map['item_type'] = Variable<String>(itemType.value);
+    }
+    if (projectId.present) {
+      map['project_id'] = Variable<int>(projectId.value);
+    }
+    if (itemId.present) {
+      map['item_id'] = Variable<int>(itemId.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (lastViewedAt.present) {
+      map['last_viewed_at'] = Variable<DateTime>(lastViewedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RecentlyViewedItemsCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('itemType: $itemType, ')
+          ..write('projectId: $projectId, ')
+          ..write('itemId: $itemId, ')
+          ..write('payload: $payload, ')
+          ..write('lastViewedAt: $lastViewedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2666,6 +3150,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TodoItemsTable todoItems = $TodoItemsTable(this);
   late final $RepositoryTreeEntriesTable repositoryTreeEntries =
       $RepositoryTreeEntriesTable(this);
+  late final $RecentlyViewedItemsTable recentlyViewedItems =
+      $RecentlyViewedItemsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2676,6 +3162,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     paginationCursors,
     todoItems,
     repositoryTreeEntries,
+    recentlyViewedItems,
   ];
 }
 
@@ -4043,6 +4530,264 @@ typedef $$RepositoryTreeEntriesTableProcessedTableManager =
       RepositoryTreeEntry,
       PrefetchHooks Function()
     >;
+typedef $$RecentlyViewedItemsTableCreateCompanionBuilder =
+    RecentlyViewedItemsCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      required String itemType,
+      required int projectId,
+      required int itemId,
+      required String payload,
+      required DateTime lastViewedAt,
+      Value<int> rowid,
+    });
+typedef $$RecentlyViewedItemsTableUpdateCompanionBuilder =
+    RecentlyViewedItemsCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<String> itemType,
+      Value<int> projectId,
+      Value<int> itemId,
+      Value<String> payload,
+      Value<DateTime> lastViewedAt,
+      Value<int> rowid,
+    });
+
+class $$RecentlyViewedItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $RecentlyViewedItemsTable> {
+  $$RecentlyViewedItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get itemType => $composableBuilder(
+    column: $table.itemType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastViewedAt => $composableBuilder(
+    column: $table.lastViewedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RecentlyViewedItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RecentlyViewedItemsTable> {
+  $$RecentlyViewedItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get itemType => $composableBuilder(
+    column: $table.itemType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastViewedAt => $composableBuilder(
+    column: $table.lastViewedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RecentlyViewedItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RecentlyViewedItemsTable> {
+  $$RecentlyViewedItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<String> get itemType =>
+      $composableBuilder(column: $table.itemType, builder: (column) => column);
+
+  GeneratedColumn<int> get projectId =>
+      $composableBuilder(column: $table.projectId, builder: (column) => column);
+
+  GeneratedColumn<int> get itemId =>
+      $composableBuilder(column: $table.itemId, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastViewedAt => $composableBuilder(
+    column: $table.lastViewedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$RecentlyViewedItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RecentlyViewedItemsTable,
+          RecentlyViewedItem,
+          $$RecentlyViewedItemsTableFilterComposer,
+          $$RecentlyViewedItemsTableOrderingComposer,
+          $$RecentlyViewedItemsTableAnnotationComposer,
+          $$RecentlyViewedItemsTableCreateCompanionBuilder,
+          $$RecentlyViewedItemsTableUpdateCompanionBuilder,
+          (
+            RecentlyViewedItem,
+            BaseReferences<
+              _$AppDatabase,
+              $RecentlyViewedItemsTable,
+              RecentlyViewedItem
+            >,
+          ),
+          RecentlyViewedItem,
+          PrefetchHooks Function()
+        > {
+  $$RecentlyViewedItemsTableTableManager(
+    _$AppDatabase db,
+    $RecentlyViewedItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RecentlyViewedItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RecentlyViewedItemsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RecentlyViewedItemsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<String> itemType = const Value.absent(),
+                Value<int> projectId = const Value.absent(),
+                Value<int> itemId = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<DateTime> lastViewedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RecentlyViewedItemsCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                itemType: itemType,
+                projectId: projectId,
+                itemId: itemId,
+                payload: payload,
+                lastViewedAt: lastViewedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                required String itemType,
+                required int projectId,
+                required int itemId,
+                required String payload,
+                required DateTime lastViewedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => RecentlyViewedItemsCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                itemType: itemType,
+                projectId: projectId,
+                itemId: itemId,
+                payload: payload,
+                lastViewedAt: lastViewedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RecentlyViewedItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RecentlyViewedItemsTable,
+      RecentlyViewedItem,
+      $$RecentlyViewedItemsTableFilterComposer,
+      $$RecentlyViewedItemsTableOrderingComposer,
+      $$RecentlyViewedItemsTableAnnotationComposer,
+      $$RecentlyViewedItemsTableCreateCompanionBuilder,
+      $$RecentlyViewedItemsTableUpdateCompanionBuilder,
+      (
+        RecentlyViewedItem,
+        BaseReferences<
+          _$AppDatabase,
+          $RecentlyViewedItemsTable,
+          RecentlyViewedItem
+        >,
+      ),
+      RecentlyViewedItem,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4057,4 +4802,6 @@ class $AppDatabaseManager {
       $$TodoItemsTableTableManager(_db, _db.todoItems);
   $$RepositoryTreeEntriesTableTableManager get repositoryTreeEntries =>
       $$RepositoryTreeEntriesTableTableManager(_db, _db.repositoryTreeEntries);
+  $$RecentlyViewedItemsTableTableManager get recentlyViewedItems =>
+      $$RecentlyViewedItemsTableTableManager(_db, _db.recentlyViewedItems);
 }

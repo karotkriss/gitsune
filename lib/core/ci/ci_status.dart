@@ -34,6 +34,14 @@ enum CiStatus {
     _ => CiStatus.unknown,
   };
 
+  /// The API status string [fromApi] maps back to this state, for payloads
+  /// that round-trip through the offline cache.
+  String get apiValue => switch (this) {
+    CiStatus.waitingForResource => 'waiting_for_resource',
+    CiStatus.waitingForCallback => 'waiting_for_callback',
+    _ => name,
+  };
+
   String get label => switch (this) {
     CiStatus.success => 'Passed',
     CiStatus.failed => 'Failed',

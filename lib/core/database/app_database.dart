@@ -88,6 +88,28 @@ class RepositoryTreeEntries extends Table with AccountScoped {
   };
 }
 
+/// The bounded per-account cache of recently viewed items (issues, merge
+/// requests, pipelines), keyed by item type plus project and item id.
+/// [payload] is the item's API-shaped JSON and [lastViewedAt] drives
+/// least-recently-viewed eviction. See
+/// `core/repository/recently_viewed_repository.dart`.
+class RecentlyViewedItems extends Table with AccountScoped {
+  TextColumn get itemType => text()();
+  IntColumn get projectId => integer()();
+  IntColumn get itemId => integer()();
+  TextColumn get payload => text()();
+  DateTimeColumn get lastViewedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {
+    instanceHost,
+    accountId,
+    itemType,
+    projectId,
+    itemId,
+  };
+}
+
 @DriftDatabase(
   tables: [
     LocalCacheEntries,
@@ -95,6 +117,7 @@ class RepositoryTreeEntries extends Table with AccountScoped {
     PaginationCursors,
     TodoItems,
     RepositoryTreeEntries,
+    RecentlyViewedItems,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -103,7 +126,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -119,6 +142,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 5) {
         await migrator.createTable(repositoryTreeEntries);
+      }
+      if (from < 6) {
+        await migrator.createTable(recentlyViewedItems);
       }
     },
   );
