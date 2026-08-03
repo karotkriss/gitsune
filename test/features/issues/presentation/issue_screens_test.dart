@@ -508,6 +508,47 @@ void main() {
     expect(repository.updateCalls, isEmpty);
   });
 
+  testWidgets('picker selection is discarded after issue state refreshes', (
+    tester,
+  ) async {
+    final refreshedIssue = Completer<Issue>();
+    final repository = _TriageRegressionRepository(
+      delayedIssue: refreshedIssue,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          initialIssue: _fixtureIssue(),
+          now: now,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Edit labels'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Labels'), findsOneWidget);
+    refreshedIssue.complete(_fixtureIssueWithLabels(['bug']));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(repository.updateCalls, isEmpty);
+    expect(find.text('bug'), findsOneWidget);
+  });
+
   testWidgets('triage flow uses fixture-backed HTTP end to end', (
     tester,
   ) async {
@@ -1108,6 +1149,12 @@ IssueNote _createdNote() => IssueNote.fromJson(
 Issue _fixtureIssue() => Issue.fromJson(
   Map<String, dynamic>.from(Fixtures.json('issue_142') as Map),
 );
+
+Issue _fixtureIssueWithLabels(List<String> labels) {
+  final json = Map<String, dynamic>.from(Fixtures.json('issue_142') as Map);
+  json['labels'] = labels;
+  return Issue.fromJson(json);
+}
 
 List<IssueLabel> _fixtureLabels() => (Fixtures.json('project_7_labels') as List)
     .map(IssueLabel.fromJson)

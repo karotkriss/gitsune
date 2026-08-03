@@ -50,7 +50,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   bool _notesHaveMore = false;
   int _generation = 0;
   int _issueGeneration = 0;
-  int _issueMutationRevision = 0;
+  int _issueStateRevision = 0;
 
   @override
   void initState() {
@@ -67,6 +67,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         oldWidget.issueIid != widget.issueIid ||
         oldWidget.repository != widget.repository) {
       _issueGeneration++;
+      _issueStateRevision++;
       _issue = widget.initialIssue;
       _loadedNotes.clear();
       _createdNotes.clear();
@@ -137,7 +138,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   }
 
   Future<void> _refreshIssue(int generation) async {
-    final mutationRevision = _issueMutationRevision;
+    final issueStateRevision = _issueStateRevision;
     try {
       final issue = await widget.repository.loadIssue(
         widget.projectId,
@@ -145,17 +146,18 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       );
       if (!mounted ||
           generation != _generation ||
-          mutationRevision != _issueMutationRevision) {
+          issueStateRevision != _issueStateRevision) {
         return;
       }
       setState(() {
+        _issueStateRevision++;
         _issue = issue;
         _issueLoading = false;
       });
     } on Object {
       if (!mounted ||
           generation != _generation ||
-          mutationRevision != _issueMutationRevision) {
+          issueStateRevision != _issueStateRevision) {
         return;
       }
       setState(() {
@@ -262,17 +264,26 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     final issue = _issue;
     if (issue == null) return;
     final issueGeneration = _issueGeneration;
+    final issueStateRevision = _issueStateRevision;
     final List<IssueLabel> options;
     try {
       options = await widget.repository.loadProjectLabels(widget.projectId);
     } on Object {
-      if (!mounted || issueGeneration != _issueGeneration) return;
+      if (!mounted ||
+          issueGeneration != _issueGeneration ||
+          issueStateRevision != _issueStateRevision) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to load project labels.')),
       );
       return;
     }
-    if (!mounted || issueGeneration != _issueGeneration) return;
+    if (!mounted ||
+        issueGeneration != _issueGeneration ||
+        issueStateRevision != _issueStateRevision) {
+      return;
+    }
     final optionsByName = {
       for (final label in issue.labels) label.name: label,
       for (final label in options) label.name: label,
@@ -283,7 +294,10 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       options: [for (final label in _projectLabels) (label.name, label.name)],
       initial: issue.labels.map((label) => label.name).toSet(),
     );
-    if (!mounted || issueGeneration != _issueGeneration || selection == null) {
+    if (!mounted ||
+        issueGeneration != _issueGeneration ||
+        issueStateRevision != _issueStateRevision ||
+        selection == null) {
       return;
     }
     await _applyTriage(labels: selection);
@@ -293,17 +307,26 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     final issue = _issue;
     if (issue == null) return;
     final issueGeneration = _issueGeneration;
+    final issueStateRevision = _issueStateRevision;
     final List<IssueAuthor> options;
     try {
       options = await widget.repository.loadProjectMembers(widget.projectId);
     } on Object {
-      if (!mounted || issueGeneration != _issueGeneration) return;
+      if (!mounted ||
+          issueGeneration != _issueGeneration ||
+          issueStateRevision != _issueStateRevision) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to load project members.')),
       );
       return;
     }
-    if (!mounted || issueGeneration != _issueGeneration) return;
+    if (!mounted ||
+        issueGeneration != _issueGeneration ||
+        issueStateRevision != _issueStateRevision) {
+      return;
+    }
     final optionsById = {
       for (final assignee in issue.assignees) assignee.id: assignee,
       for (final member in options) member.id: member,
@@ -315,7 +338,10 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       ],
       initial: issue.assignees.map((assignee) => assignee.id).toSet(),
     );
-    if (!mounted || issueGeneration != _issueGeneration || selection == null) {
+    if (!mounted ||
+        issueGeneration != _issueGeneration ||
+        issueStateRevision != _issueStateRevision ||
+        selection == null) {
       return;
     }
     await _applyTriage(assigneeIds: selection);
@@ -400,7 +426,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         ..._projectLabels,
       ]);
       setState(() {
-        _issueMutationRevision++;
+        _issueStateRevision++;
         _localEvents.addAll(_triageEvents(before, folded));
         _issue = folded;
         _issueLoading = false;
