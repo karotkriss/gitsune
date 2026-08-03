@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show SemanticsAction;
 
 import 'package:flutter/material.dart';
@@ -157,6 +158,53 @@ void main() {
     expect(find.text('Unable to load Approvals.'), findsOneWidget);
   });
 
+  testWidgets(
+    'detail ignores stale pipeline pages after its identity changes',
+    (tester) async {
+      final repository = _DelayedPipelineRepository();
+
+      Widget detail(int mergeIid) => MaterialApp(
+        theme: buildAppTheme(),
+        home: MergeRequestDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          mergeIid: mergeIid,
+          repository: repository,
+          now: now,
+        ),
+      );
+
+      await tester.pumpWidget(detail(142));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('load-more-pipelines')));
+      await tester.pump();
+
+      await tester.pumpWidget(detail(143));
+      await tester.pumpAndSettle();
+      repository.stalePage.complete(
+        MergeRequestPipelinePage(items: [_pipeline(999)], hasMore: false),
+      );
+      await tester.pump();
+
+      expect(
+        find.textContaining('Pipeline #143', findRichText: true),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Pipeline #999', findRichText: true),
+        findsNothing,
+      );
+      expect(
+        tester
+            .widget<TextButton>(
+              find.byKey(const ValueKey('load-more-pipelines')),
+            )
+            .onPressed,
+        isNotNull,
+      );
+    },
+  );
+
   testWidgets('router exposes merge requests as project destinations', (
     tester,
   ) async {
@@ -240,3 +288,27 @@ class _FailingSupplementsRepository extends FixtureMergeRequestsRepository {
   Future<MergeRequestApprovals> loadApprovals(int projectId, int mergeIid) =>
       Future.error(StateError('approval failure'));
 }
+
+class _DelayedPipelineRepository extends FixtureMergeRequestsRepository {
+  final stalePage = Completer<MergeRequestPipelinePage>();
+
+  @override
+  Future<MergeRequestPipelinePage> loadFirstPipelinePage(
+    int projectId,
+    int mergeIid,
+  ) async =>
+      MergeRequestPipelinePage(items: [_pipeline(mergeIid)], hasMore: true);
+
+  @override
+  Future<MergeRequestPipelinePage> loadNextPipelinePage(
+    int projectId,
+    int mergeIid,
+  ) => stalePage.future;
+}
+
+MergeRequestPipeline _pipeline(int id) => MergeRequestPipeline.fromJson({
+  'id': id,
+  'status': 'running',
+  'ref': 'refs/merge-requests/$id/head',
+  'sha': '731af8923c51e65101fc3cbb3275ce0a3e849311',
+});

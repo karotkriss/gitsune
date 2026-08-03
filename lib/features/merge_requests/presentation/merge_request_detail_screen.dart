@@ -72,6 +72,7 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
       _failed = false;
       _pipelinesLoading = true;
       _pipelinesFailed = false;
+      _loadingMorePipelines = false;
       _approvalsLoading = true;
       _approvalsFailed = false;
     });
@@ -152,20 +153,21 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
 
   Future<void> _loadMorePipelines() async {
     if (_loadingMorePipelines || !_pipelinesHaveMore) return;
+    final generation = _generation;
     setState(() => _loadingMorePipelines = true);
     try {
       final page = await widget.repository.loadNextPipelinePage(
         widget.projectId,
         widget.mergeIid,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _generation) return;
       setState(() {
         _pipelines = [...?_pipelines, ...page.items];
         _pipelinesHaveMore = page.hasMore;
         _loadingMorePipelines = false;
       });
     } on Object {
-      if (!mounted) return;
+      if (!mounted || generation != _generation) return;
       setState(() => _loadingMorePipelines = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to load more pipelines.')),
