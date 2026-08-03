@@ -110,6 +110,16 @@ class RecentlyViewedItems extends Table with AccountScoped {
   };
 }
 
+/// The persisted Home shortcut-tile order, one row per account holding the
+/// comma-separated tile ids. See `features/home/home_tiles.dart`.
+class HomeTileOrders extends Table with AccountScoped {
+  TextColumn get tileOrder => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId};
+}
+
 @DriftDatabase(
   tables: [
     LocalCacheEntries,
@@ -118,6 +128,7 @@ class RecentlyViewedItems extends Table with AccountScoped {
     TodoItems,
     RepositoryTreeEntries,
     RecentlyViewedItems,
+    HomeTileOrders,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -126,7 +137,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -145,6 +156,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await migrator.createTable(recentlyViewedItems);
+      }
+      if (from < 7) {
+        await migrator.createTable(homeTileOrders);
       }
     },
   );

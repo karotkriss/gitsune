@@ -9,6 +9,7 @@ import '../code/data/repository_tree_repository.dart';
 import '../code/presentation/repository_tree_screen.dart';
 import '../explore/explore_screen.dart';
 import '../home/home_screen.dart';
+import '../home/home_tiles.dart';
 import '../issues/data/issue_models.dart';
 import '../issues/data/issues_repository.dart';
 import '../issues/presentation/issue_detail_screen.dart';
@@ -40,9 +41,11 @@ import '../todos/todos_screen.dart';
 /// wiring lands without hiding the route contracts exposed to project
 /// navigation. [searchRepository] swaps the Explore tab's placeholder for the
 /// real [SearchScreen], while [todosRepository] binds the To-Dos tab to its
-/// offline-first cache stream. [recentlyViewedCache] lets the issue, merge
+/// offline-first cache stream and [homeTileOrderStore] persists the Home
+/// tab's tile order per account. [recentlyViewedCache] lets the issue, merge
 /// request, and pipeline detail screens serve recently viewed items offline.
 GoRouter buildAppRouter({
+  HomeTileOrderStore? homeTileOrderStore,
   IssuesRepository? issuesRepository,
   MergeRequestsRepository? mergeRequestsRepository,
   PipelinesRepository? pipelinesRepository,
@@ -62,7 +65,14 @@ GoRouter buildAppRouter({
             routes: [
               GoRoute(
                 path: '/home',
-                builder: (context, state) => const HomeScreen(),
+                builder: (context, state) => HomeScreen(
+                  tileOrderStore: homeTileOrderStore,
+                  // Only the To-Do List has a global destination yet; the
+                  // other tiles route once their sections land (E6+).
+                  onTileTap: (tile) {
+                    if (tile == HomeTile.todos) context.go('/todos');
+                  },
+                ),
               ),
             ],
           ),
