@@ -16,6 +16,7 @@ import '../../support/fixtures.dart';
 class RecordingNotifier implements TodoNotifier {
   final shown =
       <({AccountKey account, int todoId, String title, String body})>[];
+  int? failingTodoId;
 
   @override
   Future<void> showNewTodo({
@@ -24,6 +25,9 @@ class RecordingNotifier implements TodoNotifier {
     required String title,
     required String body,
   }) async {
+    if (todoId == failingTodoId) {
+      throw StateError('notification failed');
+    }
     shown.add((account: account, todoId: todoId, title: title, body: body));
   }
 }
@@ -178,6 +182,46 @@ void main() {
       expect(notifier.shown, isEmpty);
       final state = await db.select(db.todoPollStates).getSingle();
       expect(jsonDecode(state.seenTodoIds), containsAll([102, 101]));
+    },
+  );
+
+  test(
+    'a partial notification failure retries only undelivered to-dos',
+    () async {
+      final poller = createPoller();
+      await poller.poll();
+
+      endpoint.etag = 'W/"v2"';
+      endpoint.todos = [
+        {
+          'id': 104,
+          'action_name': 'assigned',
+          'body': 'First new to-do',
+          'target': {'title': 'First target'},
+        },
+        {
+          'id': 103,
+          'action_name': 'assigned',
+          'body': 'Second new to-do',
+          'target': {'title': 'Second target'},
+        },
+        ...endpoint.todos,
+      ];
+      notifier.failingTodoId = 103;
+
+      await expectLater(poller.poll(), throwsStateError);
+
+      var state = await db.select(db.todoPollStates).getSingle();
+      expect(state.etag, 'W/"v1"');
+      expect(jsonDecode(state.seenTodoIds), contains(104));
+      expect(jsonDecode(state.seenTodoIds), isNot(contains(103)));
+
+      notifier.failingTodoId = null;
+      await poller.poll();
+
+      expect(notifier.shown.map((item) => item.todoId), [104, 103]);
+      state = await db.select(db.todoPollStates).getSingle();
+      expect(state.etag, 'W/"v2"');
     },
   );
 

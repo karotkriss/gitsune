@@ -128,31 +128,44 @@ class TodosPoller {
         : (jsonDecode(state.seenTodoIds) as List<dynamic>).cast<int>().toSet();
 
     if (state != null) {
-      for (final item in items) {
-        if (seenIds.contains(item['id'] as int)) {
-          continue;
+      try {
+        for (final item in items) {
+          final todoId = item['id'] as int;
+          if (seenIds.contains(todoId)) {
+            continue;
+          }
+          final target = item['target'] as Map<String, dynamic>?;
+          await notifier.showNewTodo(
+            account: account,
+            todoId: todoId,
+            title: item['body'] as String? ?? item['action_name'] as String,
+            body:
+                target?['title'] as String? ??
+                item['target_url'] as String? ??
+                '',
+          );
+          seenIds.add(todoId);
         }
-        final target = item['target'] as Map<String, dynamic>?;
-        await notifier.showNewTodo(
-          account: account,
-          todoId: item['id'] as int,
-          title: item['body'] as String? ?? item['action_name'] as String,
-          body:
-              target?['title'] as String? ??
-              item['target_url'] as String? ??
-              '',
-        );
+      } on Object {
+        await _persistState(etag: state.etag, seenIds: seenIds);
+        rethrow;
       }
     }
     seenIds.addAll(fetchedIds);
+    await _persistState(etag: response.headers.value('etag'), seenIds: seenIds);
+  }
 
+  Future<void> _persistState({
+    required String? etag,
+    required Set<int> seenIds,
+  }) async {
     await database
         .into(database.todoPollStates)
         .insertOnConflictUpdate(
           TodoPollStatesCompanion.insert(
             instanceHost: account.instanceHost,
             accountId: account.accountId,
-            etag: Value(response.headers.value('etag')),
+            etag: Value(etag),
             seenTodoIds: jsonEncode(seenIds.toList()),
             updatedAt: DateTime.now(),
           ),
