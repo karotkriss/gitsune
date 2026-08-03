@@ -12,21 +12,3 @@ bool isConnectivityError(DioException error) =>
     error.type == DioExceptionType.connectionError ||
     error.type == DioExceptionType.connectionTimeout ||
     error.error is SocketException;
-
-bool failedBeforeRequestTransmission(DioException error) {
-  if (error.type == DioExceptionType.connectionTimeout) return true;
-  if (error.type != DioExceptionType.connectionError) return false;
-  final message = '${error.message} ${error.error}'.toLowerCase();
-  return const [
-    'connection refused',
-    'failed host lookup',
-    'no address associated with hostname',
-    'network is unreachable',
-    'no route to host',
-  ].any(message.contains);
-}
-
-bool hasAmbiguousRequestOutcome(DioException error) =>
-    error.type == DioExceptionType.sendTimeout ||
-    error.type == DioExceptionType.receiveTimeout ||
-    (isConnectivityError(error) && !failedBeforeRequestTransmission(error));

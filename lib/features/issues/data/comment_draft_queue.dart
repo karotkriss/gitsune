@@ -14,8 +14,6 @@ import 'issues_repository.dart';
 /// A note created by flushing a queued draft, so the issue's thread can fold
 /// it into local state without a refetch (the E6.2 pattern).
 typedef SentCommentDraft = ({int projectId, int issueIid, IssueNote note});
-typedef LoadRecentIssueNotes =
-    Future<List<IssueNote>> Function(int projectId, int issueIid);
 
 /// The E14.2 account-scoped offline comment outbox, backed by
 /// [AppDatabase.commentDrafts].
@@ -29,14 +27,14 @@ typedef LoadRecentIssueNotes =
 /// keeps the draft queued for the next reconnect; a permanent rejection (a
 /// non-connectivity 4xx, e.g. 403) marks the draft failed via
 /// [CommentDraft.lastError] so it is surfaced instead of retried forever.
+/// Delivery is at least once in v1: timestamp correlation is unreliable and
+/// GitLab notes have no idempotency key, so a lost POST response can produce
+/// a duplicate comment when the queued draft retries.
 class CommentDraftQueue {
-  static const _reconciliationFutureClockSkew = Duration(seconds: 5);
-
   CommentDraftQueue({
     required this.database,
     required this.account,
     required this.repository,
-    required this.loadRecentNotes,
     required Stream<void> onReconnect,
     DateTime Function() now = DateTime.now,
     this.retryBackoff = const Duration(seconds: 30),
@@ -49,7 +47,6 @@ class CommentDraftQueue {
   final AppDatabase database;
   final AccountKey account;
   final IssuesRepository repository;
-  final LoadRecentIssueNotes loadRecentNotes;
   final Duration retryBackoff;
   final DateTime Function() _now;
 
@@ -140,18 +137,6 @@ class CommentDraftQueue {
     if (draft.retryAfter case final retryAfter? when now.isBefore(retryAfter)) {
       return false;
     }
-    if (draft.ambiguousSince != null) {
-      final reconciled = await _reconcile(draft, now);
-      if (reconciled == null) return false;
-      if (reconciled) return true;
-    }
-    await _updateDraft(
-      draft.draftId,
-      CommentDraftsCompanion(
-        ambiguousSince: Value(now),
-        retryAfter: const Value(null),
-      ),
-    );
     late final IssueNote note;
     try {
       note = await repository.createNote(
@@ -165,31 +150,14 @@ class CommentDraftQueue {
         // Permanent rejection: surface it and let later drafts still send.
         await _updateDraft(
           draft.draftId,
-          CommentDraftsCompanion(
-            lastError: Value('HTTP $status'),
-            ambiguousSince: const Value(null),
-          ),
+          CommentDraftsCompanion(lastError: Value('HTTP $status')),
         );
         return true;
       }
       if (error is DioException && (status == 408 || status == 429)) {
         await _updateDraft(
           draft.draftId,
-          CommentDraftsCompanion(
-            retryAfter: Value(_retryAfter(error, now)),
-            ambiguousSince: const Value(null),
-          ),
-        );
-        return false;
-      }
-      if (error is DioException && hasAmbiguousRequestOutcome(error)) {
-        return false;
-      }
-      if (error is DioException &&
-          (failedBeforeRequestTransmission(error) || error.response != null)) {
-        await _updateDraft(
-          draft.draftId,
-          const CommentDraftsCompanion(ambiguousSince: Value(null)),
+          CommentDraftsCompanion(retryAfter: Value(_retryAfter(error, now))),
         );
         return false;
       }
@@ -212,38 +180,6 @@ class CommentDraftQueue {
       note: note,
     ));
     return true;
-  }
-
-  Future<bool?> _reconcile(CommentDraft draft, DateTime now) async {
-    try {
-      final notes = await loadRecentNotes(draft.projectId, draft.issueIid);
-      final ambiguousSince = draft.ambiguousSince!;
-      final earliest = ambiguousSince;
-      final latest = now.add(_reconciliationFutureClockSkew);
-      for (final note in notes) {
-        if (note.body == draft.body &&
-            note.author.id.toString() == account.accountId &&
-            !note.createdAt.isBefore(earliest) &&
-            !note.createdAt.isAfter(latest)) {
-          await discard(draft.draftId);
-          _sentController.add((
-            projectId: draft.projectId,
-            issueIid: draft.issueIid,
-            note: note,
-          ));
-          return true;
-        }
-      }
-      return false;
-    } on Object catch (error, stackTrace) {
-      log(
-        'Unable to reconcile an ambiguous comment draft',
-        name: 'gitsune.comment_drafts',
-        error: error,
-        stackTrace: stackTrace,
-      );
-      return null;
-    }
   }
 
   bool _isPermanentRejection(int? status) =>

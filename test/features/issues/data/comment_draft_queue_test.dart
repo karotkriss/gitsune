@@ -42,7 +42,6 @@ void main() {
       database: database,
       account: account,
       repository: repository,
-      loadRecentNotes: repository.loadRecentNotes,
       onReconnect: reconnect.stream,
       now: now,
       retryBackoff: retryBackoff,
@@ -102,7 +101,6 @@ void main() {
       'Second, while offline',
     ]);
     expect(drafts.map((draft) => draft.lastError), everyElement(isNull));
-    expect(drafts.map((draft) => draft.ambiguousSince), everyElement(isNull));
 
     // A restart: a fresh queue over the same database still sees the drafts.
     await offline.dispose();
@@ -264,35 +262,20 @@ void main() {
     });
   }
 
-  test('an ambiguous lost response reconciles the created note without a '
-      'duplicate post', () async {
+  test('a lost POST response retries with at-least-once delivery', () async {
     var now = DateTime.utc(2026, 8, 3, 12);
     final server = await FakeGitLabServer.start();
     addTearDown(server.close);
     var postAttempts = 0;
-    late Map<String, dynamic> createdNote;
+    final landedBodies = <String>[];
     server.handle(_notesPath, (request) async {
       postAttempts++;
       final body =
           jsonDecode(await utf8.decoder.bind(request).join())
               as Map<String, dynamic>;
-      createdNote =
-          Map<String, dynamic>.from(
-            Fixtures.json('issue_142_note_created') as Map,
-          )..addAll({
-            'id': 9991,
-            'body': body['body'],
-            'author': {
-              'id': 1,
-              'username': 'current-user',
-              'name': 'Current User',
-              'avatar_url': null,
-            },
-            'created_at': now.toIso8601String(),
-          });
+      landedBodies.add(body['body'] as String);
       await Future<void>.delayed(const Duration(milliseconds: 100));
-      request.response.headers.contentType = ContentType.json;
-      request.response.write(jsonEncode(createdNote));
+      request.response.statusCode = HttpStatus.created;
       await request.response.close();
     });
     final timedClient = client(server.baseUri.port)
@@ -301,143 +284,33 @@ void main() {
 
     await ambiguous.send(7, 142, 'May already exist');
 
-    var drafts = await ambiguous.watchDrafts(7, 142).first;
-    expect(drafts.single.ambiguousSince?.toUtc(), now);
-    late Map<String, String> recentNotesQuery;
-    server.handle('GET /api/v4/projects/7/issues/142/notes', (request) async {
-      recentNotesQuery = request.uri.queryParameters;
+    expect(
+      (await ambiguous.watchDrafts(7, 142).first).single.body,
+      'May already exist',
+    );
+    now = now.add(const Duration(seconds: 1));
+    server.handle(_notesPath, (request) async {
+      postAttempts++;
+      final body =
+          jsonDecode(await utf8.decoder.bind(request).join())
+              as Map<String, dynamic>;
+      landedBodies.add(body['body'] as String);
+      final note = Map<String, dynamic>.from(
+        Fixtures.json('issue_142_note_created') as Map,
+      )..addAll({'id': 9992, 'body': body['body']});
       request.response.headers.contentType = ContentType.json;
-      request.response.write(jsonEncode([createdNote]));
+      request.response.write(jsonEncode(note));
       await request.response.close();
     });
     final sent = ambiguous.sentNotes.first;
-    now = now.add(const Duration(seconds: 1));
     await ambiguous.flush();
     final event = await sent;
 
-    expect(postAttempts, 1);
-    expect(event.note.id, 9991);
-    expect(recentNotesQuery, {
-      'sort': 'desc',
-      'order_by': 'created_at',
-      'per_page': '20',
-    });
-    drafts = await ambiguous.watchDrafts(7, 142).first;
-    expect(drafts, isEmpty);
+    expect(postAttempts, 2);
+    expect(landedBodies, ['May already exist', 'May already exist']);
+    expect(event.note.id, 9992);
+    expect(await ambiguous.watchDrafts(7, 142).first, isEmpty);
   });
-
-  test(
-    'an older identical comment does not consume a repeated draft',
-    () async {
-      var now = DateTime.utc(2026, 8, 3, 12);
-      final server = await FakeGitLabServer.start();
-      addTearDown(server.close);
-      var postAttempts = 0;
-      server.handle(_notesPath, (request) async {
-        postAttempts++;
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-        request.response.statusCode = HttpStatus.serviceUnavailable;
-        await request.response.close();
-      });
-      final timedClient = client(server.baseUri.port)
-        ..options.receiveTimeout = const Duration(milliseconds: 20);
-      final repeated = queue(timedClient, now: () => now);
-
-      await repeated.send(7, 142, 'Intentionally repeated');
-
-      final olderNote =
-          Map<String, dynamic>.from(
-            Fixtures.json('issue_142_note_created') as Map,
-          )..addAll({
-            'id': 9993,
-            'body': 'Intentionally repeated',
-            'author': {
-              'id': 1,
-              'username': 'current-user',
-              'name': 'Current User',
-              'avatar_url': null,
-            },
-            'created_at': now
-                .subtract(const Duration(seconds: 1))
-                .toIso8601String(),
-          });
-      server.respondJson('GET /api/v4/projects/7/issues/142/notes', [
-        olderNote,
-      ]);
-      now = now.add(const Duration(seconds: 1));
-      final repeatedNote = Map<String, dynamic>.from(olderNote)
-        ..addAll({'id': 9994, 'created_at': now.toIso8601String()});
-      server.handle(_notesPath, (request) async {
-        postAttempts++;
-        request.response.headers.contentType = ContentType.json;
-        request.response.write(jsonEncode(repeatedNote));
-        await request.response.close();
-      });
-      final sent = repeated.sentNotes.first;
-      await repeated.flush();
-      final event = await sent;
-
-      expect(postAttempts, 2);
-      expect(event.note.id, 9994);
-      expect(await repeated.watchDrafts(7, 142).first, isEmpty);
-    },
-  );
-
-  test(
-    'a failed local delete reconciles a successful post before retrying',
-    () async {
-      final now = DateTime.utc(2026, 8, 3, 12);
-      final server = await FakeGitLabServer.start();
-      addTearDown(server.close);
-      var postAttempts = 0;
-      final createdNote =
-          Map<String, dynamic>.from(
-            Fixtures.json('issue_142_note_created') as Map,
-          )..addAll({
-            'id': 9992,
-            'body': 'Created before delete failed',
-            'author': {
-              'id': 1,
-              'username': 'current-user',
-              'name': 'Current User',
-              'avatar_url': null,
-            },
-            'created_at': now.toIso8601String(),
-          });
-      server.handle(_notesPath, (request) async {
-        postAttempts++;
-        request.response.headers.contentType = ContentType.json;
-        request.response.write(jsonEncode(createdNote));
-        await request.response.close();
-      });
-      server.respondJson('GET /api/v4/projects/7/issues/142/notes', [
-        createdNote,
-      ]);
-      await database.customStatement('''
-      CREATE TRIGGER reject_comment_draft_delete
-      BEFORE DELETE ON comment_drafts
-      BEGIN
-        SELECT RAISE(FAIL, 'simulated delete failure');
-      END
-    ''');
-      final reconciling = queue(client(server.baseUri.port), now: () => now);
-
-      await reconciling.send(7, 142, 'Created before delete failed');
-
-      var drafts = await reconciling.watchDrafts(7, 142).first;
-      expect(drafts.single.ambiguousSince?.toUtc(), now);
-      await database.customStatement(
-        'DROP TRIGGER reject_comment_draft_delete',
-      );
-      final sent = reconciling.sentNotes.first;
-      await reconciling.flush();
-      await sent;
-
-      expect(postAttempts, 1);
-      drafts = await reconciling.watchDrafts(7, 142).first;
-      expect(drafts, isEmpty);
-    },
-  );
 
   test('one account\'s queue never reads or flushes another\'s '
       'drafts', () async {

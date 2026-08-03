@@ -115,7 +115,6 @@ void main() {
 
     final draft = (await database.select(database.commentDrafts).get()).single;
     expect(draft.body, 'Still queued');
-    expect(draft.ambiguousSince, isNull);
     expect(draft.retryAfter, isNull);
   });
 }

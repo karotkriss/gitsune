@@ -4617,18 +4617,6 @@ class $CommentDraftsTable extends CommentDrafts
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _ambiguousSinceMeta = const VerificationMeta(
-    'ambiguousSince',
-  );
-  @override
-  late final GeneratedColumn<DateTime> ambiguousSince =
-      GeneratedColumn<DateTime>(
-        'ambiguous_since',
-        aliasedName,
-        true,
-        type: DriftSqlType.dateTime,
-        requiredDuringInsert: false,
-      );
   static const VerificationMeta _retryAfterMeta = const VerificationMeta(
     'retryAfter',
   );
@@ -4649,7 +4637,6 @@ class $CommentDraftsTable extends CommentDrafts
     issueIid,
     body,
     lastError,
-    ambiguousSince,
     retryAfter,
   ];
   @override
@@ -4721,15 +4708,6 @@ class $CommentDraftsTable extends CommentDrafts
         lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
       );
     }
-    if (data.containsKey('ambiguous_since')) {
-      context.handle(
-        _ambiguousSinceMeta,
-        ambiguousSince.isAcceptableOrUnknown(
-          data['ambiguous_since']!,
-          _ambiguousSinceMeta,
-        ),
-      );
-    }
     if (data.containsKey('retry_after')) {
       context.handle(
         _retryAfterMeta,
@@ -4773,10 +4751,6 @@ class $CommentDraftsTable extends CommentDrafts
         DriftSqlType.string,
         data['${effectivePrefix}last_error'],
       ),
-      ambiguousSince: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}ambiguous_since'],
-      ),
       retryAfter: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}retry_after'],
@@ -4798,7 +4772,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
   final int issueIid;
   final String body;
   final String? lastError;
-  final DateTime? ambiguousSince;
   final DateTime? retryAfter;
   const CommentDraft({
     required this.instanceHost,
@@ -4808,7 +4781,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
     required this.issueIid,
     required this.body,
     this.lastError,
-    this.ambiguousSince,
     this.retryAfter,
   });
   @override
@@ -4822,9 +4794,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
     map['body'] = Variable<String>(body);
     if (!nullToAbsent || lastError != null) {
       map['last_error'] = Variable<String>(lastError);
-    }
-    if (!nullToAbsent || ambiguousSince != null) {
-      map['ambiguous_since'] = Variable<DateTime>(ambiguousSince);
     }
     if (!nullToAbsent || retryAfter != null) {
       map['retry_after'] = Variable<DateTime>(retryAfter);
@@ -4843,9 +4812,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
       lastError: lastError == null && nullToAbsent
           ? const Value.absent()
           : Value(lastError),
-      ambiguousSince: ambiguousSince == null && nullToAbsent
-          ? const Value.absent()
-          : Value(ambiguousSince),
       retryAfter: retryAfter == null && nullToAbsent
           ? const Value.absent()
           : Value(retryAfter),
@@ -4865,7 +4831,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
       issueIid: serializer.fromJson<int>(json['issueIid']),
       body: serializer.fromJson<String>(json['body']),
       lastError: serializer.fromJson<String?>(json['lastError']),
-      ambiguousSince: serializer.fromJson<DateTime?>(json['ambiguousSince']),
       retryAfter: serializer.fromJson<DateTime?>(json['retryAfter']),
     );
   }
@@ -4880,7 +4845,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
       'issueIid': serializer.toJson<int>(issueIid),
       'body': serializer.toJson<String>(body),
       'lastError': serializer.toJson<String?>(lastError),
-      'ambiguousSince': serializer.toJson<DateTime?>(ambiguousSince),
       'retryAfter': serializer.toJson<DateTime?>(retryAfter),
     };
   }
@@ -4893,7 +4857,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
     int? issueIid,
     String? body,
     Value<String?> lastError = const Value.absent(),
-    Value<DateTime?> ambiguousSince = const Value.absent(),
     Value<DateTime?> retryAfter = const Value.absent(),
   }) => CommentDraft(
     instanceHost: instanceHost ?? this.instanceHost,
@@ -4903,9 +4866,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
     issueIid: issueIid ?? this.issueIid,
     body: body ?? this.body,
     lastError: lastError.present ? lastError.value : this.lastError,
-    ambiguousSince: ambiguousSince.present
-        ? ambiguousSince.value
-        : this.ambiguousSince,
     retryAfter: retryAfter.present ? retryAfter.value : this.retryAfter,
   );
   CommentDraft copyWithCompanion(CommentDraftsCompanion data) {
@@ -4919,9 +4879,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
       issueIid: data.issueIid.present ? data.issueIid.value : this.issueIid,
       body: data.body.present ? data.body.value : this.body,
       lastError: data.lastError.present ? data.lastError.value : this.lastError,
-      ambiguousSince: data.ambiguousSince.present
-          ? data.ambiguousSince.value
-          : this.ambiguousSince,
       retryAfter: data.retryAfter.present
           ? data.retryAfter.value
           : this.retryAfter,
@@ -4938,7 +4895,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
           ..write('issueIid: $issueIid, ')
           ..write('body: $body, ')
           ..write('lastError: $lastError, ')
-          ..write('ambiguousSince: $ambiguousSince, ')
           ..write('retryAfter: $retryAfter')
           ..write(')'))
         .toString();
@@ -4953,7 +4909,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
     issueIid,
     body,
     lastError,
-    ambiguousSince,
     retryAfter,
   );
   @override
@@ -4967,7 +4922,6 @@ class CommentDraft extends DataClass implements Insertable<CommentDraft> {
           other.issueIid == this.issueIid &&
           other.body == this.body &&
           other.lastError == this.lastError &&
-          other.ambiguousSince == this.ambiguousSince &&
           other.retryAfter == this.retryAfter);
 }
 
@@ -4979,7 +4933,6 @@ class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
   final Value<int> issueIid;
   final Value<String> body;
   final Value<String?> lastError;
-  final Value<DateTime?> ambiguousSince;
   final Value<DateTime?> retryAfter;
   final Value<int> rowid;
   const CommentDraftsCompanion({
@@ -4990,7 +4943,6 @@ class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
     this.issueIid = const Value.absent(),
     this.body = const Value.absent(),
     this.lastError = const Value.absent(),
-    this.ambiguousSince = const Value.absent(),
     this.retryAfter = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -5002,7 +4954,6 @@ class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
     required int issueIid,
     required String body,
     this.lastError = const Value.absent(),
-    this.ambiguousSince = const Value.absent(),
     this.retryAfter = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : instanceHost = Value(instanceHost),
@@ -5019,7 +4970,6 @@ class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
     Expression<int>? issueIid,
     Expression<String>? body,
     Expression<String>? lastError,
-    Expression<DateTime>? ambiguousSince,
     Expression<DateTime>? retryAfter,
     Expression<int>? rowid,
   }) {
@@ -5031,7 +4981,6 @@ class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
       if (issueIid != null) 'issue_iid': issueIid,
       if (body != null) 'body': body,
       if (lastError != null) 'last_error': lastError,
-      if (ambiguousSince != null) 'ambiguous_since': ambiguousSince,
       if (retryAfter != null) 'retry_after': retryAfter,
       if (rowid != null) 'rowid': rowid,
     });
@@ -5045,7 +4994,6 @@ class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
     Value<int>? issueIid,
     Value<String>? body,
     Value<String?>? lastError,
-    Value<DateTime?>? ambiguousSince,
     Value<DateTime?>? retryAfter,
     Value<int>? rowid,
   }) {
@@ -5057,7 +5005,6 @@ class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
       issueIid: issueIid ?? this.issueIid,
       body: body ?? this.body,
       lastError: lastError ?? this.lastError,
-      ambiguousSince: ambiguousSince ?? this.ambiguousSince,
       retryAfter: retryAfter ?? this.retryAfter,
       rowid: rowid ?? this.rowid,
     );
@@ -5087,9 +5034,6 @@ class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
     if (lastError.present) {
       map['last_error'] = Variable<String>(lastError.value);
     }
-    if (ambiguousSince.present) {
-      map['ambiguous_since'] = Variable<DateTime>(ambiguousSince.value);
-    }
     if (retryAfter.present) {
       map['retry_after'] = Variable<DateTime>(retryAfter.value);
     }
@@ -5109,7 +5053,6 @@ class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
           ..write('issueIid: $issueIid, ')
           ..write('body: $body, ')
           ..write('lastError: $lastError, ')
-          ..write('ambiguousSince: $ambiguousSince, ')
           ..write('retryAfter: $retryAfter, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -7503,7 +7446,6 @@ typedef $$CommentDraftsTableCreateCompanionBuilder =
       required int issueIid,
       required String body,
       Value<String?> lastError,
-      Value<DateTime?> ambiguousSince,
       Value<DateTime?> retryAfter,
       Value<int> rowid,
     });
@@ -7516,7 +7458,6 @@ typedef $$CommentDraftsTableUpdateCompanionBuilder =
       Value<int> issueIid,
       Value<String> body,
       Value<String?> lastError,
-      Value<DateTime?> ambiguousSince,
       Value<DateTime?> retryAfter,
       Value<int> rowid,
     });
@@ -7562,11 +7503,6 @@ class $$CommentDraftsTableFilterComposer
 
   ColumnFilters<String> get lastError => $composableBuilder(
     column: $table.lastError,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get ambiguousSince => $composableBuilder(
-    column: $table.ambiguousSince,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7620,11 +7556,6 @@ class $$CommentDraftsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get ambiguousSince => $composableBuilder(
-    column: $table.ambiguousSince,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<DateTime> get retryAfter => $composableBuilder(
     column: $table.retryAfter,
     builder: (column) => ColumnOrderings(column),
@@ -7662,11 +7593,6 @@ class $$CommentDraftsTableAnnotationComposer
 
   GeneratedColumn<String> get lastError =>
       $composableBuilder(column: $table.lastError, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get ambiguousSince => $composableBuilder(
-    column: $table.ambiguousSince,
-    builder: (column) => column,
-  );
 
   GeneratedColumn<DateTime> get retryAfter => $composableBuilder(
     column: $table.retryAfter,
@@ -7712,7 +7638,6 @@ class $$CommentDraftsTableTableManager
                 Value<int> issueIid = const Value.absent(),
                 Value<String> body = const Value.absent(),
                 Value<String?> lastError = const Value.absent(),
-                Value<DateTime?> ambiguousSince = const Value.absent(),
                 Value<DateTime?> retryAfter = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CommentDraftsCompanion(
@@ -7723,7 +7648,6 @@ class $$CommentDraftsTableTableManager
                 issueIid: issueIid,
                 body: body,
                 lastError: lastError,
-                ambiguousSince: ambiguousSince,
                 retryAfter: retryAfter,
                 rowid: rowid,
               ),
@@ -7736,7 +7660,6 @@ class $$CommentDraftsTableTableManager
                 required int issueIid,
                 required String body,
                 Value<String?> lastError = const Value.absent(),
-                Value<DateTime?> ambiguousSince = const Value.absent(),
                 Value<DateTime?> retryAfter = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => CommentDraftsCompanion.insert(
@@ -7747,7 +7670,6 @@ class $$CommentDraftsTableTableManager
                 issueIid: issueIid,
                 body: body,
                 lastError: lastError,
-                ambiguousSince: ambiguousSince,
                 retryAfter: retryAfter,
                 rowid: rowid,
               ),

@@ -31,7 +31,6 @@ class _FailingFlushQueue extends CommentDraftQueue {
     required super.database,
     required super.account,
     required super.repository,
-    required super.loadRecentNotes,
     required super.onReconnect,
   });
 
@@ -60,7 +59,6 @@ void main() {
       database: database,
       account: account,
       repository: repository,
-      loadRecentNotes: (_, _) async => const [],
       onReconnect: reconnect.stream,
     );
   });
@@ -193,7 +191,6 @@ void main() {
       database: database,
       account: account,
       repository: repository,
-      loadRecentNotes: (_, _) async => const [],
       onReconnect: reconnect.stream,
     );
     await tester.pumpWidget(screen());
