@@ -30,6 +30,8 @@ typedef LoadRecentIssueNotes =
 /// non-connectivity 4xx, e.g. 403) marks the draft failed via
 /// [CommentDraft.lastError] so it is surfaced instead of retried forever.
 class CommentDraftQueue {
+  static const _reconciliationFutureClockSkew = Duration(seconds: 5);
+
   CommentDraftQueue({
     required this.database,
     required this.account,
@@ -139,7 +141,7 @@ class CommentDraftQueue {
       return false;
     }
     if (draft.ambiguousSince != null) {
-      final reconciled = await _reconcile(draft);
+      final reconciled = await _reconcile(draft, now);
       if (reconciled == null) return false;
       if (reconciled) return true;
     }
@@ -212,12 +214,12 @@ class CommentDraftQueue {
     return true;
   }
 
-  Future<bool?> _reconcile(CommentDraft draft) async {
+  Future<bool?> _reconcile(CommentDraft draft, DateTime now) async {
     try {
       final notes = await loadRecentNotes(draft.projectId, draft.issueIid);
       final ambiguousSince = draft.ambiguousSince!;
-      final earliest = ambiguousSince.subtract(const Duration(minutes: 2));
-      final latest = ambiguousSince.add(const Duration(minutes: 2));
+      final earliest = ambiguousSince;
+      final latest = now.add(_reconciliationFutureClockSkew);
       for (final note in notes) {
         if (note.body == draft.body &&
             note.author.id.toString() == account.accountId &&

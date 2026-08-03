@@ -327,6 +327,63 @@ void main() {
   });
 
   test(
+    'an older identical comment does not consume a repeated draft',
+    () async {
+      var now = DateTime.utc(2026, 8, 3, 12);
+      final server = await FakeGitLabServer.start();
+      addTearDown(server.close);
+      var postAttempts = 0;
+      server.handle(_notesPath, (request) async {
+        postAttempts++;
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        request.response.statusCode = HttpStatus.serviceUnavailable;
+        await request.response.close();
+      });
+      final timedClient = client(server.baseUri.port)
+        ..options.receiveTimeout = const Duration(milliseconds: 20);
+      final repeated = queue(timedClient, now: () => now);
+
+      await repeated.send(7, 142, 'Intentionally repeated');
+
+      final olderNote =
+          Map<String, dynamic>.from(
+            Fixtures.json('issue_142_note_created') as Map,
+          )..addAll({
+            'id': 9993,
+            'body': 'Intentionally repeated',
+            'author': {
+              'id': 1,
+              'username': 'current-user',
+              'name': 'Current User',
+              'avatar_url': null,
+            },
+            'created_at': now
+                .subtract(const Duration(seconds: 1))
+                .toIso8601String(),
+          });
+      server.respondJson('GET /api/v4/projects/7/issues/142/notes', [
+        olderNote,
+      ]);
+      now = now.add(const Duration(seconds: 1));
+      final repeatedNote = Map<String, dynamic>.from(olderNote)
+        ..addAll({'id': 9994, 'created_at': now.toIso8601String()});
+      server.handle(_notesPath, (request) async {
+        postAttempts++;
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(jsonEncode(repeatedNote));
+        await request.response.close();
+      });
+      final sent = repeated.sentNotes.first;
+      await repeated.flush();
+      final event = await sent;
+
+      expect(postAttempts, 2);
+      expect(event.note.id, 9994);
+      expect(await repeated.watchDrafts(7, 142).first, isEmpty);
+    },
+  );
+
+  test(
     'a failed local delete reconciles a successful post before retrying',
     () async {
       final now = DateTime.utc(2026, 8, 3, 12);
