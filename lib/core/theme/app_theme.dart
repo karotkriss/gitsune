@@ -93,10 +93,24 @@ ThemeData buildAppTheme([GsTokenSet tokens = gsTokens]) {
       splashColor: gs.pressOverlayStrong,
       colorScheme: colorScheme,
     ),
-    dialogTheme: DialogThemeData(backgroundColor: gs.surfaceSheet),
+    // Overlays are heavy glass over the `--gs-scrim` barrier (ADR 0009, via
+    // the primitives in `lib/core/glass/glass_overlays.dart`), so every
+    // overlay route gets the scrim, and modal sheets stay unpainted for the
+    // glass body to show through.
+    dialogTheme: DialogThemeData(
+      backgroundColor: gs.surfaceSheet,
+      barrierColor: gs.scrim,
+    ),
+    drawerTheme: DrawerThemeData(scrimColor: gs.scrim),
+    bottomSheetTheme: BottomSheetThemeData(
+      modalBarrierColor: gs.scrim,
+      modalBackgroundColor: Colors.transparent,
+      modalElevation: 0,
+    ),
     // Tab bar (design `TabBar` component): active item in a pill, labels
     // 12/500 per the type scale's tab-bar exception. Solid surface for now;
-    // the liquid-glass capsule treatment arrives with the glass work (E1.5).
+    // the liquid-glass capsule treatment is still open glass work (E1.5
+    // covered overlays only).
     navigationBarTheme: NavigationBarThemeData(
       height: 64,
       backgroundColor: gs.surfaceSubtle,

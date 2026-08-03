@@ -6,6 +6,7 @@ import 'package:flutter/semantics.dart';
 import '../../core/ci/ci_status.dart';
 import '../../core/ci/ci_status_badge.dart';
 import '../../core/database/app_database.dart';
+import '../../core/glass/glass_overlays.dart';
 import '../../core/glass/glass_surface.dart';
 import '../../core/icons/gs_icons.dart';
 import '../../core/repository/offline_first_repository.dart';
@@ -112,14 +113,10 @@ class _TodosScreenState extends State<TodosScreen> {
   }
 
   Future<void> _showFilterSheet(List<TodoItem> todos) async {
-    final gs = Theme.of(context).extension<GsTheme>()!;
     final reasons = _availableReasons(todos);
     final selection = await showModalBottomSheet<_ReasonSelection>(
       context: context,
       isScrollControlled: true,
-      useSafeArea: false,
-      backgroundColor: Colors.transparent,
-      barrierColor: gs.scrim,
       builder: (context) =>
           _ReasonFilterSheet(reasons: reasons, selectedReason: _selectedReason),
     );
@@ -493,79 +490,65 @@ class _ReasonFilterSheet extends StatelessWidget {
 
     return SizedBox(
       height: height,
-      child: GlassSurface(
-        intensity: GlassIntensity.heavy,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(top: 8),
-                decoration: BoxDecoration(
-                  color: gs.borderStrong,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      child: GlassBottomSheet(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text(
+                'Filter by reason',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: gs.textHeading),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Text(
-                  'Filter by reason',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: gs.textHeading),
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: options.length,
-                  itemBuilder: (context, index) {
-                    final reason = options[index];
-                    final selected = reason == selectedReason;
-                    return InkWell(
-                      key: ValueKey('todo-filter-${reason ?? 'all'}'),
-                      onTap: () =>
-                          Navigator.of(context).pop(_ReasonSelection(reason)),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(minHeight: 48),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            border: index == options.length - 1
-                                ? null
-                                : Border(
-                                    bottom: BorderSide(color: gs.borderSubtle),
-                                  ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    reason == null
-                                        ? 'All'
-                                        : todoReasonLabel(reason),
-                                  ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final reason = options[index];
+                  final selected = reason == selectedReason;
+                  return InkWell(
+                    key: ValueKey('todo-filter-${reason ?? 'all'}'),
+                    onTap: () =>
+                        Navigator.of(context).pop(_ReasonSelection(reason)),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          border: index == options.length - 1
+                              ? null
+                              : Border(
+                                  bottom: BorderSide(color: gs.borderSubtle),
                                 ),
-                                if (selected)
-                                  GsIcon(
-                                    GsIconGlyph.check,
-                                    size: 16,
-                                    color: gs.accent,
-                                  ),
-                              ],
-                            ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  reason == null
+                                      ? 'All'
+                                      : todoReasonLabel(reason),
+                                ),
+                              ),
+                              if (selected)
+                                GsIcon(
+                                  GsIconGlyph.check,
+                                  size: 16,
+                                  color: gs.accent,
+                                ),
+                            ],
                           ),
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

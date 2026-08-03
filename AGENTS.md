@@ -32,6 +32,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   `flutter_markdown_plus` intercepts every use of a registered built-in tag, even when its builder returns `null`, so this can blank ordinary content; `test/core/markdown/mermaid/gs_mermaid_test.dart` protects ordinary fenced code blocks from that regression.
 - Liquid glass: `GlassSurface` (`lib/core/glass/glass_surface.dart`) is the single glass primitive and isolation seam; compose it rather than using `BackdropFilter` directly.
   See `docs/research/glass-spike.md` for the benchmark procedure, measured cost model, and open real-device validation.
+  Reusable heavy-glass overlays live in `lib/core/glass/glass_overlays.dart`; use those primitives for feature overlays.
 - GitLab CI states and the fixed Pajamas circular badge mapping live in `lib/core/ci/`; reuse `CiStatusBadge` anywhere pipeline or job state appears so glyphs, colors, and semantics stay consistent.
 - The pipeline job actions (`lib/features/pipelines/data/pipelines_repository.dart`'s `retryJob`/`cancelJob`/`playJob`) are this app's first write (POST) endpoints; they establish the pattern for future mutating actions: the repository method posts and decodes the updated resource from the response body, and the calling screen folds that resource back into its local state (see `PipelineDetails.withUpdatedJob` for the retry-creates-a-new-job-id-vs-cancel/play-updates-in-place merge logic) rather than refetching.
 - The license is intentionally unset ("License: TBD" in `README.md`).
