@@ -169,6 +169,32 @@ void main() {
     },
   );
 
+  test('a touch failure still serves a readable cached issue', () async {
+    final cache = _FailingTouchRecentlyViewedCache(
+      database: db,
+      account: account,
+      now: tick,
+    );
+    await cache.put(
+      RecentlyViewedType.issue,
+      7,
+      142,
+      Fixtures.raw('issue_142'),
+    );
+    final repository = issueRepository(
+      cache,
+      clientFor(Uri.parse('http://127.0.0.1:1')),
+    );
+
+    final cached = await repository.readCached();
+
+    expect(cached!.title, 'Keep draft comments after reconnecting');
+    expect(
+      await cache.watchPayload(RecentlyViewedType.issue, 7, 142).first,
+      isNotNull,
+    );
+  });
+
   test(
     'a background refresh updates the cache and the stream re-emits',
     () async {
@@ -367,4 +393,16 @@ void main() {
       ]),
     );
   });
+}
+
+class _FailingTouchRecentlyViewedCache extends RecentlyViewedCache {
+  _FailingTouchRecentlyViewedCache({
+    required super.database,
+    required super.account,
+    required super.now,
+  });
+
+  @override
+  Future<void> touch(RecentlyViewedType type, int projectId, int itemId) =>
+      Future.error(StateError('touch failed'));
 }

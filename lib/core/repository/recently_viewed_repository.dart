@@ -233,6 +233,15 @@ class RecentItemRepository<T> implements OfflineFirstRepository<T?> {
   Future<T?> readCached() async {
     try {
       await cache.touch(type, projectId, itemId);
+    } on Object catch (error, stackTrace) {
+      log(
+        'Unable to touch recently viewed item',
+        name: 'gitsune.recently_viewed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+    try {
       return await watch().first;
     } on Object catch (error, stackTrace) {
       log(
