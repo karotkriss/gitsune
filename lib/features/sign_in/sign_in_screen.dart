@@ -8,8 +8,8 @@ import '../../core/theme/app_theme.dart';
 /// The sign-in surface specified by `docs/research/design-direction.md` and
 /// `docs/decisions/0001-auth-posture.md`.
 ///
-/// Reachable self-hosted instances show an inline limitation until the E2.3
-/// registration wizard is implemented.
+/// Production keeps showing an inline limitation for reachable self-hosted
+/// instances until the E2.3 registration wizard wires [signInSelfHosted].
 class SignInScreen extends StatefulWidget {
   const SignInScreen({
     super.key,
