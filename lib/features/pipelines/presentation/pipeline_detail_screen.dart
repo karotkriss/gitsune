@@ -109,10 +109,7 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
         ),
       ),
       body: details == null
-          ? _PipelineInitialState(
-              loading: _loading,
-              failed: _failed,
-            )
+          ? _PipelineInitialState(loading: _loading, failed: _failed)
           : RefreshIndicator(
               onRefresh: _load,
               color: gs.accent,
@@ -332,10 +329,7 @@ class _JobRow extends StatelessWidget {
 }
 
 class _PipelineInitialState extends StatelessWidget {
-  const _PipelineInitialState({
-    required this.loading,
-    required this.failed,
-  });
+  const _PipelineInitialState({required this.loading, required this.failed});
 
   final bool loading;
   final bool failed;
