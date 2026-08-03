@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/icons/gs_icons.dart';
+import '../../../core/repository/recently_viewed_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/issue_models.dart';
 import '../data/issues_repository.dart';
@@ -13,6 +14,7 @@ class IssueDetailScreen extends StatefulWidget {
     required this.projectPath,
     required this.issueIid,
     required this.repository,
+    this.recentlyViewedCache,
     this.initialIssue,
     this.now,
   });
@@ -21,6 +23,10 @@ class IssueDetailScreen extends StatefulWidget {
   final String projectPath;
   final int issueIid;
   final IssuesRepository repository;
+
+  /// Serves this issue offline after a previous view; null leaves the screen
+  /// network-only until the composition root wires the cache.
+  final RecentlyViewedCache? recentlyViewedCache;
   final Issue? initialIssue;
   final DateTime? now;
 
@@ -51,24 +57,46 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   int _generation = 0;
   int _issueGeneration = 0;
   int _issueStateRevision = 0;
+  RecentItemRepository<Issue>? _recentIssue;
 
   @override
   void initState() {
     super.initState();
     _issue = widget.initialIssue;
     _scrollController.addListener(_handleScroll);
+    _rebuildRecentIssue();
     _reload();
+  }
+
+  void _rebuildRecentIssue() {
+    final cache = widget.recentlyViewedCache;
+    _recentIssue = cache == null
+        ? null
+        : RecentItemRepository(
+            cache: cache,
+            type: RecentlyViewedType.issue,
+            projectId: widget.projectId,
+            itemId: widget.issueIid,
+            fetch: () =>
+                widget.repository.loadIssue(widget.projectId, widget.issueIid),
+            decode: Issue.fromJson,
+            encode: (issue) => issue.toJson(),
+            updatedAt: (issue) => issue.updatedAt,
+          );
   }
 
   @override
   void didUpdateWidget(covariant IssueDetailScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final cacheChanged =
+        oldWidget.recentlyViewedCache != widget.recentlyViewedCache;
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.issueIid != widget.issueIid ||
-        oldWidget.repository != widget.repository) {
+        oldWidget.repository != widget.repository ||
+        cacheChanged) {
       _issueGeneration++;
       _issueStateRevision++;
-      _issue = widget.initialIssue;
+      _issue = cacheChanged ? null : widget.initialIssue;
       _loadedNotes.clear();
       _createdNotes.clear();
       _localEvents.clear();
@@ -77,6 +105,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       _sendingComment = false;
       _triaging = false;
       _notesHaveMore = false;
+      _rebuildRecentIssue();
       _reload();
     }
   }
@@ -139,11 +168,32 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
 
   Future<void> _refreshIssue(int generation) async {
     final issueStateRevision = _issueStateRevision;
+    final recent = _recentIssue;
+    if (recent != null) {
+      // Stale-while-revalidate: serve the cached issue immediately while the
+      // network refresh below continues in the background.
+      final cached = await recent.readCached();
+      if (!mounted ||
+          generation != _generation ||
+          issueStateRevision != _issueStateRevision) {
+        return;
+      }
+      if (cached != null && _issue == null) {
+        setState(() {
+          _issue = cached;
+          _issueLoading = true;
+        });
+      }
+    }
     try {
-      final issue = await widget.repository.loadIssue(
-        widget.projectId,
-        widget.issueIid,
-      );
+      final issue = recent != null
+          ? await recent.load(
+              shouldPersist: () => issueStateRevision == _issueStateRevision,
+            )
+          : await widget.repository.loadIssue(
+              widget.projectId,
+              widget.issueIid,
+            );
       if (!mounted ||
           generation != _generation ||
           issueStateRevision != _issueStateRevision) {
@@ -433,6 +483,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         _issueFailed = false;
         _triaging = false;
       });
+      await _recentIssue?.invalidate();
     } on Object {
       if (!mounted || issueGeneration != _issueGeneration) return;
       setState(() => _triaging = false);

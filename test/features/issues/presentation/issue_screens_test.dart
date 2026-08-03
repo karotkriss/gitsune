@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/io.dart';
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gitsune/core/database/app_database.dart';
 import 'package:gitsune/core/markdown/gs_markdown.dart';
 import 'package:gitsune/core/network/account_key.dart';
 import 'package:gitsune/core/network/gitlab_client.dart';
+import 'package:gitsune/core/repository/recently_viewed_repository.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/issues/data/issue_models.dart';
 import 'package:gitsune/features/issues/data/issues_repository.dart';
@@ -403,9 +406,187 @@ void main() {
     expect(repository.updateCalls.last.assigneeIds?.toSet(), {12, 13});
   });
 
+  testWidgets('a recently viewed issue renders offline from the cache', (
+    tester,
+  ) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final cache = RecentlyViewedCache(
+      database: db,
+      account: const AccountKey(
+        instanceHost: 'gitlab.example.com',
+        accountId: 'alice',
+      ),
+    );
+    await cache.put(
+      RecentlyViewedType.issue,
+      7,
+      142,
+      jsonEncode(Fixtures.json('issue_142')),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: _OfflineIssuesRepository(),
+          recentlyViewedCache: cache,
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Keep draft comments after reconnecting'), findsOneWidget);
+    expect(find.text('Unable to refresh this issue.'), findsOneWidget);
+  });
+
+  testWidgets('switching account caches replaces the displayed issue', (
+    tester,
+  ) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    RecentlyViewedCache cacheFor(String accountId) => RecentlyViewedCache(
+      database: db,
+      account: AccountKey(
+        instanceHost: 'gitlab.example.com',
+        accountId: accountId,
+      ),
+    );
+    final aliceCache = cacheFor('alice');
+    final bobCache = cacheFor('bob');
+    final fixture = Map<String, dynamic>.from(
+      Fixtures.json('issue_142') as Map,
+    );
+    await aliceCache.put(
+      RecentlyViewedType.issue,
+      7,
+      142,
+      jsonEncode({...fixture, 'title': 'Alice issue'}),
+    );
+    await bobCache.put(
+      RecentlyViewedType.issue,
+      7,
+      142,
+      jsonEncode({...fixture, 'title': 'Bob issue'}),
+    );
+
+    Widget screen(RecentlyViewedCache cache) => MaterialApp(
+      theme: buildAppTheme(),
+      home: IssueDetailScreen(
+        projectId: 7,
+        projectPath: 'gitsune/app',
+        issueIid: 142,
+        repository: _OfflineIssuesRepository(),
+        recentlyViewedCache: cache,
+        now: now,
+      ),
+    );
+
+    await tester.pumpWidget(screen(aliceCache));
+    await tester.pumpAndSettle();
+    expect(find.text('Alice issue'), findsOneWidget);
+
+    await tester.pumpWidget(screen(bobCache));
+    await tester.pumpAndSettle();
+    expect(find.text('Alice issue'), findsNothing);
+    expect(find.text('Bob issue'), findsOneWidget);
+  });
+
+  testWidgets('an initial issue still touches its cached view timestamp', (
+    tester,
+  ) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    var clock = DateTime.utc(2026, 8, 2, 8);
+    final cache = RecentlyViewedCache(
+      database: db,
+      account: const AccountKey(
+        instanceHost: 'gitlab.example.com',
+        accountId: 'alice',
+      ),
+      now: () => clock,
+    );
+    await cache.put(
+      RecentlyViewedType.issue,
+      7,
+      142,
+      jsonEncode(Fixtures.json('issue_142')),
+    );
+    clock = DateTime.utc(2026, 8, 2, 9);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: _OfflineIssuesRepository(),
+          recentlyViewedCache: cache,
+          initialIssue: _fixtureIssue(),
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final row = await db.select(db.recentlyViewedItems).getSingle();
+    expect(row.lastViewedAt.toUtc(), clock);
+  });
+
+  testWidgets('triage invalidates the cached issue', (tester) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final cache = RecentlyViewedCache(
+      database: db,
+      account: const AccountKey(
+        instanceHost: 'gitlab.example.com',
+        accountId: 'alice',
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: FixtureIssuesRepository(),
+          recentlyViewedCache: cache,
+          initialIssue: _fixtureIssue(),
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Close issue'));
+    await tester.pumpAndSettle();
+
+    expect(
+      await cache.watchPayload(RecentlyViewedType.issue, 7, 142).first,
+      isNull,
+    );
+  });
+
   testWidgets('a stale issue refresh cannot overwrite committed triage', (
     tester,
   ) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final cache = RecentlyViewedCache(
+      database: db,
+      account: const AccountKey(
+        instanceHost: 'gitlab.example.com',
+        accountId: 'alice',
+      ),
+    );
     final staleIssue = Completer<Issue>();
     final repository = _TriageRegressionRepository(delayedIssue: staleIssue);
     await tester.pumpWidget(
@@ -416,6 +597,7 @@ void main() {
           projectPath: 'gitsune/app',
           issueIid: 142,
           repository: repository,
+          recentlyViewedCache: cache,
           initialIssue: _fixtureIssue(),
           now: now,
         ),
@@ -435,6 +617,47 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Closed'), findsOneWidget);
+    expect(
+      await cache.watchPayload(RecentlyViewedType.issue, 7, 142).first,
+      isNull,
+    );
+  });
+
+  testWidgets('a cache invalidation failure does not fail successful triage', (
+    tester,
+  ) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final cache = _FailingRemoveRecentlyViewedCache(
+      database: db,
+      account: const AccountKey(
+        instanceHost: 'gitlab.example.com',
+        accountId: 'alice',
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: FixtureIssuesRepository(),
+          recentlyViewedCache: cache,
+          initialIssue: _fixtureIssue(),
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Close issue'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Closed'), findsOneWidget);
+    expect(find.text('Unable to update the issue.'), findsNothing);
   });
 
   testWidgets('a pending notes refresh preserves later triage events', (
@@ -1197,3 +1420,27 @@ Future<void> _waitForHttp<T>(WidgetTester tester, Future<T> future) async {
 }
 
 class _LoopbackHttpOverrides extends HttpOverrides {}
+
+/// A repository whose reads fail the way an offline device's would.
+class _OfflineIssuesRepository extends FixtureIssuesRepository {
+  @override
+  Future<Issue> loadIssue(int projectId, int issueIid) async {
+    throw const SocketException('offline');
+  }
+
+  @override
+  Future<IssueNotePage> loadFirstNotesPage(int projectId, int issueIid) async {
+    throw const SocketException('offline');
+  }
+}
+
+class _FailingRemoveRecentlyViewedCache extends RecentlyViewedCache {
+  _FailingRemoveRecentlyViewedCache({
+    required super.database,
+    required super.account,
+  });
+
+  @override
+  Future<void> remove(RecentlyViewedType type, int projectId, int itemId) =>
+      Future.error(StateError('cache invalidation failed'));
+}

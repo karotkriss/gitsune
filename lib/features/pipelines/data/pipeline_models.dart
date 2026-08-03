@@ -19,6 +19,17 @@ class PipelineDetails {
     required this.jobs,
   });
 
+  /// Reads the cache-shaped JSON [toJson] writes (this composite of one
+  /// pipeline plus its job attempts has no single API payload of its own).
+  factory PipelineDetails.fromJson(Map<String, dynamic> json) {
+    return PipelineDetails(
+      pipeline: Pipeline.fromJson(_jsonMap(json['pipeline'])),
+      jobs: (json['jobs'] as List)
+          .map((value) => PipelineJob.fromJson(_jsonMap(value)))
+          .toList(growable: false),
+    );
+  }
+
   final Pipeline pipeline;
   final List<PipelineJob> jobs;
   final List<PipelineJob> _attempts;
@@ -30,6 +41,11 @@ class PipelineDetails {
     pipeline: pipeline,
     jobs: [..._attempts.where((job) => job.id != updated.id), updated],
   );
+
+  Map<String, dynamic> toJson() => {
+    'pipeline': pipeline.toJson(),
+    'jobs': [for (final job in _attempts) job.toJson()],
+  };
 }
 
 List<PipelineJob> _latestJobsInStageOrder(Iterable<PipelineJob> jobs) {
@@ -103,6 +119,20 @@ class Pipeline {
   final double? duration;
   final String? webUrl;
 
+  /// The API-shaped JSON [fromJson] reads, for the recently-viewed cache.
+  /// [CiStatus.warning] round-trips because `fromApi` accepts `warning`.
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'status': status.apiValue,
+    'ref': ref,
+    'sha': sha,
+    'source': source,
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+    'duration': duration,
+    'web_url': webUrl,
+  };
+
   String get shortSha => sha.length <= 8 ? sha : sha.substring(0, 8);
 }
 
@@ -152,6 +182,21 @@ class PipelineJob {
   final DateTime? startedAt;
   final DateTime? finishedAt;
   final String? webUrl;
+
+  /// The API-shaped JSON [fromJson] reads, for the recently-viewed cache
+  /// ([badgeStatus] is re-derived from `status` and `allow_failure`).
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'stage': stage,
+    'status': status.apiValue,
+    'allow_failure': allowFailure,
+    'duration': duration,
+    'queued_duration': queuedDuration,
+    'started_at': startedAt?.toIso8601String(),
+    'finished_at': finishedAt?.toIso8601String(),
+    'web_url': webUrl,
+  };
 }
 
 CiStatus _pipelineStatus(Map<String, dynamic> json) {
@@ -164,3 +209,10 @@ CiStatus _pipelineStatus(Map<String, dynamic> json) {
 
 DateTime? _dateTimeOrNull(Object? value) =>
     value is String ? DateTime.parse(value) : null;
+
+Map<String, dynamic> _jsonMap(Object? value) {
+  if (value is! Map) {
+    throw const FormatException('Expected a JSON object.');
+  }
+  return Map<String, dynamic>.from(value);
+}

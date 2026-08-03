@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/database/app_database.dart';
 import '../../core/icons/gs_icons.dart';
 import '../../core/repository/offline_first_repository.dart';
+import '../../core/repository/recently_viewed_repository.dart';
 import '../code/data/repository_tree_repository.dart';
 import '../code/presentation/repository_tree_screen.dart';
 import '../explore/explore_screen.dart';
@@ -39,7 +40,8 @@ import '../todos/todos_screen.dart';
 /// wiring lands without hiding the route contracts exposed to project
 /// navigation. [searchRepository] swaps the Explore tab's placeholder for the
 /// real [SearchScreen], while [todosRepository] binds the To-Dos tab to its
-/// offline-first cache stream.
+/// offline-first cache stream. [recentlyViewedCache] lets the issue, merge
+/// request, and pipeline detail screens serve recently viewed items offline.
 GoRouter buildAppRouter({
   IssuesRepository? issuesRepository,
   MergeRequestsRepository? mergeRequestsRepository,
@@ -47,6 +49,7 @@ GoRouter buildAppRouter({
   RepositoryTreeRepository? repositoryTreeRepository,
   SearchRepository? searchRepository,
   OfflineFirstRepository<List<TodoItem>>? todosRepository,
+  RecentlyViewedCache? recentlyViewedCache,
   String initialLocation = '/home',
 }) {
   return GoRouter(
@@ -131,6 +134,7 @@ GoRouter buildAppRouter({
               projectPath: projectPath,
               issueIid: int.parse(state.pathParameters['issueIid']!),
               repository: issuesRepository,
+              recentlyViewedCache: recentlyViewedCache,
               initialIssue: state.extra is Issue ? state.extra! as Issue : null,
             );
           },
@@ -207,6 +211,7 @@ GoRouter buildAppRouter({
               projectPath: projectPath,
               pipelineId: pipelineId,
               repository: pipelinesRepository,
+              recentlyViewedCache: recentlyViewedCache,
               onJobTap: (pipeline, job) => context.push(
                 Uri(
                   path: '/projects/$projectId/jobs/${job.id}/log',
@@ -266,6 +271,7 @@ GoRouter buildAppRouter({
               projectPath: projectPath,
               mergeIid: int.parse(state.pathParameters['mergeIid']!),
               repository: mergeRequestsRepository,
+              recentlyViewedCache: recentlyViewedCache,
               initialMergeRequest: state.extra is MergeRequest
                   ? state.extra! as MergeRequest
                   : null,

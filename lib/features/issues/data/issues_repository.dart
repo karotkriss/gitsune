@@ -19,7 +19,8 @@ class IssueNotePage {
 
 /// Network-backed seam consumed by the issue list and detail screens.
 ///
-/// The first offline cache for recently viewed issues arrives in E14.1.
+/// This repository remains network-backed. The issue detail screen composes
+/// it with the E14.1 recently-viewed cache for offline reads.
 abstract interface class IssuesRepository {
   Future<IssuePage> loadFirstPage(int projectId);
 

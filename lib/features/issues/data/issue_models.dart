@@ -65,6 +65,24 @@ class Issue {
 
   String get reference => '#$iid';
 
+  /// The API-shaped JSON [fromJson] reads, for the recently-viewed cache.
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'project_id': projectId,
+    'iid': iid,
+    'title': title,
+    'description': description,
+    'state': state.name,
+    'author': author.toJson(),
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+    'labels': [for (final label in labels) label.toJson()],
+    'assignees': [for (final assignee in assignees) assignee.toJson()],
+    'user_notes_count': userNotesCount,
+    if (milestoneTitle != null) 'milestone': {'title': milestoneTitle},
+    'web_url': webUrl,
+  };
+
   /// The issue update endpoint returns labels as plain names, so a caller
   /// folding its response can restore the detailed colors it already knows.
   Issue withLabelDetailsFrom(Iterable<IssueLabel> known) {
@@ -129,6 +147,13 @@ class IssueAuthor {
   final String name;
   final String? avatarUrl;
 
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'username': username,
+    'name': name,
+    'avatar_url': avatarUrl,
+  };
+
   String get initials {
     final words = name.trim().split(RegExp(r'\s+'));
     if (words.isEmpty || words.first.isEmpty) return '?';
@@ -156,6 +181,12 @@ class IssueLabel {
   final String name;
   final String? colorHex;
   final String? textColorHex;
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'color': colorHex,
+    'text_color': textColorHex,
+  };
 
   bool get isScoped => name.contains('::');
 

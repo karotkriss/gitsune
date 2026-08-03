@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/ci/ci_status_badge.dart';
 import '../../../core/icons/gs_icons.dart';
 import '../../../core/markdown/gs_markdown.dart';
+import '../../../core/repository/recently_viewed_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/merge_request_models.dart';
 import '../data/merge_requests_repository.dart';
@@ -15,6 +16,7 @@ class MergeRequestDetailScreen extends StatefulWidget {
     required this.projectPath,
     required this.mergeIid,
     required this.repository,
+    this.recentlyViewedCache,
     this.initialMergeRequest,
     this.onShowChanges,
     this.now,
@@ -24,6 +26,11 @@ class MergeRequestDetailScreen extends StatefulWidget {
   final String projectPath;
   final int mergeIid;
   final MergeRequestsRepository repository;
+
+  /// Serves this merge request's core content offline after a previous view;
+  /// null leaves the screen network-only until the composition root wires
+  /// the cache. Pipelines and approvals stay network-only.
+  final RecentlyViewedCache? recentlyViewedCache;
   final MergeRequest? initialMergeRequest;
 
   /// Opens the changes (diff) screen for the merge request; the card stays
@@ -49,25 +56,50 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
   bool _approvalsLoading = true;
   bool _approvalsFailed = false;
   int _generation = 0;
+  RecentItemRepository<MergeRequest>? _recentMergeRequest;
 
   @override
   void initState() {
     super.initState();
     _mergeRequest = widget.initialMergeRequest;
+    _rebuildRecentMergeRequest();
     _load();
   }
 
   @override
   void didUpdateWidget(covariant MergeRequestDetailScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final cacheChanged =
+        oldWidget.recentlyViewedCache != widget.recentlyViewedCache;
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.mergeIid != widget.mergeIid ||
-        oldWidget.repository != widget.repository) {
-      _mergeRequest = widget.initialMergeRequest;
+        oldWidget.repository != widget.repository ||
+        cacheChanged) {
+      _mergeRequest = cacheChanged ? null : widget.initialMergeRequest;
       _pipelines = null;
       _approvals = null;
+      _rebuildRecentMergeRequest();
       _load();
     }
+  }
+
+  void _rebuildRecentMergeRequest() {
+    final cache = widget.recentlyViewedCache;
+    _recentMergeRequest = cache == null
+        ? null
+        : RecentItemRepository(
+            cache: cache,
+            type: RecentlyViewedType.mergeRequest,
+            projectId: widget.projectId,
+            itemId: widget.mergeIid,
+            fetch: () => widget.repository.loadMergeRequest(
+              widget.projectId,
+              widget.mergeIid,
+            ),
+            decode: MergeRequest.fromJson,
+            encode: (mergeRequest) => mergeRequest.toJson(),
+            updatedAt: (mergeRequest) => mergeRequest.updatedAt,
+          );
   }
 
   Future<void> _load() async {
@@ -89,11 +121,23 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
   }
 
   Future<void> _loadCore(int generation) async {
+    final recent = _recentMergeRequest;
+    if (recent != null) {
+      // Stale-while-revalidate: serve the cached merge request immediately
+      // while the network refresh below continues in the background.
+      final cached = await recent.readCached();
+      if (!mounted || generation != _generation) return;
+      if (cached != null && _mergeRequest == null) {
+        setState(() => _mergeRequest = cached);
+      }
+    }
     try {
-      final mergeRequest = await widget.repository.loadMergeRequest(
-        widget.projectId,
-        widget.mergeIid,
-      );
+      final mergeRequest = recent != null
+          ? await recent.load()
+          : await widget.repository.loadMergeRequest(
+              widget.projectId,
+              widget.mergeIid,
+            );
       if (!mounted || generation != _generation) return;
       setState(() {
         _mergeRequest = mergeRequest;
