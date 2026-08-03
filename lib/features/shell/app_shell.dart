@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/database/app_database.dart';
 import '../../core/icons/gs_icons.dart';
+import '../../core/repository/offline_first_repository.dart';
 import '../explore/explore_screen.dart';
 import '../home/home_screen.dart';
 import '../issues/data/issue_models.dart';
@@ -36,6 +38,7 @@ GoRouter buildAppRouter({
   MergeRequestsRepository? mergeRequestsRepository,
   PipelinesRepository? pipelinesRepository,
   SearchRepository? searchRepository,
+  OfflineFirstRepository<List<TodoItem>>? todosRepository,
   String initialLocation = '/home',
 }) {
   return GoRouter(
@@ -56,7 +59,9 @@ GoRouter buildAppRouter({
             routes: [
               GoRoute(
                 path: '/todos',
-                builder: (context, state) => const TodosScreen(),
+                builder: (context, state) => todosRepository == null
+                    ? const TodosScreen()
+                    : TodosScreen(repository: todosRepository),
               ),
             ],
           ),

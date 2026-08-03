@@ -4,13 +4,13 @@ import 'package:gitsune/main.dart';
 
 void main() {
   const tabs = {
-    'Home': 'shell_home',
-    'To-Dos': 'shell_todos',
-    'Explore': 'shell_explore',
-    'Profile': 'shell_profile',
+    'Home': ('Home', 'shell_home'),
+    'To-Dos': ('To-Do List', 'shell_todos'),
+    'Explore': ('Explore', 'shell_explore'),
+    'Profile': ('Profile', 'shell_profile'),
   };
 
-  for (final MapEntry(key: label, value: golden) in tabs.entries) {
+  for (final MapEntry(key: label, value: tab) in tabs.entries) {
     testWidgets('$label tab navigates and matches the dark-theme golden', (
       tester,
     ) async {
@@ -25,13 +25,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // The label appears twice once the tab is active: the tab-bar item and
-      // the screen's title, proving navigation landed on the right screen.
-      expect(find.text(label), findsNWidgets(2));
+      expect(
+        find.text(tab.$1),
+        tab.$1 == label ? findsNWidgets(2) : findsOneWidget,
+      );
 
       await expectLater(
         find.byType(GitsuneApp),
-        matchesGoldenFile('goldens/$golden.png'),
+        matchesGoldenFile('goldens/${tab.$2}.png'),
       );
     });
   }
