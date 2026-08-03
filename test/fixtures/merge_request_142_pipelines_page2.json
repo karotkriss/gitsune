@@ -1,0 +1,11 @@
+[
+  {
+    "id": 88101,
+    "status": "failed",
+    "ref": "refs/merge-requests/142/head",
+    "sha": "149fd85856342fd56cc6d2426c9d26c1464f6432",
+    "created_at": "2026-08-01T07:40:00.000Z",
+    "updated_at": "2026-08-01T08:00:00.000Z",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/pipelines/88101"
+  }
+]

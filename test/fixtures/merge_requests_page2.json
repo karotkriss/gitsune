@@ -1,0 +1,48 @@
+[
+  {
+    "id": 50140,
+    "project_id": 7,
+    "iid": 140,
+    "title": "Remove stale session banner",
+    "description": "",
+    "state": "closed",
+    "draft": false,
+    "author": {
+      "id": 20,
+      "username": "tom",
+      "name": "Tom Chen",
+      "avatar_url": null
+    },
+    "source_branch": "cleanup/session-banner",
+    "target_branch": "main",
+    "created_at": "2026-07-20T12:00:00.000Z",
+    "updated_at": "2026-07-25T12:00:00.000Z",
+    "user_notes_count": 0,
+    "labels": [],
+    "changes_count": "2",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/merge_requests/140"
+  },
+  {
+    "id": 50139,
+    "project_id": 7,
+    "iid": 139,
+    "title": "Draft OAuth callback diagnostics",
+    "description": "",
+    "state": "opened",
+    "draft": true,
+    "author": {
+      "id": 18,
+      "username": "ade",
+      "name": "Ade Ogunleye",
+      "avatar_url": null
+    },
+    "source_branch": "draft/oauth-diagnostics",
+    "target_branch": "main",
+    "created_at": "2026-07-19T12:00:00.000Z",
+    "updated_at": "2026-07-24T12:00:00.000Z",
+    "user_notes_count": 0,
+    "labels": [],
+    "changes_count": "1",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/merge_requests/139"
+  }
+]

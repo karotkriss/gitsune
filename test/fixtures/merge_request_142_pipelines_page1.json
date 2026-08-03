@@ -1,0 +1,20 @@
+[
+  {
+    "id": 88123,
+    "status": "running",
+    "ref": "refs/merge-requests/142/head",
+    "sha": "731af8923c51e65101fc3cbb3275ce0a3e849311",
+    "created_at": "2026-08-02T07:40:00.000Z",
+    "updated_at": "2026-08-02T08:00:00.000Z",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/pipelines/88123"
+  },
+  {
+    "id": 88119,
+    "status": "success",
+    "ref": "refs/merge-requests/142/head",
+    "sha": "2845ae78119c5cd68a98f72d83173cab16a87ead",
+    "created_at": "2026-08-02T04:40:00.000Z",
+    "updated_at": "2026-08-02T05:00:00.000Z",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/pipelines/88119"
+  }
+]
