@@ -65,7 +65,7 @@ This repository's own license is not yet decided (see `README.md`); the licenses
 ## Index
 
 - `styles.css` → imports `tokens/` (fonts, colors, semantic, typography, spacing, elevation, base)
-- `assets/` — fonts (GitLab Sans/Mono variable woff2), icon sprites, illustrations, the versioned social-preview image, and the third-party license texts covering them (see "Third-party licenses" above)
+- `assets/` — fonts (GitLab Sans/Mono variable woff2), icon sprites, illustrations, the versioned social-preview images (`gitsune-social-preview.png` flat, `gitsune-social-preview-product.png` product-forward), and the third-party license texts covering them (see "Third-party licenses" above)
 - `components/` — `core/` Icon, CiIcon · `actions/` Button · `display/` Avatar, Badge, Label, Token, Skeleton · `feedback/` Alert, Toast · `containers/` Card, Tabs · `overlays/` Drawer, Modal · `navigation/` TabBar, ListRow, Tile. Each has `.d.ts` + `.prompt.md` + a specimen card.
 - `ui_kits/gitsune-app/` — the seven documented surfaces as an interactive phone mock (`index.html`, all logic in `GitsuneApp.jsx`): SignIn, Home, TodoInbox, MergeRequest (+DiffView), IssueView, Explore, Profile (switcher), CodeBrowser
 - `templates/app-screen/` — "Gitsune app screen" template for consuming projects (tweakable surface + theme)
