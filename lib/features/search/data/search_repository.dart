@@ -48,8 +48,10 @@ abstract interface class SearchRepository {
 
   Future<SearchPage<SearchBlob>> loadNextBlobsPage(String term);
 
-  /// The instance's web code-search URL for [term], the fallback surface
-  /// when [loadFirstBlobsPage] reports the scope unsupported.
+  /// The instance's web code-search URL for [term], built by stripping the
+  /// terminal `/api/v4` from the API base so subpath installations retain
+  /// their prefix. This is the fallback when [loadFirstBlobsPage] reports the
+  /// scope unsupported.
   Uri codeSearchWebUrl(String term);
 }
 
