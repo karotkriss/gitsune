@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../icons/gs_icons.dart';
@@ -21,7 +23,7 @@ import 'diff_hunk_parser.dart';
 /// Every row has a fixed height, so a file block's extent is a pure function
 /// of its hunk shape ([extentForFile]) and a composing screen can jump to a
 /// file by scrolling [controller] to [offsetForFile].
-class GsDiffView extends StatelessWidget {
+class GsDiffView extends StatefulWidget {
   const GsDiffView({
     super.key,
     required this.files,
@@ -61,35 +63,35 @@ class GsDiffView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (isOversizedDiff(files)) {
-      return _OversizedDiffFallback(
-        files: files,
-        onOpenInBrowser: onOpenInBrowser,
-      );
-    }
-    final gs = Theme.of(context).extension<GsTheme>()!;
-    final syntaxTheme = gsSyntaxTextTheme(gs);
-    final items = _buildItems(files);
-    return ListView.builder(
-      controller: controller,
-      padding: EdgeInsets.zero,
-      itemCount: items.length,
-      itemExtentBuilder: (index, dimensions) => items[index].extent,
-      itemBuilder: (context, index) => items[index].build(context, syntaxTheme),
-    );
-  }
+  State<GsDiffView> createState() => _GsDiffViewState();
 
-  static List<_DiffListItem> _buildItems(List<DiffFile> files) {
+  static List<_DiffListItem> _buildItems(
+    List<DiffFile> files,
+    List<_HorizontalScrollGroup> scrollGroups,
+    TextStyle monoStyle,
+    TextDirection textDirection,
+  ) {
     final items = <_DiffListItem>[];
-    for (final file in files) {
+    for (var fileIndex = 0; fileIndex < files.length; fileIndex++) {
+      final file = files[fileIndex];
+      final scrollGroup = scrollGroups[fileIndex];
+      final contentWidth = _contentWidthForFile(file, monoStyle, textDirection);
       items.add(_FileHeaderItem(file));
       final languageId = detectLanguageId(file.languagePath);
       var rows = <_DiffContentRow>[];
+      var chunkIndex = 0;
 
       void flushRows() {
         if (rows.isEmpty) return;
-        items.add(_DiffRowsItem(rows, languageId));
+        items.add(
+          _DiffRowsItem(
+            rows,
+            languageId,
+            scrollGroup,
+            contentWidth,
+            ValueKey('diff-horizontal-$fileIndex-${chunkIndex++}'),
+          ),
+        );
         rows = <_DiffContentRow>[];
       }
 
@@ -106,6 +108,112 @@ class GsDiffView extends StatelessWidget {
       items.add(const _FileGapItem());
     }
     return items;
+  }
+
+  static double _contentWidthForFile(
+    DiffFile file,
+    TextStyle monoStyle,
+    TextDirection textDirection,
+  ) {
+    var longestHeader = '';
+    var longestLineColumns = 0;
+    for (final hunk in file.hunks) {
+      if (_displayColumns(hunk.header) > _displayColumns(longestHeader)) {
+        longestHeader = hunk.header;
+      }
+      for (final line in hunk.lines) {
+        longestLineColumns = math.max(
+          longestLineColumns,
+          _displayColumns(line.content),
+        );
+      }
+    }
+    final italicStyle = monoStyle.copyWith(fontStyle: FontStyle.italic);
+    final characterWidth = ['M', 'W', '漢', '😀'].fold(0.0, (width, glyph) {
+      return math.max(
+        width,
+        math.max(
+          _measureText(glyph, monoStyle, textDirection),
+          _measureText(glyph, italicStyle, textDirection),
+        ),
+      );
+    });
+    final headerWidth = _measureText(
+      longestHeader,
+      monoStyle.copyWith(fontSize: 11, fontStyle: FontStyle.italic),
+      textDirection,
+    );
+    return math.max(
+          longestLineColumns * characterWidth * 1.05 + 104,
+          headerWidth + 32,
+        ) +
+        1;
+  }
+
+  static double _measureText(
+    String text,
+    TextStyle style,
+    TextDirection textDirection,
+  ) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: textDirection,
+      maxLines: 1,
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return width;
+  }
+
+  static int _displayColumns(String text) {
+    var columns = 0;
+    for (final rune in text.runes) {
+      columns = rune == 9 ? (columns ~/ 8 + 1) * 8 : columns + 1;
+    }
+    return columns;
+  }
+}
+
+class _GsDiffViewState extends State<GsDiffView> {
+  late List<_HorizontalScrollGroup> _scrollGroups = _newScrollGroups();
+
+  List<_HorizontalScrollGroup> _newScrollGroups() => List.generate(
+    widget.files.length,
+    (_) => _HorizontalScrollGroup(),
+    growable: false,
+  );
+
+  @override
+  void didUpdateWidget(GsDiffView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(widget.files, oldWidget.files)) {
+      _scrollGroups = _newScrollGroups();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isOversizedDiff(widget.files)) {
+      return _OversizedDiffFallback(
+        files: widget.files,
+        onOpenInBrowser: widget.onOpenInBrowser,
+      );
+    }
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    final syntaxTheme = gsSyntaxTextTheme(gs);
+    final items = GsDiffView._buildItems(
+      widget.files,
+      _scrollGroups,
+      gs.mono,
+      Directionality.of(context),
+    );
+    return ListView.builder(
+      controller: widget.controller,
+      padding: EdgeInsets.zero,
+      itemCount: items.length,
+      itemExtentBuilder: (index, dimensions) => items[index].extent,
+      itemBuilder: (context, index) => items[index].build(context, syntaxTheme),
+    );
   }
 }
 
@@ -167,10 +275,19 @@ class _FileHeaderItem extends _DiffListItem {
 }
 
 class _DiffRowsItem extends _DiffListItem {
-  const _DiffRowsItem(this.rows, this.languageId);
+  const _DiffRowsItem(
+    this.rows,
+    this.languageId,
+    this.scrollGroup,
+    this.contentWidth,
+    this.scrollKey,
+  );
 
   final List<_DiffContentRow> rows;
   final String languageId;
+  final _HorizontalScrollGroup scrollGroup;
+  final double contentWidth;
+  final Key scrollKey;
 
   @override
   double get extent => rows.fold(0, (sum, row) => sum + row.extent);
@@ -181,21 +298,125 @@ class _DiffRowsItem extends _DiffListItem {
     return ColoredBox(
       color: gs.codeBg,
       child: LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: constraints.maxWidth),
-            child: IntrinsicWidth(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (final row in rows)
-                    row.build(context, languageId, syntaxTheme),
-                ],
-              ),
-            ),
+        builder: (context, constraints) => _SynchronizedHorizontalScrollView(
+          scrollKey: scrollKey,
+          group: scrollGroup,
+          width: math.max(contentWidth, constraints.maxWidth),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final row in rows)
+                row.build(context, languageId, syntaxTheme),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _HorizontalScrollGroup {
+  static const double _offsetEpsilon = 0.01;
+
+  final Set<ScrollController> _controllers = {};
+  double offset = 0;
+  bool _synchronizing = false;
+
+  void attach(ScrollController controller) => _controllers.add(controller);
+
+  void detach(ScrollController controller) => _controllers.remove(controller);
+
+  void update(ScrollController source, double nextOffset) {
+    if (_synchronizing) return;
+    offset = nextOffset;
+    _synchronizing = true;
+    try {
+      for (final controller in _controllers) {
+        if (identical(controller, source) || !controller.hasClients) continue;
+        final target = nextOffset
+            .clamp(
+              controller.position.minScrollExtent,
+              controller.position.maxScrollExtent,
+            )
+            .toDouble();
+        if ((controller.offset - target).abs() > _offsetEpsilon) {
+          controller.jumpTo(target);
+        }
+      }
+    } finally {
+      _synchronizing = false;
+    }
+  }
+}
+
+class _SynchronizedHorizontalScrollView extends StatefulWidget {
+  const _SynchronizedHorizontalScrollView({
+    required this.scrollKey,
+    required this.group,
+    required this.width,
+    required this.child,
+  });
+
+  final Key scrollKey;
+  final _HorizontalScrollGroup group;
+  final double width;
+  final Widget child;
+
+  @override
+  State<_SynchronizedHorizontalScrollView> createState() =>
+      _SynchronizedHorizontalScrollViewState();
+}
+
+class _SynchronizedHorizontalScrollViewState
+    extends State<_SynchronizedHorizontalScrollView> {
+  late final ScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ScrollController(initialScrollOffset: widget.group.offset);
+    widget.group.attach(_controller);
+  }
+
+  @override
+  void didUpdateWidget(_SynchronizedHorizontalScrollView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(widget.group, oldWidget.group)) {
+      oldWidget.group.detach(_controller);
+      widget.group.attach(_controller);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_controller.hasClients) return;
+        _controller.jumpTo(
+          widget.group.offset
+              .clamp(
+                _controller.position.minScrollExtent,
+                _controller.position.maxScrollExtent,
+              )
+              .toDouble(),
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.group.detach(_controller);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollUpdateNotification>(
+      onNotification: (notification) {
+        widget.group.update(_controller, notification.metrics.pixels);
+        return false;
+      },
+      child: SingleChildScrollView(
+        key: widget.scrollKey,
+        controller: _controller,
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(width: widget.width, child: widget.child),
       ),
     );
   }
@@ -381,6 +602,7 @@ class _OversizedDiffFallback extends StatelessWidget {
     final theme = Theme.of(context);
     final gs = theme.extension<GsTheme>()!;
     final lineCount = files.fold(0, (sum, file) => sum + file.lineCount);
+    final hasSuppressedContent = files.any((file) => file.requiresWebFallback);
     return Center(
       key: const ValueKey('diff-web-fallback'),
       child: Padding(
@@ -397,8 +619,12 @@ class _OversizedDiffFallback extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '${files.length} files and $lineCount diff lines exceed what '
-              'reads well on this screen. View it on the web instead.',
+              hasSuppressedContent
+                  ? 'GitLab omitted part of this diff. View it on the web '
+                        'instead.'
+                  : '${files.length} files and $lineCount diff lines exceed '
+                        'what reads well on this screen. View it on the web '
+                        'instead.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(color: gs.textSubtle),
             ),

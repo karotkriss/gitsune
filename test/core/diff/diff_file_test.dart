@@ -69,14 +69,25 @@ void main() {
   });
 
   test('flags a diff oversized past the file or line limits', () {
-    expect(isOversizedDiff([for (var i = 0; i < 100; i++) _fileOfLines(1)]),
-        isFalse);
-    expect(isOversizedDiff([for (var i = 0; i < 101; i++) _fileOfLines(1)]),
-        isTrue);
+    expect(
+      isOversizedDiff([for (var i = 0; i < 100; i++) _fileOfLines(1)]),
+      isFalse,
+    );
+    expect(
+      isOversizedDiff([for (var i = 0; i < 101; i++) _fileOfLines(1)]),
+      isTrue,
+    );
     expect(isOversizedDiff([_fileOfLines(5000)]), isFalse);
     expect(isOversizedDiff([_fileOfLines(5000), _fileOfLines(1)]), isTrue);
-    expect(isOversizedDiff(_filesFrom('merge_request_142_diffs_oversized')),
-        isTrue);
+    expect(
+      isOversizedDiff(_filesFrom('merge_request_142_diffs_oversized')),
+      isTrue,
+    );
+    final suppressed = _filesFrom('merge_request_142_diffs_suppressed');
+    expect(suppressed.first.tooLarge, isTrue);
+    expect(suppressed.last.collapsed, isTrue);
+    expect(suppressed, everyElement(_requiresWebFallback));
+    expect(isOversizedDiff(suppressed), isTrue);
   });
 
   test('computes fixed per-file extents and jump offsets', () {
@@ -93,4 +104,9 @@ void main() {
 final Matcher _isAddition = predicate<DiffLine>(
   (line) => line.type == DiffLineType.addition,
   'is an addition line',
+);
+
+final Matcher _requiresWebFallback = predicate<DiffFile>(
+  (file) => file.requiresWebFallback,
+  'requires web fallback',
 );

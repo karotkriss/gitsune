@@ -89,6 +89,20 @@ void main() {
     expect(opened, 1);
   });
 
+  testWidgets('suppressed diff shows the web fallback instead of empty files', (
+    tester,
+  ) async {
+    final files = _filesFrom('merge_request_142_diffs_suppressed');
+
+    await tester.pumpWidget(
+      _app(GsDiffView(files: files, onOpenInBrowser: () {})),
+    );
+
+    expect(find.byKey(const ValueKey('diff-web-fallback')), findsOneWidget);
+    expect(find.text('lib/generated/large.dart'), findsNothing);
+    expect(find.text('lib/generated/collapsed.dart'), findsNothing);
+  });
+
   testWidgets('large single-file diff builds only visible row chunks', (
     tester,
   ) async {
@@ -115,5 +129,41 @@ void main() {
     expect(largeFile.lineCount, greaterThan(4000));
     expect(largeFile.lineCount, lessThanOrEqualTo(maxInAppDiffLines));
     expect(find.byType(RichText).evaluate().length, lessThan(200));
+  });
+
+  testWidgets('horizontal position stays synchronized across file chunks', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(160, 1800);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final source = _filesFrom('merge_request_142_diffs_page1').first;
+    final file = DiffFile(
+      oldPath: source.oldPath,
+      newPath: source.newPath,
+      newFile: source.newFile,
+      renamedFile: source.renamedFile,
+      deletedFile: source.deletedFile,
+      hunks: List.filled(8, source.hunks.first),
+    );
+
+    await tester.pumpWidget(
+      _app(GsDiffView(files: [file], onOpenInBrowser: () {})),
+    );
+
+    final firstFinder = find.byKey(const ValueKey('diff-horizontal-0-0'));
+    final secondFinder = find.byKey(const ValueKey('diff-horizontal-0-1'));
+    expect(firstFinder, findsOneWidget);
+    expect(secondFinder, findsOneWidget);
+
+    await tester.drag(firstFinder, const Offset(-80, 0));
+    await tester.pump();
+
+    final first = tester.widget<SingleChildScrollView>(firstFinder);
+    final second = tester.widget<SingleChildScrollView>(secondFinder);
+    expect(first.controller!.offset, greaterThan(0));
+    expect(second.controller!.offset, first.controller!.offset);
   });
 }

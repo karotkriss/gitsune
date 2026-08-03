@@ -1,0 +1,18 @@
+[
+  {
+    "old_path": "lib/generated/large.dart",
+    "new_path": "lib/generated/large.dart",
+    "new_file": false,
+    "renamed_file": false,
+    "deleted_file": false,
+    "too_large": true
+  },
+  {
+    "old_path": "lib/generated/collapsed.dart",
+    "new_path": "lib/generated/collapsed.dart",
+    "new_file": false,
+    "renamed_file": false,
+    "deleted_file": false,
+    "collapsed": true
+  }
+]

@@ -18,16 +18,25 @@ class DiffFile {
     required this.renamedFile,
     required this.deletedFile,
     required this.hunks,
+    this.collapsed = false,
+    this.tooLarge = false,
+    this.diffBodyOmitted = false,
   }) : lineCount = hunks.fold(0, (sum, hunk) => sum + hunk.lines.length);
 
-  factory DiffFile.fromJson(Map<String, dynamic> json) => DiffFile(
-    oldPath: json['old_path'] as String,
-    newPath: json['new_path'] as String,
-    newFile: json['new_file'] as bool? ?? false,
-    renamedFile: json['renamed_file'] as bool? ?? false,
-    deletedFile: json['deleted_file'] as bool? ?? false,
-    hunks: parseDiffHunks(json['diff'] as String? ?? ''),
-  );
+  factory DiffFile.fromJson(Map<String, dynamic> json) {
+    final diff = json['diff'] as String?;
+    return DiffFile(
+      oldPath: json['old_path'] as String,
+      newPath: json['new_path'] as String,
+      newFile: json['new_file'] as bool? ?? false,
+      renamedFile: json['renamed_file'] as bool? ?? false,
+      deletedFile: json['deleted_file'] as bool? ?? false,
+      hunks: parseDiffHunks(diff ?? ''),
+      collapsed: json['collapsed'] as bool? ?? false,
+      tooLarge: json['too_large'] as bool? ?? false,
+      diffBodyOmitted: diff == null || diff.isEmpty,
+    );
+  }
 
   final String oldPath;
   final String newPath;
@@ -35,9 +44,14 @@ class DiffFile {
   final bool renamedFile;
   final bool deletedFile;
   final List<DiffHunk> hunks;
+  final bool collapsed;
+  final bool tooLarge;
+  final bool diffBodyOmitted;
 
   /// Total rendered diff lines across all hunks (context, added, removed).
   final int lineCount;
+
+  bool get requiresWebFallback => tooLarge || (collapsed && diffBodyOmitted);
 
   /// The path shown for this file: the new path, prefixed with the old path
   /// for renames.
@@ -78,6 +92,7 @@ bool isOversizedDiff(List<DiffFile> files) {
   if (files.length > maxInAppDiffFiles) return true;
   var lines = 0;
   for (final file in files) {
+    if (file.requiresWebFallback) return true;
     lines += file.lineCount;
     if (lines > maxInAppDiffLines) return true;
   }
