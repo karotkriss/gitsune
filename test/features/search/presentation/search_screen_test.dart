@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/issues/data/issue_models.dart';
 import 'package:gitsune/features/search/data/search_models.dart';
+import 'package:gitsune/features/search/data/search_repository.dart';
 import 'package:gitsune/features/search/presentation/search_screen.dart';
 
 import '../support/fixture_search_repository.dart';
@@ -55,9 +58,7 @@ void main() {
     ),
   );
 
-  testWidgets('searching shows results grouped by entity type', (
-    tester,
-  ) async {
+  testWidgets('searching shows results grouped by entity type', (tester) async {
     final repository = FixtureSearchRepository(
       projects: [project],
       issues: [issue],
@@ -93,13 +94,97 @@ void main() {
     expect(find.text('Projects'), findsNothing);
   });
 
-  testWidgets('shows a prompt before any search is submitted', (
-    tester,
-  ) async {
+  testWidgets('shows a prompt before any search is submitted', (tester) async {
     final repository = FixtureSearchRepository();
     await pumpSearch(tester, repository);
 
     expect(find.text('Search Gitsune'), findsOneWidget);
     expect(repository.issueSearches, 0);
   });
+
+  testWidgets('ignores load-more results from an earlier search', (
+    tester,
+  ) async {
+    final stalePage = Completer<SearchPage<SearchProject>>();
+    final repository = _OverlappingSearchRepository(
+      staleProjectPage: stalePage.future,
+      firstProject: project,
+    );
+    await pumpSearch(tester, repository);
+
+    await tester.enterText(find.byType(TextField), 'first');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Load more'));
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'second');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Load more'), findsOneWidget);
+
+    stalePage.complete(
+      SearchPage(
+        items: [
+          SearchProject.fromJson(const {
+            'id': 8,
+            'name': 'stale',
+            'name_with_namespace': 'gitsune / stale',
+            'description': 'Result from the earlier query.',
+            'star_count': 0,
+          }),
+        ],
+        hasMore: false,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('gitsune / stale'), findsNothing);
+    expect(find.text('Load more'), findsOneWidget);
+  });
+
+  testWidgets('ignores load-more errors from an earlier search', (
+    tester,
+  ) async {
+    final stalePage = Completer<SearchPage<SearchProject>>();
+    final repository = _OverlappingSearchRepository(
+      staleProjectPage: stalePage.future,
+      firstProject: project,
+    );
+    await pumpSearch(tester, repository);
+
+    await tester.enterText(find.byType(TextField), 'first');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Load more'));
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'second');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    stalePage.completeError(Exception('stale failure'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load more. Try again'), findsNothing);
+    expect(find.text('Load more'), findsOneWidget);
+  });
+}
+
+class _OverlappingSearchRepository extends FixtureSearchRepository {
+  _OverlappingSearchRepository({
+    required this.staleProjectPage,
+    required this.firstProject,
+  });
+
+  final Future<SearchPage<SearchProject>> staleProjectPage;
+  final SearchProject firstProject;
+
+  @override
+  Future<SearchPage<SearchProject>> loadFirstProjectsPage(String term) async =>
+      SearchPage(items: [firstProject], hasMore: true);
+
+  @override
+  Future<SearchPage<SearchProject>> loadNextProjectsPage(String term) =>
+      staleProjectPage;
 }

@@ -25,6 +25,13 @@ class _SectionState<T> {
   bool hasMore = false;
   bool loadingMore = false;
   bool loadMoreFailed = false;
+
+  void reset() {
+    items = const [];
+    hasMore = false;
+    loadingMore = false;
+    loadMoreFailed = false;
+  }
 }
 
 class _SearchScreenState extends State<SearchScreen> {
@@ -52,15 +59,9 @@ class _SearchScreenState extends State<SearchScreen> {
       _searchedTerm = term;
       _loading = true;
       _initialError = false;
-      _projects
-        ..items = const []
-        ..hasMore = false;
-      _issues
-        ..items = const []
-        ..hasMore = false;
-      _mergeRequests
-        ..items = const []
-        ..hasMore = false;
+      _projects.reset();
+      _issues.reset();
+      _mergeRequests.reset();
     });
     try {
       final results = await Future.wait<Object>([
@@ -93,82 +94,43 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  Future<void> _loadMoreProjects() async {
+  Future<void> _loadMore<T>(
+    _SectionState<T> section,
+    Future<SearchPage<T>> Function(String term) loadNextPage,
+  ) async {
     final term = _searchedTerm;
-    if (term == null || _projects.loadingMore || !_projects.hasMore) return;
+    if (term == null || section.loadingMore || !section.hasMore) return;
+    final generation = _generation;
     setState(() {
-      _projects.loadingMore = true;
-      _projects.loadMoreFailed = false;
+      section.loadingMore = true;
+      section.loadMoreFailed = false;
     });
     try {
-      final page = await widget.repository.loadNextProjectsPage(term);
-      if (!mounted) return;
+      final page = await loadNextPage(term);
+      if (!mounted || generation != _generation) return;
       setState(() {
-        _projects
-          ..items = [..._projects.items, ...page.items]
+        section
+          ..items = [...section.items, ...page.items]
           ..hasMore = page.hasMore
           ..loadingMore = false;
       });
     } on Object {
-      if (!mounted) return;
+      if (!mounted || generation != _generation) return;
       setState(() {
-        _projects.loadingMore = false;
-        _projects.loadMoreFailed = true;
+        section.loadingMore = false;
+        section.loadMoreFailed = true;
       });
     }
   }
 
-  Future<void> _loadMoreIssues() async {
-    final term = _searchedTerm;
-    if (term == null || _issues.loadingMore || !_issues.hasMore) return;
-    setState(() {
-      _issues.loadingMore = true;
-      _issues.loadMoreFailed = false;
-    });
-    try {
-      final page = await widget.repository.loadNextIssuesPage(term);
-      if (!mounted) return;
-      setState(() {
-        _issues
-          ..items = [..._issues.items, ...page.items]
-          ..hasMore = page.hasMore
-          ..loadingMore = false;
-      });
-    } on Object {
-      if (!mounted) return;
-      setState(() {
-        _issues.loadingMore = false;
-        _issues.loadMoreFailed = true;
-      });
-    }
-  }
+  Future<void> _loadMoreProjects() =>
+      _loadMore(_projects, widget.repository.loadNextProjectsPage);
 
-  Future<void> _loadMoreMergeRequests() async {
-    final term = _searchedTerm;
-    if (term == null || _mergeRequests.loadingMore || !_mergeRequests.hasMore) {
-      return;
-    }
-    setState(() {
-      _mergeRequests.loadingMore = true;
-      _mergeRequests.loadMoreFailed = false;
-    });
-    try {
-      final page = await widget.repository.loadNextMergeRequestsPage(term);
-      if (!mounted) return;
-      setState(() {
-        _mergeRequests
-          ..items = [..._mergeRequests.items, ...page.items]
-          ..hasMore = page.hasMore
-          ..loadingMore = false;
-      });
-    } on Object {
-      if (!mounted) return;
-      setState(() {
-        _mergeRequests.loadingMore = false;
-        _mergeRequests.loadMoreFailed = true;
-      });
-    }
-  }
+  Future<void> _loadMoreIssues() =>
+      _loadMore(_issues, widget.repository.loadNextIssuesPage);
+
+  Future<void> _loadMoreMergeRequests() =>
+      _loadMore(_mergeRequests, widget.repository.loadNextMergeRequestsPage);
 
   bool get _hasAnyResults =>
       _projects.items.isNotEmpty ||
@@ -261,10 +223,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 _ResultSection(
                   title: 'Issues',
                   itemCount: _issues.items.length,
-                  itemBuilder: (context, index) => _IssueResultRow(
-                    issue: _issues.items[index],
-                    now: now,
-                  ),
+                  itemBuilder: (context, index) =>
+                      _IssueResultRow(issue: _issues.items[index], now: now),
                   hasMore: _issues.hasMore,
                   loadingMore: _issues.loadingMore,
                   loadMoreFailed: _issues.loadMoreFailed,
@@ -329,7 +289,10 @@ class _ResultSection extends StatelessWidget {
         ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          sliver: SliverList.builder(itemCount: itemCount, itemBuilder: itemBuilder),
+          sliver: SliverList.builder(
+            itemCount: itemCount,
+            itemBuilder: itemBuilder,
+          ),
         ),
         if (hasMore)
           SliverToBoxAdapter(
@@ -344,7 +307,9 @@ class _ResultSection extends StatelessWidget {
                     : TextButton(
                         onPressed: onLoadMore,
                         child: Text(
-                          loadMoreFailed ? 'Unable to load more. Try again' : 'Load more',
+                          loadMoreFailed
+                              ? 'Unable to load more. Try again'
+                              : 'Load more',
                         ),
                       ),
               ),
@@ -460,10 +425,7 @@ class _IssueResultRow extends StatelessWidget {
 }
 
 class _MergeRequestResultRow extends StatelessWidget {
-  const _MergeRequestResultRow({
-    required this.mergeRequest,
-    required this.now,
-  });
+  const _MergeRequestResultRow({required this.mergeRequest, required this.now});
 
   final SearchMergeRequest mergeRequest;
   final DateTime now;
@@ -529,8 +491,14 @@ class _MergeRequestStateBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final gs = Theme.of(context).extension<GsTheme>()!;
     final (background, foreground) = switch (state) {
-      SearchMergeRequestState.opened => (gs.feedbackSuccessBg, gs.feedbackSuccessText),
-      SearchMergeRequestState.merged => (gs.feedbackInfoBg, gs.feedbackInfoText),
+      SearchMergeRequestState.opened => (
+        gs.feedbackSuccessBg,
+        gs.feedbackSuccessText,
+      ),
+      SearchMergeRequestState.merged => (
+        gs.feedbackInfoBg,
+        gs.feedbackInfoText,
+      ),
       SearchMergeRequestState.closed ||
       SearchMergeRequestState.locked => (gs.surfaceStrong, gs.textDefault),
     };
