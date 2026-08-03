@@ -2,9 +2,16 @@ import 'package:dio/dio.dart';
 
 import 'account_key.dart';
 
+class TokenReadResult {
+  const TokenReadResult(this.accessToken, {this.refreshAttempted = false});
+
+  final String? accessToken;
+  final bool refreshAttempted;
+}
+
 /// Reads the current access token for [account]. Injected by E2.5's token
 /// store; this layer only defines the seam.
-typedef TokenReader = Future<String?> Function(AccountKey account);
+typedef TokenReader = Future<TokenReadResult> Function(AccountKey account);
 
 /// Refreshes [account]'s token and returns the new access token, or `null`
 /// if the refresh failed. `rejectedAccessToken` is the bearer token the
@@ -23,6 +30,7 @@ Uri resolveApiBaseUrl(AccountKey account) =>
     Uri.https(account.instanceHost, '/api/v4');
 
 const _retriedAfter401 = 'gitsuneRetriedAfter401';
+const _refreshedBeforeRequest = 'gitsuneRefreshedBeforeRequest';
 const _authorizationHeader = 'Authorization';
 
 bool _hasAuthorizationHeader(Map<String, dynamic> headers) => headers.keys.any(
@@ -69,16 +77,20 @@ Dio createGitLabClient({
         // A 401 retry pre-sets Authorization with the refreshed token before
         // re-entering this interceptor; don't clobber it with the stale one.
         if (!_hasAuthorizationHeader(options.headers)) {
-          final token = await readToken(account);
-          if (token != null) {
-            _setBearerToken(options.headers, token);
+          final result = await readToken(account);
+          if (result.refreshAttempted) {
+            options.extra[_refreshedBeforeRequest] = true;
+          }
+          if (result.accessToken != null) {
+            _setBearerToken(options.headers, result.accessToken!);
           }
         }
         handler.next(options);
       },
       onError: (error, handler) async {
         final alreadyRetried =
-            error.requestOptions.extra[_retriedAfter401] == true;
+            error.requestOptions.extra[_retriedAfter401] == true ||
+            error.requestOptions.extra[_refreshedBeforeRequest] == true;
         if (error.response?.statusCode != 401 || alreadyRetried) {
           handler.next(error);
           return;

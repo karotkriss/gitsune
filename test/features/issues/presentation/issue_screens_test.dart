@@ -298,7 +298,7 @@ void main() {
     final client = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'fixture-token',
+      readToken: (_) async => const TokenReadResult('fixture-token'),
       refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     client.interceptors.clear();

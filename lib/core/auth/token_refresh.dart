@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../network/account_key.dart';
+import '../network/gitlab_client.dart';
 import 'oauth_config.dart';
 import 'token_store.dart';
 
@@ -36,10 +37,10 @@ class TokenRefreshCoordinator {
 
   /// `TokenReader` for `createGitLabClient`: the stored access token when it
   /// is still fresh, otherwise the result of an on-demand refresh.
-  Future<String?> readToken(AccountKey account) async {
+  Future<TokenReadResult> readToken(AccountKey account) async {
     final tokens = await tokenStore.read(account);
     if (tokens == null) {
-      return null;
+      return const TokenReadResult(null);
     }
     final expiresAt = tokens.expiresAt;
     final fresh =
@@ -48,9 +49,12 @@ class TokenRefreshCoordinator {
     if (fresh || tokens.refreshToken == null) {
       // Without a refresh token an expired token can only be sent and let
       // the 401 surface as an auth failure.
-      return tokens.accessToken;
+      return TokenReadResult(tokens.accessToken);
     }
-    return refreshToken(account, tokens.accessToken);
+    return TokenReadResult(
+      await refreshToken(account, tokens.accessToken),
+      refreshAttempted: true,
+    );
   }
 
   /// `TokenRefresher` for `createGitLabClient`. [rejectedAccessToken] is the
@@ -80,9 +84,9 @@ class TokenRefreshCoordinator {
     }
 
     final config = configFor(account);
-    final Map<String, dynamic> body;
+    final Object? body;
     try {
-      final response = await _dio.post<Map<String, dynamic>>(
+      final response = await _dio.post<Object?>(
         config.tokenEndpoint.toString(),
         data: {
           'grant_type': 'refresh_token',
@@ -92,18 +96,43 @@ class TokenRefreshCoordinator {
         },
         options: Options(contentType: Headers.formUrlEncodedContentType),
       );
-      body = response.data!;
+      body = response.data;
     } on DioException {
       // A failed refresh (revoked app, rotated credentials, expired SSO) is
       // an auth failure for this account; E2.6 marks it for re-auth.
       return null;
     }
 
-    final tokens = OAuthTokens.fromTokenResponse(body);
+    final tokens = _parseRefreshResponse(body);
+    if (tokens == null) {
+      return null;
+    }
     // One save rotates access token, refresh token, and expiry atomically:
     // no window where the old refresh token is spent but the new one is not
     // yet stored.
     await tokenStore.save(account, tokens);
     return tokens.accessToken;
+  }
+
+  OAuthTokens? _parseRefreshResponse(Object? body) {
+    if (body is! Map<String, dynamic>) {
+      return null;
+    }
+    final accessToken = body['access_token'];
+    final refreshToken = body['refresh_token'];
+    final expiresIn = body['expires_in'];
+    if (accessToken is! String ||
+        accessToken.isEmpty ||
+        refreshToken is! String ||
+        refreshToken.isEmpty ||
+        expiresIn is! int ||
+        expiresIn <= 0) {
+      return null;
+    }
+    return OAuthTokens(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      expiresAt: DateTime.now().add(Duration(seconds: expiresIn)),
+    );
   }
 }

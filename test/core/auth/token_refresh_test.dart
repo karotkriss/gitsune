@@ -257,6 +257,77 @@ void main() {
     expect((await store.read(account))?.refreshToken, 'rt-1');
   });
 
+  test('a failed lazy refresh is not attempted again after the 401', () async {
+    server.handle('POST /oauth/token', (request) async {
+      refreshCalls++;
+      request.response.statusCode = 400;
+      request.response.write(jsonEncode({'error': 'invalid_grant'}));
+      await request.response.close();
+    });
+    server.handle('GET /api/v4/projects', (request) async {
+      apiCalls++;
+      request.response.statusCode = HttpStatus.unauthorized;
+      await request.response.close();
+    });
+    await store.save(account, seedTokens(expired: true));
+
+    await expectLater(
+      api.get<String>('/projects'),
+      throwsA(
+        isA<DioException>().having(
+          (error) => error.response?.statusCode,
+          'statusCode',
+          401,
+        ),
+      ),
+    );
+
+    expect(refreshCalls, 1);
+    expect(apiCalls, 1);
+    expect((await store.read(account))?.refreshToken, 'rt-1');
+  });
+
+  test(
+    'malformed refresh responses fail without changing stored tokens',
+    () async {
+      final responses = <Object?>[
+        {'refresh_token': 'rt-2', 'expires_in': 7200},
+        {'access_token': null, 'refresh_token': 'rt-2', 'expires_in': 7200},
+        {'access_token': 2, 'refresh_token': 'rt-2', 'expires_in': 7200},
+        {'access_token': 'at-2', 'expires_in': 7200},
+        {'access_token': 'at-2', 'refresh_token': null, 'expires_in': 7200},
+        {'access_token': 'at-2', 'refresh_token': 2, 'expires_in': 7200},
+        {'access_token': 'at-2', 'refresh_token': 'rt-2'},
+        {'access_token': 'at-2', 'refresh_token': 'rt-2', 'expires_in': null},
+        {'access_token': 'at-2', 'refresh_token': 'rt-2', 'expires_in': '7200'},
+      ];
+      server.handle('POST /oauth/token', (request) async {
+        final body = responses[refreshCalls++];
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(jsonEncode(body));
+        await request.response.close();
+      });
+      for (var i = 0; i < responses.length; i++) {
+        final original = OAuthTokens(
+          accessToken: 'at-$i',
+          refreshToken: 'rt-$i',
+          expiresAt: DateTime.now().subtract(const Duration(minutes: 1)),
+        );
+        await store.save(account, original);
+        expect(
+          await coordinator.refreshToken(account, original.accessToken),
+          isNull,
+        );
+        final stored = await store.read(account);
+        expect(stored?.accessToken, original.accessToken);
+        expect(stored?.refreshToken, original.refreshToken);
+        expect(stored?.expiresAt, original.expiresAt);
+      }
+
+      expect(refreshCalls, responses.length);
+    },
+  );
+
   test('a caller whose token was already rotated past gets the newer token '
       'without a second refresh', () async {
     server.handle('POST /oauth/token', (request) async {

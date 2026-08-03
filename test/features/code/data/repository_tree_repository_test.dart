@@ -30,7 +30,7 @@ void main() {
     final client = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'tok',
+      readToken: (_) async => const TokenReadResult('tok'),
       refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     return GitLabRepositoryTreeRepository(
@@ -207,7 +207,7 @@ void main() {
     final otherClient = createGitLabClient(
       account: otherAccount,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'tok',
+      readToken: (_) async => const TokenReadResult('tok'),
       refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final otherRepository = GitLabRepositoryTreeRepository(

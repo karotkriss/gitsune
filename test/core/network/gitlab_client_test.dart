@@ -28,7 +28,7 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'tok-abc',
+      readToken: (_) async => const TokenReadResult('tok-abc'),
       refreshToken: (_, _) async => fail('refresh should not be called'),
     );
 
@@ -52,7 +52,7 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'account-token',
+      readToken: (_) async => const TokenReadResult('account-token'),
       refreshToken: (_, _) async => fail('refresh should not be called'),
     );
 
@@ -88,7 +88,7 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'stale-token',
+      readToken: (_) async => const TokenReadResult('stale-token'),
       refreshToken: (_, rejected) async {
         refreshCalls++;
         rejectedToken = rejected;
@@ -121,7 +121,7 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'stale-token',
+      readToken: (_) async => const TokenReadResult('stale-token'),
       refreshToken: (_, _) async {
         refreshCalls++;
         return 'still-bad-token';
@@ -162,7 +162,7 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'stale-token',
+      readToken: (_) async => const TokenReadResult('stale-token'),
       refreshToken: (_, _) async => 'fresh-token',
     );
 
@@ -193,7 +193,7 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'stale-token',
+      readToken: (_) async => const TokenReadResult('stale-token'),
       refreshToken: (_, _) async {
         refreshCalls++;
         return 'fresh-token';
