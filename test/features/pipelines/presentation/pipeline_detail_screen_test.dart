@@ -34,6 +34,10 @@ void main() {
       expect(find.text('a73f91c2'), findsOneWidget);
       expect(find.text('BUILD'), findsOneWidget);
       expect(find.text('TEST'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('BUILD')).dy,
+        lessThan(tester.getTopLeft(find.text('TEST')).dy),
+      );
       expect(find.text('DEPLOY'), findsNothing);
       expect(find.text('test:integration'), findsOneWidget);
       expect(
@@ -109,6 +113,36 @@ void main() {
     expect(find.text('test:flutter'), findsOneWidget);
   });
 
+  testWidgets('allowed failures keep failed semantics with a warning badge', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: PipelineDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          pipelineId: 88123,
+          repository: _AllowedFailureRepository(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.bySemanticsLabel('audit, Failed, test stage, 12s, allowed to fail.'),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widgetList<CiStatusBadge>(find.byType(CiStatusBadge))
+          .map((badge) => badge.status),
+      contains(CiStatus.warning),
+    );
+    semantics.dispose();
+  });
+
   testWidgets('large pipeline job lists build lazily and remain reachable', (
     tester,
   ) async {
@@ -171,6 +205,29 @@ class _LargePipelineRepository implements PipelinesRepository {
           allowFailure: false,
         ),
       ),
+    );
+  }
+}
+
+class _AllowedFailureRepository implements PipelinesRepository {
+  final _fixture = FixturePipelinesRepository();
+
+  @override
+  Future<PipelineDetails> loadPipeline(int projectId, int pipelineId) async {
+    final details = await _fixture.loadPipeline(projectId, pipelineId);
+    return PipelineDetails(
+      pipeline: details.pipeline,
+      jobs: const [
+        PipelineJob(
+          id: 1,
+          name: 'audit',
+          stage: 'test',
+          status: CiStatus.failed,
+          badgeStatus: CiStatus.warning,
+          allowFailure: true,
+          duration: 12,
+        ),
+      ],
     );
   }
 }

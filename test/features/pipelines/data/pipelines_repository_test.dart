@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/ci/ci_status.dart';
 import 'package:gitsune/core/network/account_key.dart';
 import 'package:gitsune/core/network/gitlab_client.dart';
+import 'package:gitsune/features/pipelines/data/pipeline_models.dart';
 import 'package:gitsune/features/pipelines/data/pipelines_repository.dart';
 
 import '../../../support/fake_gitlab_server.dart';
@@ -57,6 +58,25 @@ void main() {
     expect(details.jobs.map((job) => job.status), contains(CiStatus.failed));
     expect(details.jobs.map((job) => job.status), contains(CiStatus.manual));
     expect(details.jobs.map((job) => job.status), contains(CiStatus.scheduled));
+  });
+
+  test('derives warning badges without losing raw execution status', () {
+    final pipelineJson =
+        Map<String, dynamic>.from(Fixtures.json('pipeline_88123') as Map)
+          ..['status'] = 'success'
+          ..['detailed_status'] = {'icon': 'status_warning'};
+    final jobJson =
+        Map<String, dynamic>.from(
+            (Fixtures.json('pipeline_88123_jobs') as List<dynamic>).first
+                as Map,
+          )
+          ..['status'] = 'failed'
+          ..['allow_failure'] = true;
+
+    expect(Pipeline.fromJson(pipelineJson).status, CiStatus.warning);
+    final job = PipelineJob.fromJson(jobJson);
+    expect(job.status, CiStatus.failed);
+    expect(job.badgeStatus, CiStatus.warning);
   });
 }
 

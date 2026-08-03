@@ -281,7 +281,7 @@ class _JobRow extends StatelessWidget {
               child: Row(
                 children: [
                   CiStatusBadge(
-                    status: job.status,
+                    status: job.badgeStatus,
                     size: 20,
                     excludeFromSemantics: true,
                   ),
@@ -379,7 +379,8 @@ class _PipelineInitialState extends StatelessWidget {
 
 Map<String, List<PipelineJob>> _groupJobsByStage(List<PipelineJob> jobs) {
   final stages = <String, List<PipelineJob>>{};
-  for (final job in jobs) {
+  final orderedJobs = [...jobs]..sort((a, b) => a.id.compareTo(b.id));
+  for (final job in orderedJobs) {
     stages.putIfAbsent(job.stage, () => []).add(job);
   }
   return stages;
