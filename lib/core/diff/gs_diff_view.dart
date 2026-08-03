@@ -65,15 +65,17 @@ class GsDiffView extends StatefulWidget {
   static double extentForFile(
     DiffFile file, {
     List<DiffLineAnnotation> annotations = const [],
-  }) {
+  }) => _extentForFile(file, _DiffLineAnnotationIndex(annotations));
+
+  static double _extentForFile(
+    DiffFile file,
+    _DiffLineAnnotationIndex annotationIndex,
+  ) {
     var extent = _fileHeaderHeight + _fileGap;
     for (final hunk in file.hunks) {
       extent += _hunkHeaderHeight + hunk.lines.length * _lineHeight;
-      if (annotations.isEmpty) continue;
       for (final line in hunk.lines) {
-        extent +=
-            annotations.where((a) => a.matches(file, line)).length *
-            annotationHeight;
+        extent += annotationIndex.forLine(file, line).length * annotationHeight;
       }
     }
     return extent;
@@ -86,8 +88,9 @@ class GsDiffView extends StatefulWidget {
     List<DiffLineAnnotation> annotations = const [],
   }) {
     var offset = 0.0;
+    final annotationIndex = _DiffLineAnnotationIndex(annotations);
     for (var i = 0; i < index; i++) {
-      offset += extentForFile(files[i], annotations: annotations);
+      offset += _extentForFile(files[i], annotationIndex);
     }
     return offset;
   }
@@ -105,6 +108,7 @@ class GsDiffView extends StatefulWidget {
     void Function(DiffFile file, DiffLine line)? onLineTap,
   ) {
     final items = <_DiffListItem>[];
+    final annotationIndex = _DiffLineAnnotationIndex(annotations);
     for (var fileIndex = 0; fileIndex < files.length; fileIndex++) {
       final file = files[fileIndex];
       final scrollGroup = scrollGroups[fileIndex];
@@ -144,9 +148,7 @@ class GsDiffView extends StatefulWidget {
               onLineTap == null ? null : () => onLineTap(file, line),
             ),
           );
-          final lineAnnotations = annotations.where(
-            (a) => a.matches(file, line),
-          );
+          final lineAnnotations = annotationIndex.forLine(file, line);
           if (lineAnnotations.isNotEmpty) {
             // Annotations render outside the horizontal scroll group so they
             // stay pinned to the viewport width.
@@ -299,6 +301,64 @@ class DiffLineAnnotation {
     if (path != file.newPath && path != file.oldPath) return false;
     if (newLine != null) return line.newLineNumber == newLine;
     return oldLine != null && line.oldLineNumber == oldLine;
+  }
+}
+
+class _DiffLineAnnotationIndex {
+  _DiffLineAnnotationIndex(List<DiffLineAnnotation> annotations) {
+    for (final annotation in annotations) {
+      final newLine = annotation.newLine;
+      if (newLine != null) {
+        _add(_newByPath, annotation.path, newLine, annotation);
+        continue;
+      }
+      final oldLine = annotation.oldLine;
+      if (oldLine != null) {
+        _add(_oldByPath, annotation.path, oldLine, annotation);
+      }
+    }
+  }
+
+  final Map<String, Map<int, List<DiffLineAnnotation>>> _newByPath = {};
+  final Map<String, Map<int, List<DiffLineAnnotation>>> _oldByPath = {};
+
+  List<DiffLineAnnotation> forLine(DiffFile file, DiffLine line) {
+    final matches = <DiffLineAnnotation>[];
+    final newLine = line.newLineNumber;
+    if (newLine != null) {
+      _addMatches(matches, _newByPath, file.newPath, newLine);
+      if (file.oldPath != file.newPath) {
+        _addMatches(matches, _newByPath, file.oldPath, newLine);
+      }
+    }
+    final oldLine = line.oldLineNumber;
+    if (oldLine != null) {
+      _addMatches(matches, _oldByPath, file.newPath, oldLine);
+      if (file.oldPath != file.newPath) {
+        _addMatches(matches, _oldByPath, file.oldPath, oldLine);
+      }
+    }
+    return matches;
+  }
+
+  static void _add(
+    Map<String, Map<int, List<DiffLineAnnotation>>> index,
+    String path,
+    int line,
+    DiffLineAnnotation annotation,
+  ) {
+    final byLine = index.putIfAbsent(path, () => {});
+    byLine.putIfAbsent(line, () => []).add(annotation);
+  }
+
+  static void _addMatches(
+    List<DiffLineAnnotation> matches,
+    Map<String, Map<int, List<DiffLineAnnotation>>> index,
+    String path,
+    int line,
+  ) {
+    final found = index[path]?[line];
+    if (found != null) matches.addAll(found);
   }
 }
 

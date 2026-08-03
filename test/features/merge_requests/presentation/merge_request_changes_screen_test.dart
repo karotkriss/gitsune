@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
+import 'package:gitsune/features/merge_requests/data/merge_request_discussion_models.dart';
 import 'package:gitsune/features/merge_requests/data/merge_request_models.dart';
 import 'package:gitsune/features/merge_requests/presentation/merge_request_changes_screen.dart';
 
@@ -26,6 +27,13 @@ class _FailingDetailRepository extends FixtureMergeRequestsRepository {
   @override
   Future<MergeRequest> loadMergeRequest(int projectId, int mergeIid) async {
     throw StateError('detail unavailable');
+  }
+}
+
+class _FailingDiscussionsRepository extends FixtureMergeRequestsRepository {
+  @override
+  Future<List<Discussion>> loadDiscussions(int projectId, int mergeIid) async {
+    throw StateError('discussions unavailable');
   }
 }
 
@@ -93,6 +101,17 @@ void main() {
     expect(find.text('Unable to load these changes.'), findsNothing);
   });
 
+  testWidgets('discussion failure preserves the loaded diff', (tester) async {
+    await tester.pumpWidget(
+      _screen(repository: _FailingDiscussionsRepository()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('lib/src/instance_switcher.dart'), findsOneWidget);
+    expect(find.text('Unable to load these changes.'), findsNothing);
+    expect(find.byKey(const ValueKey('unresolved-threads')), findsNothing);
+  });
+
   testWidgets('inline discussions render on their diff lines', (tester) async {
     await tester.pumpWidget(_screen());
     await tester.pumpAndSettle();
@@ -128,9 +147,7 @@ void main() {
     // A plain note without a diff position renders no inline row.
     expect(
       find.byKey(
-        const ValueKey(
-          'diff-thread-8a7c4b5d6e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b',
-        ),
+        const ValueKey('diff-thread-8a7c4b5d6e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b'),
       ),
       findsNothing,
     );
@@ -168,9 +185,7 @@ void main() {
     // The created discussion folds into the diff without a refetch.
     expect(
       find.byKey(
-        const ValueKey(
-          'diff-thread-9b8d5c6e7f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c',
-        ),
+        const ValueKey('diff-thread-9b8d5c6e7f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c'),
       ),
       findsOneWidget,
     );

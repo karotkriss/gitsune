@@ -79,25 +79,15 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
       _loading = true;
       _failed = false;
     });
+    late final List<DiffFile> files;
     try {
-      final files = await widget.repository.loadDiffs(
+      files = await widget.repository.loadDiffs(
         widget.projectId,
         widget.mergeIid,
       );
-      final discussions = await widget.repository.loadDiscussions(
-        widget.projectId,
-        widget.mergeIid,
-      );
-      if (_webUrl == null && isOversizedDiff(files)) {
-        _webUrl = (await widget.repository.loadMergeRequest(
-          widget.projectId,
-          widget.mergeIid,
-        )).webUrl;
-      }
       if (!mounted) return;
       setState(() {
         _files = files;
-        _discussions = discussions;
         _loading = false;
       });
     } on Object {
@@ -106,6 +96,32 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
         _loading = false;
         _failed = true;
       });
+      return;
+    }
+
+    List<Discussion>? discussions;
+    try {
+      discussions = await widget.repository.loadDiscussions(
+        widget.projectId,
+        widget.mergeIid,
+      );
+    } on Object {
+      discussions = null;
+    }
+    if (!mounted) return;
+    if (discussions != null) {
+      setState(() => _discussions = discussions!);
+    }
+
+    if (_webUrl == null && isOversizedDiff(files)) {
+      try {
+        _webUrl = (await widget.repository.loadMergeRequest(
+          widget.projectId,
+          widget.mergeIid,
+        )).webUrl;
+      } on Object {
+        return;
+      }
     }
   }
 
@@ -394,11 +410,7 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
 /// The fixed-height inline row for one comment thread, anchored beneath the
 /// diff line the thread discusses.
 class _ThreadRow extends StatelessWidget {
-  const _ThreadRow({
-    super.key,
-    required this.discussion,
-    required this.onTap,
-  });
+  const _ThreadRow({super.key, required this.discussion, required this.onTap});
 
   final Discussion discussion;
   final VoidCallback onTap;
@@ -449,10 +461,7 @@ class _ThreadRow extends StatelessWidget {
 
 /// The composer sheet for starting a new thread on a diff line.
 class _InlineCommentSheet extends StatefulWidget {
-  const _InlineCommentSheet({
-    required this.lineLabel,
-    required this.onSubmit,
-  });
+  const _InlineCommentSheet({required this.lineLabel, required this.onSubmit});
 
   final String lineLabel;
   final Future<void> Function(String body) onSubmit;
