@@ -61,12 +61,40 @@ class TodoItems extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId, todoId};
 }
 
+/// Cached repository tree entries (`GET /projects/:id/repository/tree`),
+/// one row per directory entry, scoped per account. [parentPath] is the
+/// directory the entry lives in (`''` for the repository root) and
+/// [position] preserves GitLab's server-side ordering (trees first,
+/// alphabetical) within that directory. [ref] is the requested ref, `''`
+/// when browsing the instance's default branch. See
+/// `features/code/data/repository_tree_repository.dart`.
+class RepositoryTreeEntries extends Table with AccountScoped {
+  IntColumn get projectId => integer()();
+  TextColumn get ref => text()();
+  TextColumn get parentPath => text()();
+  TextColumn get name => text()();
+  TextColumn get path => text()();
+  TextColumn get entryType => text()();
+  IntColumn get position => integer()();
+
+  @override
+  Set<Column> get primaryKey => {
+    instanceHost,
+    accountId,
+    projectId,
+    ref,
+    parentPath,
+    name,
+  };
+}
+
 @DriftDatabase(
   tables: [
     LocalCacheEntries,
     CurrentUserProfiles,
     PaginationCursors,
     TodoItems,
+    RepositoryTreeEntries,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -75,7 +103,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -88,6 +116,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await migrator.createTable(todoItems);
+      }
+      if (from < 5) {
+        await migrator.createTable(repositoryTreeEntries);
       }
     },
   );

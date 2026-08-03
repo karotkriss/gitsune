@@ -43,6 +43,8 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   The issues scope reuses `Issue`/`IssueAuthor`/`IssueLabel` from `lib/features/issues/data/issue_models.dart`; the merge-requests scope has no canonical model to reuse yet (E7.1 not landed), so `search_models.dart` defines a minimal `SearchMergeRequest` reusing `IssueAuthor`/`IssueLabel` for its author/label shape.
   Fold this into the canonical MR model once E7.1 lands rather than keeping both.
   `buildAppRouter`'s optional `searchRepository` param swaps the Explore tab's placeholder for `SearchScreen`, the same null-until-composition-root-wiring convention as `issuesRepository`/`pipelinesRepository`.
+- Code browsing (`lib/features/code/`) starts with the E9.1 repository tree drill-down: `RepositoryTreeRepository` caches one directory per refresh in the account-scoped `RepositoryTreeEntries` drift table, whose `parentPath` and `position` columns preserve GitLab's per-directory ordering, and the route wiring in `buildAppRouter` pushes one route per level so breadcrumb jumps are plain pops.
+  File-type glyphs live in `lib/core/icons/gs_file_icons.dart`, copied verbatim from `design/assets/icons/gitlab-file-icons.svg`; unlike the monochrome Pajamas glyphs, these are colored 24x24 symbols rendered untinted, so add new ones by copying the symbol's inner markup, not just a path.
 
 ## Maintaining this file
 

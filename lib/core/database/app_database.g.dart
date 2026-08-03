@@ -2079,6 +2079,581 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
   }
 }
 
+class $RepositoryTreeEntriesTable extends RepositoryTreeEntries
+    with TableInfo<$RepositoryTreeEntriesTable, RepositoryTreeEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RepositoryTreeEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
+  @override
+  late final GeneratedColumn<int> projectId = GeneratedColumn<int>(
+    'project_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _refMeta = const VerificationMeta('ref');
+  @override
+  late final GeneratedColumn<String> ref = GeneratedColumn<String>(
+    'ref',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _parentPathMeta = const VerificationMeta(
+    'parentPath',
+  );
+  @override
+  late final GeneratedColumn<String> parentPath = GeneratedColumn<String>(
+    'parent_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entryTypeMeta = const VerificationMeta(
+    'entryType',
+  );
+  @override
+  late final GeneratedColumn<String> entryType = GeneratedColumn<String>(
+    'entry_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    projectId,
+    ref,
+    parentPath,
+    name,
+    path,
+    entryType,
+    position,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'repository_tree_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RepositoryTreeEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('project_id')) {
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_projectIdMeta);
+    }
+    if (data.containsKey('ref')) {
+      context.handle(
+        _refMeta,
+        ref.isAcceptableOrUnknown(data['ref']!, _refMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_refMeta);
+    }
+    if (data.containsKey('parent_path')) {
+      context.handle(
+        _parentPathMeta,
+        parentPath.isAcceptableOrUnknown(data['parent_path']!, _parentPathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_parentPathMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    if (data.containsKey('entry_type')) {
+      context.handle(
+        _entryTypeMeta,
+        entryType.isAcceptableOrUnknown(data['entry_type']!, _entryTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryTypeMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {
+    instanceHost,
+    accountId,
+    projectId,
+    ref,
+    parentPath,
+    name,
+  };
+  @override
+  RepositoryTreeEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RepositoryTreeEntry(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}project_id'],
+      )!,
+      ref: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ref'],
+      )!,
+      parentPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}parent_path'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+      entryType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_type'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+    );
+  }
+
+  @override
+  $RepositoryTreeEntriesTable createAlias(String alias) {
+    return $RepositoryTreeEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class RepositoryTreeEntry extends DataClass
+    implements Insertable<RepositoryTreeEntry> {
+  final String instanceHost;
+  final String accountId;
+  final int projectId;
+  final String ref;
+  final String parentPath;
+  final String name;
+  final String path;
+  final String entryType;
+  final int position;
+  const RepositoryTreeEntry({
+    required this.instanceHost,
+    required this.accountId,
+    required this.projectId,
+    required this.ref,
+    required this.parentPath,
+    required this.name,
+    required this.path,
+    required this.entryType,
+    required this.position,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    map['project_id'] = Variable<int>(projectId);
+    map['ref'] = Variable<String>(ref);
+    map['parent_path'] = Variable<String>(parentPath);
+    map['name'] = Variable<String>(name);
+    map['path'] = Variable<String>(path);
+    map['entry_type'] = Variable<String>(entryType);
+    map['position'] = Variable<int>(position);
+    return map;
+  }
+
+  RepositoryTreeEntriesCompanion toCompanion(bool nullToAbsent) {
+    return RepositoryTreeEntriesCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      projectId: Value(projectId),
+      ref: Value(ref),
+      parentPath: Value(parentPath),
+      name: Value(name),
+      path: Value(path),
+      entryType: Value(entryType),
+      position: Value(position),
+    );
+  }
+
+  factory RepositoryTreeEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RepositoryTreeEntry(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      projectId: serializer.fromJson<int>(json['projectId']),
+      ref: serializer.fromJson<String>(json['ref']),
+      parentPath: serializer.fromJson<String>(json['parentPath']),
+      name: serializer.fromJson<String>(json['name']),
+      path: serializer.fromJson<String>(json['path']),
+      entryType: serializer.fromJson<String>(json['entryType']),
+      position: serializer.fromJson<int>(json['position']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'projectId': serializer.toJson<int>(projectId),
+      'ref': serializer.toJson<String>(ref),
+      'parentPath': serializer.toJson<String>(parentPath),
+      'name': serializer.toJson<String>(name),
+      'path': serializer.toJson<String>(path),
+      'entryType': serializer.toJson<String>(entryType),
+      'position': serializer.toJson<int>(position),
+    };
+  }
+
+  RepositoryTreeEntry copyWith({
+    String? instanceHost,
+    String? accountId,
+    int? projectId,
+    String? ref,
+    String? parentPath,
+    String? name,
+    String? path,
+    String? entryType,
+    int? position,
+  }) => RepositoryTreeEntry(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    projectId: projectId ?? this.projectId,
+    ref: ref ?? this.ref,
+    parentPath: parentPath ?? this.parentPath,
+    name: name ?? this.name,
+    path: path ?? this.path,
+    entryType: entryType ?? this.entryType,
+    position: position ?? this.position,
+  );
+  RepositoryTreeEntry copyWithCompanion(RepositoryTreeEntriesCompanion data) {
+    return RepositoryTreeEntry(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      projectId: data.projectId.present ? data.projectId.value : this.projectId,
+      ref: data.ref.present ? data.ref.value : this.ref,
+      parentPath: data.parentPath.present
+          ? data.parentPath.value
+          : this.parentPath,
+      name: data.name.present ? data.name.value : this.name,
+      path: data.path.present ? data.path.value : this.path,
+      entryType: data.entryType.present ? data.entryType.value : this.entryType,
+      position: data.position.present ? data.position.value : this.position,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RepositoryTreeEntry(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('projectId: $projectId, ')
+          ..write('ref: $ref, ')
+          ..write('parentPath: $parentPath, ')
+          ..write('name: $name, ')
+          ..write('path: $path, ')
+          ..write('entryType: $entryType, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    instanceHost,
+    accountId,
+    projectId,
+    ref,
+    parentPath,
+    name,
+    path,
+    entryType,
+    position,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RepositoryTreeEntry &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.projectId == this.projectId &&
+          other.ref == this.ref &&
+          other.parentPath == this.parentPath &&
+          other.name == this.name &&
+          other.path == this.path &&
+          other.entryType == this.entryType &&
+          other.position == this.position);
+}
+
+class RepositoryTreeEntriesCompanion
+    extends UpdateCompanion<RepositoryTreeEntry> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<int> projectId;
+  final Value<String> ref;
+  final Value<String> parentPath;
+  final Value<String> name;
+  final Value<String> path;
+  final Value<String> entryType;
+  final Value<int> position;
+  final Value<int> rowid;
+  const RepositoryTreeEntriesCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.projectId = const Value.absent(),
+    this.ref = const Value.absent(),
+    this.parentPath = const Value.absent(),
+    this.name = const Value.absent(),
+    this.path = const Value.absent(),
+    this.entryType = const Value.absent(),
+    this.position = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RepositoryTreeEntriesCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    required int projectId,
+    required String ref,
+    required String parentPath,
+    required String name,
+    required String path,
+    required String entryType,
+    required int position,
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       projectId = Value(projectId),
+       ref = Value(ref),
+       parentPath = Value(parentPath),
+       name = Value(name),
+       path = Value(path),
+       entryType = Value(entryType),
+       position = Value(position);
+  static Insertable<RepositoryTreeEntry> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<int>? projectId,
+    Expression<String>? ref,
+    Expression<String>? parentPath,
+    Expression<String>? name,
+    Expression<String>? path,
+    Expression<String>? entryType,
+    Expression<int>? position,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (projectId != null) 'project_id': projectId,
+      if (ref != null) 'ref': ref,
+      if (parentPath != null) 'parent_path': parentPath,
+      if (name != null) 'name': name,
+      if (path != null) 'path': path,
+      if (entryType != null) 'entry_type': entryType,
+      if (position != null) 'position': position,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RepositoryTreeEntriesCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<int>? projectId,
+    Value<String>? ref,
+    Value<String>? parentPath,
+    Value<String>? name,
+    Value<String>? path,
+    Value<String>? entryType,
+    Value<int>? position,
+    Value<int>? rowid,
+  }) {
+    return RepositoryTreeEntriesCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      projectId: projectId ?? this.projectId,
+      ref: ref ?? this.ref,
+      parentPath: parentPath ?? this.parentPath,
+      name: name ?? this.name,
+      path: path ?? this.path,
+      entryType: entryType ?? this.entryType,
+      position: position ?? this.position,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (projectId.present) {
+      map['project_id'] = Variable<int>(projectId.value);
+    }
+    if (ref.present) {
+      map['ref'] = Variable<String>(ref.value);
+    }
+    if (parentPath.present) {
+      map['parent_path'] = Variable<String>(parentPath.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    if (entryType.present) {
+      map['entry_type'] = Variable<String>(entryType.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RepositoryTreeEntriesCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('projectId: $projectId, ')
+          ..write('ref: $ref, ')
+          ..write('parentPath: $parentPath, ')
+          ..write('name: $name, ')
+          ..write('path: $path, ')
+          ..write('entryType: $entryType, ')
+          ..write('position: $position, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2089,6 +2664,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PaginationCursorsTable paginationCursors =
       $PaginationCursorsTable(this);
   late final $TodoItemsTable todoItems = $TodoItemsTable(this);
+  late final $RepositoryTreeEntriesTable repositoryTreeEntries =
+      $RepositoryTreeEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2098,6 +2675,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     currentUserProfiles,
     paginationCursors,
     todoItems,
+    repositoryTreeEntries,
   ];
 }
 
@@ -3166,6 +3744,305 @@ typedef $$TodoItemsTableProcessedTableManager =
       TodoItem,
       PrefetchHooks Function()
     >;
+typedef $$RepositoryTreeEntriesTableCreateCompanionBuilder =
+    RepositoryTreeEntriesCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      required int projectId,
+      required String ref,
+      required String parentPath,
+      required String name,
+      required String path,
+      required String entryType,
+      required int position,
+      Value<int> rowid,
+    });
+typedef $$RepositoryTreeEntriesTableUpdateCompanionBuilder =
+    RepositoryTreeEntriesCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<int> projectId,
+      Value<String> ref,
+      Value<String> parentPath,
+      Value<String> name,
+      Value<String> path,
+      Value<String> entryType,
+      Value<int> position,
+      Value<int> rowid,
+    });
+
+class $$RepositoryTreeEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $RepositoryTreeEntriesTable> {
+  $$RepositoryTreeEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ref => $composableBuilder(
+    column: $table.ref,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get parentPath => $composableBuilder(
+    column: $table.parentPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entryType => $composableBuilder(
+    column: $table.entryType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RepositoryTreeEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $RepositoryTreeEntriesTable> {
+  $$RepositoryTreeEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ref => $composableBuilder(
+    column: $table.ref,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get parentPath => $composableBuilder(
+    column: $table.parentPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entryType => $composableBuilder(
+    column: $table.entryType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RepositoryTreeEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RepositoryTreeEntriesTable> {
+  $$RepositoryTreeEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<int> get projectId =>
+      $composableBuilder(column: $table.projectId, builder: (column) => column);
+
+  GeneratedColumn<String> get ref =>
+      $composableBuilder(column: $table.ref, builder: (column) => column);
+
+  GeneratedColumn<String> get parentPath => $composableBuilder(
+    column: $table.parentPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  GeneratedColumn<String> get entryType =>
+      $composableBuilder(column: $table.entryType, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+}
+
+class $$RepositoryTreeEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RepositoryTreeEntriesTable,
+          RepositoryTreeEntry,
+          $$RepositoryTreeEntriesTableFilterComposer,
+          $$RepositoryTreeEntriesTableOrderingComposer,
+          $$RepositoryTreeEntriesTableAnnotationComposer,
+          $$RepositoryTreeEntriesTableCreateCompanionBuilder,
+          $$RepositoryTreeEntriesTableUpdateCompanionBuilder,
+          (
+            RepositoryTreeEntry,
+            BaseReferences<
+              _$AppDatabase,
+              $RepositoryTreeEntriesTable,
+              RepositoryTreeEntry
+            >,
+          ),
+          RepositoryTreeEntry,
+          PrefetchHooks Function()
+        > {
+  $$RepositoryTreeEntriesTableTableManager(
+    _$AppDatabase db,
+    $RepositoryTreeEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RepositoryTreeEntriesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RepositoryTreeEntriesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RepositoryTreeEntriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<int> projectId = const Value.absent(),
+                Value<String> ref = const Value.absent(),
+                Value<String> parentPath = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> path = const Value.absent(),
+                Value<String> entryType = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RepositoryTreeEntriesCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                projectId: projectId,
+                ref: ref,
+                parentPath: parentPath,
+                name: name,
+                path: path,
+                entryType: entryType,
+                position: position,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                required int projectId,
+                required String ref,
+                required String parentPath,
+                required String name,
+                required String path,
+                required String entryType,
+                required int position,
+                Value<int> rowid = const Value.absent(),
+              }) => RepositoryTreeEntriesCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                projectId: projectId,
+                ref: ref,
+                parentPath: parentPath,
+                name: name,
+                path: path,
+                entryType: entryType,
+                position: position,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RepositoryTreeEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RepositoryTreeEntriesTable,
+      RepositoryTreeEntry,
+      $$RepositoryTreeEntriesTableFilterComposer,
+      $$RepositoryTreeEntriesTableOrderingComposer,
+      $$RepositoryTreeEntriesTableAnnotationComposer,
+      $$RepositoryTreeEntriesTableCreateCompanionBuilder,
+      $$RepositoryTreeEntriesTableUpdateCompanionBuilder,
+      (
+        RepositoryTreeEntry,
+        BaseReferences<
+          _$AppDatabase,
+          $RepositoryTreeEntriesTable,
+          RepositoryTreeEntry
+        >,
+      ),
+      RepositoryTreeEntry,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3178,4 +4055,6 @@ class $AppDatabaseManager {
       $$PaginationCursorsTableTableManager(_db, _db.paginationCursors);
   $$TodoItemsTableTableManager get todoItems =>
       $$TodoItemsTableTableManager(_db, _db.todoItems);
+  $$RepositoryTreeEntriesTableTableManager get repositoryTreeEntries =>
+      $$RepositoryTreeEntriesTableTableManager(_db, _db.repositoryTreeEntries);
 }

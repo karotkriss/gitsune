@@ -1,0 +1,23 @@
+[
+  {
+    "id": "ebc8aacfbc9ddaeebdbeaffcdbde3adfb1facbde",
+    "name": "core",
+    "type": "tree",
+    "path": "lib/core",
+    "mode": "040000"
+  },
+  {
+    "id": "fcd9bbdacdaeebffcecfbaadecef4beac2abdcef",
+    "name": "features",
+    "type": "tree",
+    "path": "lib/features",
+    "mode": "040000"
+  },
+  {
+    "id": "adeaccebdebffcaadfdacbbefdfa5cfbd3bcedfa",
+    "name": "main.dart",
+    "type": "blob",
+    "path": "lib/main.dart",
+    "mode": "100644"
+  }
+]
