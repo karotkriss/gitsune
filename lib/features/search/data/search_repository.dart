@@ -14,9 +14,9 @@ class SearchPage<T> {
 /// Read seam over GitLab's search API (`GET /search?scope=...&search=...`),
 /// consumed by the search screen.
 ///
-/// Search results are a live, per-query result set rather than a synced
-/// local collection, so - like [IssuesRepository] and [PipelinesRepository] -
-/// this stays network-backed with no offline cache.
+/// Search results are a live, per-query result set rather than a synced local
+/// collection. Like `IssuesRepository` and `PipelinesRepository`, this stays
+/// network-backed with no offline cache.
 abstract interface class SearchRepository {
   Future<SearchPage<SearchProject>> loadFirstProjectsPage(String term);
 
@@ -30,9 +30,7 @@ abstract interface class SearchRepository {
     String term,
   );
 
-  Future<SearchPage<SearchMergeRequest>> loadNextMergeRequestsPage(
-    String term,
-  );
+  Future<SearchPage<SearchMergeRequest>> loadNextMergeRequestsPage(String term);
 }
 
 /// GitLab REST v4 search reader with Link-header pagination, one paginator
@@ -135,8 +133,10 @@ class GitLabSearchRepository implements SearchRepository {
     final base = _client.options.baseUrl.endsWith('/')
         ? _client.options.baseUrl
         : '${_client.options.baseUrl}/';
-    return Uri.parse(base).resolve('search').replace(
-      queryParameters: {'scope': scope, 'search': term, 'per_page': '20'},
-    );
+    return Uri.parse(base)
+        .resolve('search')
+        .replace(
+          queryParameters: {'scope': scope, 'search': term, 'per_page': '20'},
+        );
   }
 }

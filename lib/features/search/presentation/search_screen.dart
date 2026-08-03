@@ -9,7 +9,7 @@ import '../data/search_repository.dart';
 
 /// Explore/Search tab: a query field and results grouped by the three
 /// entity types GitLab's search API covers here (projects, issues, merge
-/// requests). Code search is out of scope - that's E10.2.
+/// requests). Code search is deferred to E10.2.
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key, required this.repository, this.now});
 
