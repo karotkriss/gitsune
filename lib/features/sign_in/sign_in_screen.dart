@@ -5,10 +5,11 @@ import '../../core/auth/gitlab_oauth.dart';
 import '../../core/icons/gs_icons.dart';
 import '../../core/theme/app_theme.dart';
 
-/// The sign-in surface from the design direction: an always-visible instance
-/// field pre-filled with `gitlab.com`, one Continue action that opens the
-/// instance's OAuth flow in the system browser, and never any credential
-/// fields (OAuth/PKCE only, `docs/decisions/0001-auth-posture.md`).
+/// The sign-in surface specified by `docs/research/design-direction.md` and
+/// `docs/decisions/0001-auth-posture.md`.
+///
+/// Reachable self-hosted instances show an inline limitation until the E2.3
+/// registration wizard is implemented.
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key, this.signIn, this.probeInstance});
 

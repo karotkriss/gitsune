@@ -48,11 +48,9 @@ void main() {
     });
 
     test('accepts a 401 JSON response (API present, auth required)', () async {
-      server.respondJson(
-        'GET /api/v4/version',
-        {'message': '401 Unauthorized'},
-        statusCode: 401,
-      );
+      server.respondJson('GET /api/v4/version', {
+        'message': '401 Unauthorized',
+      }, statusCode: 401);
       expect(await isGitLabInstance(server.baseUri), isTrue);
     });
 

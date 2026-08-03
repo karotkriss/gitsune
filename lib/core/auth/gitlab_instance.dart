@@ -44,8 +44,7 @@ Future<bool> isGitLabInstance(Uri base, {Dio? dio}) async {
       base.replace(path: '/api/v4/version').toString(),
       options: Options(validateStatus: (_) => true),
     );
-    final contentType =
-        response.headers.value(Headers.contentTypeHeader) ?? '';
+    final contentType = response.headers.value(Headers.contentTypeHeader) ?? '';
     return contentType.contains('application/json') &&
         (response.statusCode == 200 || response.statusCode == 401);
   } on DioException {

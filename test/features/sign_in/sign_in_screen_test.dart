@@ -124,6 +124,30 @@ void main() {
     );
   });
 
+  testWidgets('a reachable self-hosted instance shows the honest inline note', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signIn: () async => fail('must not start gitlab.com OAuth'),
+          probeInstance: (_) async => true,
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'gitlab.example.com');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Self-hosted sign-in is not available yet. Use gitlab.com for now.',
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('editing the field clears the inline error', (tester) async {
     await tester.pumpWidget(app(const SignInScreen()));
 
