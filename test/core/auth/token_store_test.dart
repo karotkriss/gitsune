@@ -55,18 +55,20 @@ void main() {
     );
   });
 
-  test('clear removes only that account, leaving the others signed in',
-      () async {
-    final storage = MemorySecureStorage();
-    final store = SecureTokenStore(storage: storage);
-    await store.save(alice, const OAuthTokens(accessToken: 'at-alice'));
-    await store.save(bob, const OAuthTokens(accessToken: 'at-bob'));
+  test(
+    'clear removes only that account, leaving the others signed in',
+    () async {
+      final storage = MemorySecureStorage();
+      final store = SecureTokenStore(storage: storage);
+      await store.save(alice, const OAuthTokens(accessToken: 'at-alice'));
+      await store.save(bob, const OAuthTokens(accessToken: 'at-bob'));
 
-    await store.clear(alice);
+      await store.clear(alice);
 
-    expect(await store.read(alice), isNull);
-    expect((await store.read(bob))?.accessToken, 'at-bob');
-  });
+      expect(await store.read(alice), isNull);
+      expect((await store.read(bob))?.accessToken, 'at-bob');
+    },
+  );
 
   test('null optional fields round-trip as null', () async {
     final store = SecureTokenStore(storage: MemorySecureStorage());

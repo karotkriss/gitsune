@@ -64,10 +64,12 @@ Sign-in (gitlab.com):
         |
    the app validates state, exchanges the code + PKCE verifier for tokens
    (no client secret sent - this is a public client)
+   then resolves the signed-in account through GET /api/v4/user
         |
         v
    access token, refresh token, and expiry are returned and stored
-   in the platform's secure credential store, namespaced per account
+   as one value in the platform's secure credential store, namespaced by
+   the instance host and GitLab account ID
 
 Sign-in (a self-hosted instance):
   identical, except:
@@ -121,11 +123,15 @@ Source: docs.gitlab.com/integration/oauth_provider/ (application registration pa
 ## Sessions, refresh, and the token-fallback boundary
 
 Access tokens are short-lived (around two hours by GitLab's default) with rotating refresh tokens, so refresh logic needs to be reliable rather than an afterthought.
-The approach: refresh lazily, on demand, right before a token is needed, with a small safety margin so a request never goes out with a token that expires mid-flight; retry exactly once on an unexpected 401 response before treating it as a real authentication failure; and always treat a token rotation as atomic, writing both the new access and refresh tokens together so a crash between receiving and persisting them can never strand an account in an inconsistent state.
-Concurrent requests for the same account must not both trigger a refresh simultaneously, since GitLab's refresh tokens are single-use and a second concurrent refresh would invalidate the first.
+The implementation refreshes lazily when a stored token is within 30 seconds of expiry, reads the replacement expiry from the server's `expires_in`, and retries exactly once after an unexpected 401 before surfacing an authentication failure.
+Access token, refresh token, and expiry are encoded in one JSON value and replaced in one secure-storage write, so readers never observe a partially rotated token pair.
+Tokens without a refresh token are sent as-is even after expiry so the resulting 401 surfaces as the authentication failure.
+Refresh is single-flight per account, so concurrent requests await one refresh instead of spending the same single-use refresh token more than once.
+A 401 refresh call carries the rejected access token; if another request has already stored a newer token, a straggler reuses that token without refreshing again.
+A failed refresh returns no token and leaves the stored value untouched; E2.6 owns marking that account for re-authentication.
 
 When a refresh genuinely fails (the user revoked the app, an administrator rotated credentials, or a single-sign-on session expired), Gitsune does not sign the user out of every connected account.
-It marks only that one account as needing re-authentication, keeps it visible in the account switcher, and prompts re-authentication scoped to that one account, preserving the screen the user was on.
+The E2.6 session model will mark only that one account as needing re-authentication, keep it visible in the account switcher, and prompt re-authentication scoped to that account while preserving the current screen.
 
 **The Personal Access Token fallback stays deliberately minimal.**
 It exists specifically for the one structural case where OAuth-first cannot work: an instance that forbids user-level OAuth application creation, where the signed-in user is not an administrator either.

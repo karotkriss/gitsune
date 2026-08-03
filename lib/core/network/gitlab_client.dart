@@ -9,8 +9,8 @@ class TokenReadResult {
   final bool refreshAttempted;
 }
 
-/// Reads the current access token for [account]. Injected by E2.5's token
-/// store; this layer only defines the seam.
+/// Reads the current access token for [account], including any lazy refresh.
+/// Implemented by `core/auth/token_refresh.dart`.
 typedef TokenReader = Future<TokenReadResult> Function(AccountKey account);
 
 /// Refreshes [account]'s token and returns the new access token, or `null`
@@ -59,8 +59,8 @@ void _setBearerToken(Map<String, dynamic> headers, String token) {
 /// instance, with interceptor seams for token injection and a one-time 401
 /// refresh-and-retry.
 ///
-/// Only the seams live here; the real token store and refresh flow are
-/// E2.5's job, injected via [readToken] and [refreshToken].
+/// Token storage and refresh live in `core/auth/` and are injected via
+/// [readToken] and [refreshToken].
 Dio createGitLabClient({
   required AccountKey account,
   required TokenReader readToken,
