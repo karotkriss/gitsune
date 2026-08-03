@@ -222,9 +222,6 @@ class AppDatabase extends _$AppDatabase {
       if (from < 10) {
         await migrator.createTable(commentDrafts);
       }
-      if (from >= 9 && from < 10) {
-        await migrator.addColumn(commentDrafts, commentDrafts.retryAfter);
-      }
     },
   );
 }
