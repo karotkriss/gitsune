@@ -33,6 +33,17 @@ void main() {
       .color
       .value;
 
+  Color drawerScrim(WidgetTester tester) => tester
+      .widget<ColoredBox>(
+        find.descendant(
+          of: find.byType(DrawerController),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is ColoredBox && widget.child is LimitedBox,
+          ),
+        ),
+      )
+      .color;
+
   testWidgets('modal renders heavy glass over the scrim and dismisses on '
       'scrim tap', (tester) async {
     await pumpDemo(tester);
@@ -60,17 +71,30 @@ void main() {
     expect(find.byType(GlassModal), findsNothing);
   });
 
-  testWidgets('drawer renders heavy glass and dismisses on scrim tap', (
-    tester,
-  ) async {
+  testWidgets('drawer renders heavy glass over the scrim and dismisses on '
+      'scrim tap', (tester) async {
     await pumpDemo(tester);
     await tester.tap(find.text('Drawer'));
     await tester.pumpAndSettle();
 
     expect(surfaceIn(tester, GlassDrawer).intensity, GlassIntensity.heavy);
+    final gs = Theme.of(
+      tester.element(find.byType(GlassDrawer)),
+    ).extension<GsTheme>()!;
+    expect(drawerScrim(tester), gs.scrim);
 
     // The drawer is 304 wide, so this hits the scrim beside it.
     await tester.tapAt(const Offset(380, 400));
+    await tester.pumpAndSettle();
+    expect(find.byType(GlassDrawer).hitTestable(), findsNothing);
+  });
+
+  testWidgets('drawer dismisses on the system back button', (tester) async {
+    await pumpDemo(tester);
+    await tester.tap(find.text('Drawer'));
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.byType(GlassDrawer).hitTestable(), findsNothing);
   });
@@ -92,6 +116,28 @@ void main() {
       const Offset(0, 400),
       warnIfMissed: false,
     );
+    await tester.pumpAndSettle();
+    expect(find.byType(GlassBottomSheet), findsNothing);
+  });
+
+  testWidgets('bottom sheet dismisses on scrim tap', (tester) async {
+    await pumpDemo(tester);
+    await tester.tap(find.text('Sheet'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(const Offset(5, 5));
+    await tester.pumpAndSettle();
+    expect(find.byType(GlassBottomSheet), findsNothing);
+  });
+
+  testWidgets('bottom sheet dismisses on the system back button', (
+    tester,
+  ) async {
+    await pumpDemo(tester);
+    await tester.tap(find.text('Sheet'));
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.byType(GlassBottomSheet), findsNothing);
   });
