@@ -145,7 +145,8 @@ Both consume patterns worth building once.
 Deliver v1 scope items 3 and 4, the highest-leverage and highest-complexity surfaces.
 This phase opens with the rendering foundation both surfaces and later phases need.
 
-- **Rendering foundation:** the diff-hunk parser (GitLab returns per-file unified-diff hunks; the app parses them into a colored, line-by-line list) and the syntax-highlighting engine (`re_highlight`, with the WebView JavaScript-highlighter reserved as a fallback for full-file views).
+- **Rendering foundation:** the diff-hunk parser (GitLab returns per-file unified-diff hunks; the app parses them into a colored, line-by-line list) and the `re_highlight` syntax-highlighting engine.
+  `docs/research/technology-assessment.md` owns the native and oversized-file rendering contract.
   Budget for vendoring given the single-maintainer risk on these packages.
 - **Merge request review and approval (item 3):** list, diff view with per-line syntax highlighting, inline comments, thread resolution, approve and unapprove, and merge, with a graceful view-on-web fallback for oversized diffs.
   The MR surface follows `docs/research/design-direction.md`: monospace source-to-target branch chips, a collapsible Pipelines section, a collapsible Approvals section, and a merge box that combines pipeline status, approval status, mergeability, and the unresolved-discussion count in one action area, with the merge action in the interactive accent.

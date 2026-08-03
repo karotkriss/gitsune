@@ -1,10 +1,10 @@
 /// The native, per-line syntax-highlighting engine (`re_highlight`).
 ///
-/// [highlightCodeLine] is the single entry point intended for future diff
-/// rendering (E7.2, decorating [DiffLine.content] from
-/// `lib/core/diff/diff_hunk_parser.dart`) and full-file rendering (E9.2, one
-/// call per source line). It has no notion of "diff" or "file", only a line
-/// of code and a language id from [detectLanguageId].
+/// [highlightCodeLine] is the single entry point for diff rendering (E7.2,
+/// decorating [DiffLine.content] from `lib/core/diff/diff_hunk_parser.dart`)
+/// and repository file rendering (E9.2, one call per source line).
+/// It has no notion of "diff" or "file", only a line of code and a language
+/// id from [detectLanguageId].
 library;
 
 import 'package:flutter/painting.dart';
@@ -17,23 +17,29 @@ import 'language_detection.dart';
 final Highlight _highlight = Highlight()
   ..registerLanguages(builtinAllLanguages);
 
-/// Which engine renders a full-file source view: [native] is `re_highlight`
-/// run per line on the main isolate, [webView] hands the whole file to the
-/// bundled offline highlight.js instead. See [chooseSyntaxEngine].
+/// Which engine renders the reusable full-file source-view primitive:
+/// [native] is `re_highlight` run per line on the main isolate, [webView]
+/// hands the whole file to the bundled offline highlight.js instead.
+/// See [chooseSyntaxEngine].
 enum SyntaxEngine { native, webView }
 
 /// Full-file source length above which the native per-line path (one
 /// `re_highlight` call per line, on the main isolate) gets slow enough that
-/// the WebView fallback should render the file instead.
+/// the reusable source view should use its WebView fallback instead.
 ///
 /// ponytail: a flat character-count threshold, not a profiled device budget;
 /// tighten with real large-file profiling if E9.2 shows jank near this line.
+/// The repository file view reuses this boundary but sends larger files to
+/// GitLab's browser view so it can preserve line numbers and wrapping below
+/// the boundary without maintaining a second in-app presentation.
 const int kNativeSyntaxCharThreshold = 200 * 1024;
 
-/// Picks the engine a full-file view should use for [source], purely by
-/// size. This selector is only for full-file views; diff rendering always uses
-/// the per-line native API directly. A full-file view above
-/// [kNativeSyntaxCharThreshold] gets [SyntaxEngine.webView].
+/// Picks the engine the reusable source-view primitive should use for
+/// [source], purely by size.
+/// Diff and repository file rendering use the per-line native API directly;
+/// the repository file view applies [kNativeSyntaxCharThreshold] itself and
+/// sends larger files to GitLab's browser view.
+/// A reusable source view above the threshold gets [SyntaxEngine.webView].
 SyntaxEngine chooseSyntaxEngine(String source) =>
     source.length > kNativeSyntaxCharThreshold
     ? SyntaxEngine.webView

@@ -82,7 +82,7 @@ Implementation detail: `docs/research/auth-blueprint.md`.
 | E4.1 Markdown renderer: `flutter_markdown_plus` plus GitLab references (`#123`, `!456`, `@user`, `~label`) | GitLab references resolve and render, covered by unit tests on reference resolution | E1.1 |
 | E4.2 Markdown math and Mermaid support | math and Mermaid blocks render or degrade gracefully | E4.1 |
 | E4.3 Diff-hunk parser: GitLab per-file unified-diff hunks into a colored line-by-line model | the parser turns fixture hunks into the correct add/remove/context line model, unit-tested | none |
-| E4.4 Syntax-highlighting engine (`re_highlight`) with WebView fallback for full-file views | per-line highlighting works on diffs and full files, the WebView fallback engages for large full-file views, and a golden passes | E4.3 |
+| E4.4 Syntax-highlighting engine (`re_highlight`) and reusable source-view primitive | per-line highlighting works on diffs and full files, the reusable source view can hand oversized content to its WebView fallback, and a golden passes; `docs/research/technology-assessment.md` owns the repository file-view fallback contract | E4.3 |
 
 ## E5: Notifications inbox / To-Do List (Phase 2)
 

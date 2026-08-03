@@ -21,10 +21,10 @@ import '../data/repository_tree_repository.dart';
 ///
 /// A file longer than [kNativeSyntaxCharThreshold] characters is not
 /// rendered in-app at all: past that size the per-line native highlighter
-/// stops being comfortable (see the threshold's own documentation), so -
-/// consistent with the diff view's oversized fallback - the screen offers to
-/// open the blob in the web browser, where GitLab's viewer handles large
-/// files better than a phone screen would.
+/// stops being comfortable (see the threshold's own documentation).
+/// Consistent with the diff view's oversized fallback, the screen offers to
+/// open the blob in the web browser, where GitLab's viewer handles large files
+/// better than a phone screen would.
 class FileViewScreen extends StatefulWidget {
   const FileViewScreen({
     super.key,
