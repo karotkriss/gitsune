@@ -109,6 +109,38 @@ class SearchMergeRequest {
   String get reference => '!$iid';
 }
 
+/// A code result from GitLab's search API (`scope=blobs`): a snippet of
+/// matching lines from one file.
+///
+/// Only instances with Advanced Search serve this scope; see
+/// `SearchRepository.loadFirstBlobsPage`.
+class SearchBlob {
+  const SearchBlob({
+    required this.path,
+    required this.data,
+    required this.projectId,
+    required this.startline,
+    this.ref,
+  });
+
+  factory SearchBlob.fromJson(Map<String, dynamic> json) => SearchBlob(
+    path: json['path'] as String? ?? json['filename'] as String,
+    data: json['data'] as String? ?? '',
+    projectId: json['project_id'] as int,
+    startline: json['startline'] as int? ?? 1,
+    ref: json['ref'] as String?,
+  );
+
+  final String path;
+
+  /// The matching lines, newline-separated, starting at [startline].
+  final String data;
+
+  final int projectId;
+  final int startline;
+  final String? ref;
+}
+
 Map<String, dynamic> _jsonMap(Object? value) {
   if (value is! Map) {
     throw const FormatException('Expected a JSON object.');

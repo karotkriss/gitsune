@@ -44,7 +44,8 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   Do not add a `LICENSE` file or pick a license without an explicit decision recorded as a new ADR in `docs/decisions/`.
   This is distinct from the vendored third-party licenses in `design/`, which govern only the files they accompany regardless of what license this repository eventually adopts.
 - Android flavor commands are documented in `README.md`; `android/app/build.gradle.kts` owns the proprietary-dependency boundary, and `docs/decisions/0004-app-store-launch-scope.md` owns its rationale.
-- Search (`lib/features/search/`) reads GitLab's `GET /search?scope=projects|issues|merge_requests&search=<term>`, one network-only repository method pair (`loadFirst*`/`loadNext*`) per scope, each backed by its own `KeysetPaginator`.
+- `docs/plan/roadmap.md` owns the search scope and tier-fallback contract; its implementation lives under `lib/features/search/`.
+  Each network-only scope has its own `loadFirst*`/`loadNext*` repository method pair backed by a `KeysetPaginator`.
   `KeysetPaginator` just follows the response's `Link: rel="next"` header, so it works unchanged here even though search pagination is offset-based rather than the keyset-flagged style `IssuesRepository` requests.
   The issues scope reuses `Issue`/`IssueAuthor`/`IssueLabel` from `lib/features/issues/data/issue_models.dart`; the merge-requests scope has no canonical model to reuse yet (E7.1 not landed), so `search_models.dart` defines a minimal `SearchMergeRequest` reusing `IssueAuthor`/`IssueLabel` for its author/label shape.
   Fold this into the canonical MR model once E7.1 lands rather than keeping both.

@@ -9,14 +9,23 @@ class FixtureSearchRepository implements SearchRepository {
     this.projects = const [],
     this.issues = const [],
     this.mergeRequests = const [],
+    this.blobs = const [],
+    this.codeSearchUnsupported = false,
   });
 
   final List<SearchProject> projects;
   final List<Issue> issues;
   final List<SearchMergeRequest> mergeRequests;
+  final List<SearchBlob> blobs;
+
+  /// When true, code search behaves like an instance without Advanced
+  /// Search: [loadFirstBlobsPage] throws [CodeSearchUnsupportedException].
+  final bool codeSearchUnsupported;
+
   int projectSearches = 0;
   int issueSearches = 0;
   int mergeRequestSearches = 0;
+  int blobSearches = 0;
 
   @override
   Future<SearchPage<SearchProject>> loadFirstProjectsPage(String term) async {
@@ -50,4 +59,22 @@ class FixtureSearchRepository implements SearchRepository {
   Future<SearchPage<SearchMergeRequest>> loadNextMergeRequestsPage(
     String term,
   ) async => const SearchPage(items: [], hasMore: false);
+
+  @override
+  Future<SearchPage<SearchBlob>> loadFirstBlobsPage(String term) async {
+    blobSearches++;
+    if (codeSearchUnsupported) throw const CodeSearchUnsupportedException();
+    return SearchPage(items: blobs, hasMore: false);
+  }
+
+  @override
+  Future<SearchPage<SearchBlob>> loadNextBlobsPage(String term) async =>
+      const SearchPage(items: [], hasMore: false);
+
+  @override
+  Uri codeSearchWebUrl(String term) => Uri.https(
+    'gitlab.example.com',
+    '/search',
+    {'search': term, 'scope': 'blobs'},
+  );
 }

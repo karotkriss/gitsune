@@ -11,6 +11,15 @@ class SearchPage<T> {
   final bool hasMore;
 }
 
+/// Thrown by the code (`scope=blobs`) search when the instance can't serve
+/// it: GitLab only offers global code search on tiers with Advanced Search
+/// (Elasticsearch) and answers a 4xx for the scope everywhere else. Callers
+/// should fall back to the instance's web search ([SearchRepository.codeSearchWebUrl])
+/// instead of showing an error or an empty result.
+class CodeSearchUnsupportedException implements Exception {
+  const CodeSearchUnsupportedException();
+}
+
 /// Read seam over GitLab's search API (`GET /search?scope=...&search=...`),
 /// consumed by the search screen.
 ///
@@ -31,6 +40,19 @@ abstract interface class SearchRepository {
   );
 
   Future<SearchPage<SearchMergeRequest>> loadNextMergeRequestsPage(String term);
+
+  /// Loads the first page of code (`scope=blobs`) results, throwing
+  /// [CodeSearchUnsupportedException] when the instance's tier lacks
+  /// Advanced Search.
+  Future<SearchPage<SearchBlob>> loadFirstBlobsPage(String term);
+
+  Future<SearchPage<SearchBlob>> loadNextBlobsPage(String term);
+
+  /// The instance's web code-search URL for [term], built by stripping the
+  /// terminal `/api/v4` from the API base so subpath installations retain
+  /// their prefix. This is the fallback when [loadFirstBlobsPage] reports the
+  /// scope unsupported.
+  Uri codeSearchWebUrl(String term);
 }
 
 /// GitLab REST v4 search reader with Link-header pagination, one paginator
@@ -46,6 +68,8 @@ class GitLabSearchRepository implements SearchRepository {
   final _issuePageLoads = <String, Future<SearchPage<Issue>>>{};
   final _mrPaginators = <String, KeysetPaginator<SearchMergeRequest>>{};
   final _mrPageLoads = <String, Future<SearchPage<SearchMergeRequest>>>{};
+  final _blobPaginators = <String, KeysetPaginator<SearchBlob>>{};
+  final _blobPageLoads = <String, Future<SearchPage<SearchBlob>>>{};
 
   @override
   Future<SearchPage<SearchProject>> loadFirstProjectsPage(String term) {
@@ -94,6 +118,49 @@ class GitLabSearchRepository implements SearchRepository {
   Future<SearchPage<SearchMergeRequest>> loadNextMergeRequestsPage(
     String term,
   ) => _loadNext(term, _mrPaginators, _mrPageLoads);
+
+  @override
+  Future<SearchPage<SearchBlob>> loadFirstBlobsPage(String term) async {
+    final paginator = KeysetPaginator<SearchBlob>(
+      dio: _client,
+      initialUri: _searchUri('blobs', term),
+      decode: SearchBlob.fromJson,
+    );
+    _blobPaginators[term] = paginator;
+    try {
+      return await _loadPage(term, paginator, _blobPageLoads);
+    } on DioException catch (error) {
+      if (_isScopeUnavailable(error)) {
+        throw const CodeSearchUnsupportedException();
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<SearchPage<SearchBlob>> loadNextBlobsPage(String term) =>
+      _loadNext(term, _blobPaginators, _blobPageLoads);
+
+  @override
+  Uri codeSearchWebUrl(String term) {
+    final apiBase = _client.options.baseUrl;
+    final webRoot = apiBase.replaceFirst(RegExp(r'/api/v4/?$'), '');
+    return Uri.parse(
+      '$webRoot/search',
+    ).replace(queryParameters: {'search': term, 'scope': 'blobs'});
+  }
+
+  /// Whether [error] is GitLab declining the blobs scope itself (the
+  /// tier-lacks-Advanced-Search signal) rather than an auth or rate-limit
+  /// failure that would hit every scope alike.
+  static bool _isScopeUnavailable(DioException error) {
+    final status = error.response?.statusCode;
+    return status != null &&
+        status >= 400 &&
+        status < 500 &&
+        status != 401 &&
+        status != 429;
+  }
 
   Future<SearchPage<T>> _loadNext<T>(
     String term,
