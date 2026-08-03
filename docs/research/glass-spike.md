@@ -11,7 +11,7 @@ Native-first frosted glass, no third-party glass dependency.
 - The two ruled intensities map to the dark-theme design tokens in `design/tokens/semantic.css`: `GlassIntensity.modest` uses `--gs-glass-bg` (rgba(24,23,29,.55)) for app-wide floating chrome, and `GlassIntensity.heavy` uses `--gs-glass-bg-strong` (rgba(30,29,36,.85)) for overlays.
 - **Isolation seam:** `GlassSurface` is the only public boundary; call sites pass `intensity` and `child` and never see the filter.
   A future refractive implementation (the deferred "liquid" part of the direction) replaces `GlassSurface.build` without touching any caller.
-  E1.5's overlay components must compose `GlassSurface` rather than reaching for `BackdropFilter` directly.
+  The E1.5 overlay components in `lib/core/glass/glass_overlays.dart` preserve this boundary by composing `GlassSurface` rather than reaching for `BackdropFilter` directly.
 
 Both intensities share one blur; they differ only in tint opacity, which is free.
 Heavier-looking glass is not intrinsically slower glass: the cost drivers are blur sigma and blurred area, not tint.
@@ -76,4 +76,5 @@ Until then the heavy treatment is provisionally viable: the emulator shows no fu
   2. Lower `GlassSurface.blurSigma` (fidelity to the 24 px token degrades gracefully).
   3. Drop the saturation matrix (keeps the frost, loses the color pop).
   4. For the heavy tier, fall back to a near-opaque tint without blur; its .85 tint already hides most background detail, so blur contributes least there.
-- Multiple simultaneous glass regions each pay their own backdrop pass. E1.5 should keep at most one heavy overlay live at a time, which the modal/drawer interaction model already implies.
+- Multiple simultaneous glass regions each pay their own backdrop pass.
+  The E1.5 modal, drawer, and bottom-sheet primitives use Material's modal interactions so at most one heavy overlay is live at a time.
