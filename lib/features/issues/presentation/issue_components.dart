@@ -295,6 +295,42 @@ class IssueCommentCard extends StatelessWidget {
   }
 }
 
+/// Live [GsMarkdown] rendering of an in-progress draft, used by the issue
+/// composer surfaces. Collapses to nothing while the draft is empty.
+class IssueDraftPreview extends StatelessWidget {
+  const IssueDraftPreview({super.key, required this.draft});
+
+  final String draft;
+
+  @override
+  Widget build(BuildContext context) {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    if (draft.trim().isEmpty) return const SizedBox.shrink();
+    return Semantics(
+      container: true,
+      label: 'Markdown preview',
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: gs.surfaceCard,
+          border: Border.all(color: gs.borderSubtle),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Preview', style: gs.caption.copyWith(color: gs.textSubtle)),
+            const SizedBox(height: 8),
+            GsMarkdown(data: draft),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class IssueSystemEvent extends StatelessWidget {
   const IssueSystemEvent({
     super.key,

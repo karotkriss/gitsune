@@ -31,6 +31,16 @@ abstract interface class IssuesRepository {
   Future<IssueNotePage> loadFirstNotesPage(int projectId, int issueIid);
 
   Future<IssueNotePage> loadNextNotesPage(int projectId, int issueIid);
+
+  /// Creates an issue, returning the created resource as the server shaped it.
+  Future<Issue> createIssue(
+    int projectId, {
+    required String title,
+    String description = '',
+  });
+
+  /// Posts a comment on an issue, returning the created note.
+  Future<IssueNote> createNote(int projectId, int issueIid, String body);
 }
 
 /// GitLab REST v4 issue reader with Link-header pagination.
@@ -155,6 +165,31 @@ class GitLabIssuesRepository implements IssuesRepository {
         _notePageLoads.remove(key);
       }
     });
+  }
+
+  @override
+  Future<Issue> createIssue(
+    int projectId, {
+    required String title,
+    String description = '',
+  }) async {
+    final response = await _client.postUri<Map<String, dynamic>>(
+      _apiUri('projects/$projectId/issues'),
+      data: {
+        'title': title,
+        if (description.isNotEmpty) 'description': description,
+      },
+    );
+    return Issue.fromJson(response.data!);
+  }
+
+  @override
+  Future<IssueNote> createNote(int projectId, int issueIid, String body) async {
+    final response = await _client.postUri<Map<String, dynamic>>(
+      _apiUri('projects/$projectId/issues/$issueIid/notes'),
+      data: {'body': body},
+    );
+    return IssueNote.fromJson(response.data!);
   }
 
   Uri _apiUri(String path, [Map<String, String>? queryParameters]) {

@@ -30,7 +30,9 @@ class IssueDetailScreen extends StatefulWidget {
 
 class _IssueDetailScreenState extends State<IssueDetailScreen> {
   final _scrollController = ScrollController();
+  final _commentController = TextEditingController();
   final _notes = <IssueNote>[];
+  bool _sendingComment = false;
   Issue? _issue;
   bool _issueLoading = true;
   bool _issueFailed = false;
@@ -67,7 +69,33 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     _scrollController
       ..removeListener(_handleScroll)
       ..dispose();
+    _commentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendComment() async {
+    final body = _commentController.text.trim();
+    if (body.isEmpty || _sendingComment) return;
+    setState(() => _sendingComment = true);
+    try {
+      final note = await widget.repository.createNote(
+        widget.projectId,
+        widget.issueIid,
+        body,
+      );
+      if (!mounted) return;
+      setState(() {
+        _notes.add(note);
+        _sendingComment = false;
+        _commentController.clear();
+      });
+    } on Object {
+      if (!mounted) return;
+      setState(() => _sendingComment = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to post the comment.')),
+      );
+    }
   }
 
   void _handleScroll() {
@@ -240,78 +268,167 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
               failed: _issueFailed,
               onRetry: _reload,
             )
-          : RefreshIndicator(
-              onRefresh: _reload,
-              color: gs.accent,
-              child: CustomScrollView(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  if (_issueLoading)
-                    const SliverToBoxAdapter(
-                      child: LinearProgressIndicator(minHeight: 2),
-                    ),
-                  SliverToBoxAdapter(
-                    child: _IssueHeader(
-                      issue: issue,
-                      projectPath: widget.projectPath,
-                      now: now,
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                    sliver: SliverList.builder(
-                      itemCount: _notes.length + 2,
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: IssueCommentCard(
-                              author: issue.author,
-                              timeLabel: formatIssueRelativeTime(
-                                issue.createdAt,
-                                now,
-                              ),
-                              body: issue.description,
-                              opening: true,
-                            ),
-                          );
-                        }
-                        if (index <= _notes.length) {
-                          final note = _notes[index - 1];
-                          final timeLabel = formatIssueRelativeTime(
-                            note.createdAt,
-                            now,
-                          );
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: note.system
-                                ? IssueSystemEvent(
-                                    note: note,
-                                    timeLabel: timeLabel,
-                                  )
-                                : IssueCommentCard(
-                                    author: note.author,
-                                    timeLabel: timeLabel,
-                                    body: note.body,
-                                    internal: note.internal,
+          : Column(
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _reload,
+                    color: gs.accent,
+                    child: CustomScrollView(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        if (_issueLoading)
+                          const SliverToBoxAdapter(
+                            child: LinearProgressIndicator(minHeight: 2),
+                          ),
+                        SliverToBoxAdapter(
+                          child: _IssueHeader(
+                            issue: issue,
+                            projectPath: widget.projectPath,
+                            now: now,
+                          ),
+                        ),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                          sliver: SliverList.builder(
+                            itemCount: _notes.length + 2,
+                            itemBuilder: (context, index) {
+                              if (index == 0) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: IssueCommentCard(
+                                    author: issue.author,
+                                    timeLabel: formatIssueRelativeTime(
+                                      issue.createdAt,
+                                      now,
+                                    ),
+                                    body: issue.description,
+                                    opening: true,
                                   ),
-                          );
-                        }
-                        return _NotesFooter(
-                          hasNotes: _notes.isNotEmpty,
-                          loading: _notesLoading || _notesLoadingMore,
-                          firstPageFailed: _notesInitialFailed,
-                          nextPageFailed: _notesNextFailed,
-                          onRetryFirst: _retryFirstNotesPage,
-                          onRetryNext: _retryNextNotesPage,
-                        );
-                      },
+                                );
+                              }
+                              if (index <= _notes.length) {
+                                final note = _notes[index - 1];
+                                final timeLabel = formatIssueRelativeTime(
+                                  note.createdAt,
+                                  now,
+                                );
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: note.system
+                                      ? IssueSystemEvent(
+                                          note: note,
+                                          timeLabel: timeLabel,
+                                        )
+                                      : IssueCommentCard(
+                                          author: note.author,
+                                          timeLabel: timeLabel,
+                                          body: note.body,
+                                          internal: note.internal,
+                                        ),
+                                );
+                              }
+                              return _NotesFooter(
+                                hasNotes: _notes.isNotEmpty,
+                                loading: _notesLoading || _notesLoadingMore,
+                                firstPageFailed: _notesInitialFailed,
+                                nextPageFailed: _notesNextFailed,
+                                onRetryFirst: _retryFirstNotesPage,
+                                onRetryNext: _retryNextNotesPage,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                ),
+                _CommentComposer(
+                  controller: _commentController,
+                  sending: _sendingComment,
+                  onChanged: (_) => setState(() {}),
+                  onSend: _sendComment,
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _CommentComposer extends StatelessWidget {
+  const _CommentComposer({
+    required this.controller,
+    required this.sending,
+    required this.onChanged,
+    required this.onSend,
+  });
+
+  final TextEditingController controller;
+  final bool sending;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    final canSend = !sending && controller.text.trim().isNotEmpty;
+    return ColoredBox(
+      color: gs.surfaceApp,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (controller.text.trim().isNotEmpty)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 160),
+                  child: SingleChildScrollView(
+                    child: IssueDraftPreview(draft: controller.text),
+                  ),
+                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      enabled: !sending,
+                      minLines: 1,
+                      maxLines: 5,
+                      onChanged: onChanged,
+                      decoration: const InputDecoration(
+                        hintText: 'Write a comment (Markdown supported)',
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  if (sending)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  else
+                    IconButton(
+                      tooltip: 'Send comment',
+                      onPressed: canSend ? onSend : null,
+                      icon: GsIcon(
+                        GsIconGlyph.paperAirplane,
+                        size: 20,
+                        color: canSend ? gs.accent : gs.statusNeutral,
+                      ),
+                    ),
                 ],
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

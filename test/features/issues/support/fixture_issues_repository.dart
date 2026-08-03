@@ -21,6 +21,8 @@ class FixtureIssuesRepository implements IssuesRepository {
   int issueLoads = 0;
   int firstNotesLoads = 0;
   int nextNotesLoads = 0;
+  final createdIssues = <({int projectId, String title, String description})>[];
+  final createdNotes = <({int projectId, int issueIid, String body})>[];
 
   @override
   Future<IssuePage> loadFirstPage(int projectId) async {
@@ -50,6 +52,28 @@ class FixtureIssuesRepository implements IssuesRepository {
   Future<IssueNotePage> loadNextNotesPage(int projectId, int issueIid) async {
     nextNotesLoads++;
     return IssueNotePage(items: _secondNotes, hasMore: false);
+  }
+
+  @override
+  Future<Issue> createIssue(
+    int projectId, {
+    required String title,
+    String description = '',
+  }) async {
+    createdIssues.add((
+      projectId: projectId,
+      title: title,
+      description: description,
+    ));
+    return _issueFrom('issue_created_143');
+  }
+
+  @override
+  Future<IssueNote> createNote(int projectId, int issueIid, String body) async {
+    createdNotes.add((projectId: projectId, issueIid: issueIid, body: body));
+    return IssueNote.fromJson(
+      Map<String, dynamic>.from(Fixtures.json('issue_142_note_created') as Map),
+    );
   }
 }
 

@@ -6,6 +6,7 @@ import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/issues/data/issue_models.dart';
 import 'package:gitsune/features/issues/data/issues_repository.dart';
 import 'package:gitsune/features/issues/presentation/issue_components.dart';
+import 'package:gitsune/features/issues/presentation/issue_create_screen.dart';
 import 'package:gitsune/features/issues/presentation/issue_detail_screen.dart';
 import 'package:gitsune/features/issues/presentation/issue_list_screen.dart';
 import 'package:gitsune/features/shell/app_shell.dart';
@@ -132,6 +133,105 @@ void main() {
     expect(find.text('No comments yet.'), findsOneWidget);
   });
 
+  testWidgets('creating an issue previews markdown and folds into the list', (
+    tester,
+  ) async {
+    final repository = FixtureIssuesRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueListScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          repository: repository,
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('New issue'));
+    await tester.pumpAndSettle();
+    expect(find.byType(IssueCreateScreen), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Title'),
+      'Track reconnect regressions',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Description'),
+      'Watch for **regressions** weekly',
+    );
+    await tester.pump();
+
+    expect(find.text('Preview'), findsOneWidget);
+    expect(
+      find.textContaining('Watch for regressions weekly', findRichText: true),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(IssueCreateScreen), findsNothing);
+    expect(repository.createdIssues.single, (
+      projectId: 7,
+      title: 'Track reconnect regressions',
+      description: 'Watch for **regressions** weekly',
+    ));
+    expect(find.byKey(const ValueKey('issue-row-143')), findsOneWidget);
+    expect(find.text('Track reconnect regressions'), findsOneWidget);
+  });
+
+  testWidgets('posting a comment previews markdown and appends the note', (
+    tester,
+  ) async {
+    final repository = FixtureIssuesRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byType(TextField),
+      'Confirmed on the **latest** build.',
+    );
+    await tester.pump();
+
+    expect(find.text('Preview'), findsOneWidget);
+    expect(
+      find.textContaining('Confirmed on the latest build.', findRichText: true),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Send comment'));
+    await tester.pumpAndSettle();
+
+    expect(repository.createdNotes.single, (
+      projectId: 7,
+      issueIid: 142,
+      body: 'Confirmed on the **latest** build.',
+    ));
+    expect(find.text('Preview'), findsNothing);
+    expect(find.text('Confirmed on the **latest** build.'), findsNothing);
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Confirmed on the latest build.', findRichText: true),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('router exposes issues as a pushed project destination', (
     tester,
   ) async {
@@ -192,4 +292,16 @@ class _DelayedNotesRepository implements IssuesRepository {
   @override
   Future<IssueNotePage> loadNextNotesPage(int projectId, int issueIid) =>
       throw StateError('No next notes page.');
+
+  @override
+  Future<Issue> createIssue(
+    int projectId, {
+    required String title,
+    String description = '',
+  }) =>
+      _delegate.createIssue(projectId, title: title, description: description);
+
+  @override
+  Future<IssueNote> createNote(int projectId, int issueIid, String body) =>
+      _delegate.createNote(projectId, issueIid, body);
 }
