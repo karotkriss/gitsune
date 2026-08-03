@@ -146,6 +146,30 @@ void main() {
   });
 
   test(
+    'a malformed cached issue is replaced by the network response',
+    () async {
+      final server = await FakeGitLabServer.start();
+      addTearDown(server.close);
+      server.respondJson('GET /api/v4/projects/7/issues', [
+        Fixtures.json('issue_142'),
+      ]);
+      final cache = cacheFor(account);
+      await cache.put(RecentlyViewedType.issue, 7, 142, '{malformed');
+      final repository = issueRepository(cache, clientFor(server.baseUri));
+
+      expect(await repository.readCached(), isNull);
+      expect(
+        await cache.watchPayload(RecentlyViewedType.issue, 7, 142).first,
+        isNull,
+      );
+
+      final loaded = await repository.load();
+      final cached = await repository.readCached();
+      expect(cached!.title, loaded.title);
+    },
+  );
+
+  test(
     'a background refresh updates the cache and the stream re-emits',
     () async {
       final server = await FakeGitLabServer.start();

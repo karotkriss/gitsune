@@ -105,6 +105,16 @@ class RecentlyViewedCache {
     );
   }
 
+  Future<void> remove(
+    RecentlyViewedType type,
+    int projectId,
+    int itemId,
+  ) async {
+    await (database.delete(
+      database.recentlyViewedItems,
+    )..where((t) => _itemScope(t, type, projectId, itemId))).go();
+  }
+
   Future<void> _evict(RecentlyViewedType type) async {
     final query = database.select(database.recentlyViewedItems)
       ..where(
@@ -221,7 +231,27 @@ class RecentItemRepository<T> implements OfflineFirstRepository<T?> {
   /// One-shot cached read that also records the view, keeping an item the
   /// user opens offline protected from least-recently-viewed eviction.
   Future<T?> readCached() async {
-    await cache.touch(type, projectId, itemId);
-    return watch().first;
+    try {
+      await cache.touch(type, projectId, itemId);
+      return await watch().first;
+    } on Object catch (error, stackTrace) {
+      log(
+        'Unable to read recently viewed item',
+        name: 'gitsune.recently_viewed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      try {
+        await cache.remove(type, projectId, itemId);
+      } on Object catch (removeError, removeStackTrace) {
+        log(
+          'Unable to remove invalid recently viewed item',
+          name: 'gitsune.recently_viewed',
+          error: removeError,
+          stackTrace: removeStackTrace,
+        );
+      }
+      return null;
+    }
   }
 }
