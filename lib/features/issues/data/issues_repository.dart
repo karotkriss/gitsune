@@ -17,10 +17,9 @@ class IssueNotePage {
   final bool hasMore;
 }
 
-/// Read seam consumed by the issue list and detail screens.
+/// Network-backed seam consumed by the issue list and detail screens.
 ///
-/// The first offline cache for recently viewed issues arrives in E14.1, so
-/// E6.1 keeps this seam intentionally small and network-backed.
+/// The first offline cache for recently viewed issues arrives in E14.1.
 abstract interface class IssuesRepository {
   Future<IssuePage> loadFirstPage(int projectId);
 
@@ -59,7 +58,7 @@ abstract interface class IssuesRepository {
   });
 }
 
-/// GitLab REST v4 issue reader with Link-header pagination.
+/// GitLab REST v4 issue repository with Link-header pagination.
 ///
 /// `with_labels_details=true` is important here: the default Issues API shape
 /// returns label names only, while the Pajamas label treatment needs each

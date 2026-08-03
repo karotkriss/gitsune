@@ -24,13 +24,15 @@ class FixtureIssuesRepository implements IssuesRepository {
   final createdIssues = <({int projectId, String title, String description})>[];
   final createdNotes = <({int projectId, int issueIid, String body})>[];
   final updateCalls =
-      <({
-        int projectId,
-        int issueIid,
-        List<String>? labels,
-        List<int>? assigneeIds,
-        String? stateEvent,
-      })>[];
+      <
+        ({
+          int projectId,
+          int issueIid,
+          List<String>? labels,
+          List<int>? assigneeIds,
+          String? stateEvent,
+        })
+      >[];
   Map<String, dynamic> _issueJson = Map<String, dynamic>.from(
     Fixtures.json('issue_142') as Map,
   );
