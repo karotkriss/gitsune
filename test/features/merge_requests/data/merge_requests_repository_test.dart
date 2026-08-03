@@ -29,10 +29,7 @@ void main() {
       if (cursor == null) {
         expect(request.uri.queryParameters, containsPair('scope', 'all'));
         expect(request.uri.queryParameters, containsPair('state', 'all'));
-        expect(
-          request.uri.queryParameters,
-          containsPair('pagination', 'keyset'),
-        );
+        expect(request.uri.queryParameters, isNot(contains('pagination')));
         expect(
           request.uri.queryParameters,
           containsPair('order_by', 'updated_at'),
@@ -68,7 +65,7 @@ void main() {
     expect(requestCount, 2);
   });
 
-  test('loads detail, all pipelines, and approval counts', () async {
+  test('loads detail, one pipeline page, and approval counts', () async {
     final server = await FakeGitLabServer.start();
     addTearDown(server.close);
     server.respondJson(
@@ -88,7 +85,7 @@ void main() {
       request.response.headers.contentType = ContentType.json;
       final page = request.uri.queryParameters['page'];
       if (page == null) {
-        expect(request.uri.queryParameters, containsPair('per_page', '100'));
+        expect(request.uri.queryParameters, containsPair('per_page', '20'));
         final nextUri = server.baseUri.resolve(
           '/api/v4/projects/7/merge_requests/142/pipelines?page=2',
         );
@@ -106,22 +103,45 @@ void main() {
     });
 
     final repository = GitLabMergeRequestsRepository(_client(server, account));
-    final details = await repository.loadMergeRequest(7, 142);
+    final mergeRequest = await repository.loadMergeRequest(7, 142);
+    final firstPipelines = await repository.loadFirstPipelinePage(7, 142);
+    final approvals = await repository.loadApprovals(7, 142);
 
-    expect(details.mergeRequest.title, 'Add instance switcher sheet');
-    expect(details.mergeRequest.changedFilesLabel, '4 files changed');
-    expect(details.mergeRequest.labels, ['workflow::in review', 'mobile']);
-    expect(details.pipelines.map((pipeline) => pipeline.id), [
-      88123,
-      88119,
-      88101,
-    ]);
-    expect(details.pipelines.first.status, CiStatus.running);
+    expect(mergeRequest.title, 'Add instance switcher sheet');
+    expect(mergeRequest.changedFilesLabel, '4 files changed');
+    expect(mergeRequest.labels, ['workflow::in review', 'mobile']);
+    expect(firstPipelines.items.map((pipeline) => pipeline.id), [88123, 88119]);
+    expect(firstPipelines.items.first.status, CiStatus.running);
+    expect(firstPipelines.hasMore, isTrue);
+    expect(pipelineRequestCount, 1);
+    expect(approvals.approvalsRequired, 2);
+    expect(approvals.approvalsLeft, 1);
+    expect(approvals.approvedCount, 1);
+    expect(approvals.approvedBy.single.username, 'priya');
+
+    final secondPipelines = await repository.loadNextPipelinePage(7, 142);
+    expect(secondPipelines.items.single.id, 88101);
+    expect(secondPipelines.hasMore, isFalse);
     expect(pipelineRequestCount, 2);
-    expect(details.approvals.approvalsRequired, 2);
-    expect(details.approvals.approvalsLeft, 1);
-    expect(details.approvals.approvedCount, 1);
-    expect(details.approvals.approvedBy.single.username, 'priya');
+  });
+
+  test('accepts the documented basic pipeline shape', () {
+    final pipeline = MergeRequestPipeline.fromJson({
+      'id': 88123,
+      'status': 'running',
+      'ref': 'refs/merge-requests/142/head',
+      'sha': '731af8923c51e65101fc3cbb3275ce0a3e849311',
+    });
+
+    expect(pipeline.updatedAt, isNull);
+  });
+
+  test('normalizes a pending changes count', () {
+    final json = Map<String, dynamic>.from(
+      Fixtures.json('merge_request_142') as Map,
+    )..['changes_count'] = '';
+
+    expect(MergeRequest.fromJson(json).changedFilesLabel, 'Changed files');
   });
 }
 

@@ -7,6 +7,7 @@ import 'package:gitsune/core/icons/gs_icons.dart';
 import 'package:gitsune/core/markdown/gs_markdown.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/merge_requests/data/merge_request_models.dart';
+import 'package:gitsune/features/merge_requests/data/merge_requests_repository.dart';
 import 'package:gitsune/features/merge_requests/presentation/merge_request_components.dart';
 import 'package:gitsune/features/merge_requests/presentation/merge_request_detail_screen.dart';
 import 'package:gitsune/features/merge_requests/presentation/merge_request_list_screen.dart';
@@ -133,6 +134,29 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets('detail survives independent supplemental request failures', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: MergeRequestDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          mergeIid: 142,
+          repository: _FailingSupplementsRepository(),
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Add instance switcher sheet'), findsOneWidget);
+    expect(find.text('4 files changed'), findsOneWidget);
+    expect(find.text('Unable to load Pipelines.'), findsOneWidget);
+    expect(find.text('Unable to load Approvals.'), findsOneWidget);
+  });
+
   testWidgets('router exposes merge requests as project destinations', (
     tester,
   ) async {
@@ -203,4 +227,16 @@ void main() {
       '2026-07-01',
     );
   });
+}
+
+class _FailingSupplementsRepository extends FixtureMergeRequestsRepository {
+  @override
+  Future<MergeRequestPipelinePage> loadFirstPipelinePage(
+    int projectId,
+    int mergeIid,
+  ) => Future.error(StateError('pipeline failure'));
+
+  @override
+  Future<MergeRequestApprovals> loadApprovals(int projectId, int mergeIid) =>
+      Future.error(StateError('approval failure'));
 }

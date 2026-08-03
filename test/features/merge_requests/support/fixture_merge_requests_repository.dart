@@ -7,22 +7,22 @@ class FixtureMergeRequestsRepository implements MergeRequestsRepository {
   FixtureMergeRequestsRepository()
     : _firstPage = _mergeRequestsFrom('merge_requests_page1'),
       _secondPage = _mergeRequestsFrom('merge_requests_page2'),
-      _details = MergeRequestDetails(
-        mergeRequest: _mergeRequestFrom('merge_request_142'),
-        pipelines: _pipelinesFrom([
-          'merge_request_142_pipelines_page1',
-          'merge_request_142_pipelines_page2',
-        ]),
-        approvals: MergeRequestApprovals.fromJson(
-          Map<String, dynamic>.from(
-            Fixtures.json('merge_request_142_approvals') as Map,
-          ),
+      _mergeRequest = _mergeRequestFrom('merge_request_142'),
+      _pipelines = _pipelinesFrom([
+        'merge_request_142_pipelines_page1',
+        'merge_request_142_pipelines_page2',
+      ]),
+      _approvals = MergeRequestApprovals.fromJson(
+        Map<String, dynamic>.from(
+          Fixtures.json('merge_request_142_approvals') as Map,
         ),
       );
 
   final List<MergeRequest> _firstPage;
   final List<MergeRequest> _secondPage;
-  final MergeRequestDetails _details;
+  final MergeRequest _mergeRequest;
+  final List<MergeRequestPipeline> _pipelines;
+  final MergeRequestApprovals _approvals;
   int firstPageLoads = 0;
   int nextPageLoads = 0;
   int detailLoads = 0;
@@ -40,12 +40,29 @@ class FixtureMergeRequestsRepository implements MergeRequestsRepository {
   }
 
   @override
-  Future<MergeRequestDetails> loadMergeRequest(
+  Future<MergeRequest> loadMergeRequest(int projectId, int mergeIid) async {
+    detailLoads++;
+    return _mergeRequest;
+  }
+
+  @override
+  Future<MergeRequestPipelinePage> loadFirstPipelinePage(
+    int projectId,
+    int mergeIid,
+  ) async => MergeRequestPipelinePage(items: _pipelines, hasMore: false);
+
+  @override
+  Future<MergeRequestPipelinePage> loadNextPipelinePage(
+    int projectId,
+    int mergeIid,
+  ) async => const MergeRequestPipelinePage(items: [], hasMore: false);
+
+  @override
+  Future<MergeRequestApprovals> loadApprovals(
     int projectId,
     int mergeIid,
   ) async {
-    detailLoads++;
-    return _details;
+    return _approvals;
   }
 }
 

@@ -10,6 +10,13 @@ class MergeRequestPage {
   final bool hasMore;
 }
 
+class MergeRequestPipelinePage {
+  const MergeRequestPipelinePage({required this.items, required this.hasMore});
+
+  final List<MergeRequestPipeline> items;
+  final bool hasMore;
+}
+
 /// Read seam consumed by the merge request list and detail shell.
 ///
 /// E14.1 adds the bounded offline cache for recently viewed merge requests.
@@ -19,7 +26,19 @@ abstract interface class MergeRequestsRepository {
 
   Future<MergeRequestPage> loadNextPage(int projectId);
 
-  Future<MergeRequestDetails> loadMergeRequest(int projectId, int mergeIid);
+  Future<MergeRequest> loadMergeRequest(int projectId, int mergeIid);
+
+  Future<MergeRequestPipelinePage> loadFirstPipelinePage(
+    int projectId,
+    int mergeIid,
+  );
+
+  Future<MergeRequestPipelinePage> loadNextPipelinePage(
+    int projectId,
+    int mergeIid,
+  );
+
+  Future<MergeRequestApprovals> loadApprovals(int projectId, int mergeIid);
 }
 
 /// GitLab REST v4 merge request reader with Link-header pagination.
@@ -29,6 +48,9 @@ class GitLabMergeRequestsRepository implements MergeRequestsRepository {
   final Dio _client;
   final _paginators = <int, KeysetPaginator<MergeRequest>>{};
   final _pageLoads = <int, Future<MergeRequestPage>>{};
+  final _pipelinePaginators =
+      <(int, int), KeysetPaginator<MergeRequestPipeline>>{};
+  final _pipelinePageLoads = <(int, int), Future<MergeRequestPipelinePage>>{};
 
   @override
   Future<MergeRequestPage> loadFirstPage(int projectId) {
@@ -39,7 +61,6 @@ class GitLabMergeRequestsRepository implements MergeRequestsRepository {
         'state': 'all',
         'order_by': 'updated_at',
         'sort': 'desc',
-        'pagination': 'keyset',
         'per_page': '20',
       }),
       decode: MergeRequest.fromJson,
@@ -81,49 +102,70 @@ class GitLabMergeRequestsRepository implements MergeRequestsRepository {
   }
 
   @override
-  Future<MergeRequestDetails> loadMergeRequest(
-    int projectId,
-    int mergeIid,
-  ) async {
-    final results = await Future.wait<Object>([
-      _loadDetails(projectId, mergeIid),
-      _loadPipelines(projectId, mergeIid),
-      _loadApprovals(projectId, mergeIid),
-    ]);
-    return MergeRequestDetails(
-      mergeRequest: results[0] as MergeRequest,
-      pipelines: results[1] as List<MergeRequestPipeline>,
-      approvals: results[2] as MergeRequestApprovals,
-    );
-  }
-
-  Future<MergeRequest> _loadDetails(int projectId, int mergeIid) async {
+  Future<MergeRequest> loadMergeRequest(int projectId, int mergeIid) async {
     final response = await _client.getUri<Map<String, dynamic>>(
       _apiUri('projects/$projectId/merge_requests/$mergeIid'),
     );
     return MergeRequest.fromJson(response.data!);
   }
 
-  Future<List<MergeRequestPipeline>> _loadPipelines(
+  @override
+  Future<MergeRequestPipelinePage> loadFirstPipelinePage(
     int projectId,
     int mergeIid,
-  ) async {
+  ) {
+    final key = (projectId, mergeIid);
     final paginator = KeysetPaginator<MergeRequestPipeline>(
       dio: _client,
       initialUri: _apiUri(
         'projects/$projectId/merge_requests/$mergeIid/pipelines',
-        {'per_page': '100'},
+        {'per_page': '20'},
       ),
       decode: MergeRequestPipeline.fromJson,
     );
-    final pipelines = <MergeRequestPipeline>[];
-    while (paginator.hasMore) {
-      pipelines.addAll((await paginator.loadNext()).items);
-    }
-    return pipelines;
+    _pipelinePaginators[key] = paginator;
+    return _loadPipelinePage(key, paginator);
   }
 
-  Future<MergeRequestApprovals> _loadApprovals(
+  @override
+  Future<MergeRequestPipelinePage> loadNextPipelinePage(
+    int projectId,
+    int mergeIid,
+  ) {
+    final key = (projectId, mergeIid);
+    final existing = _pipelinePageLoads[key];
+    if (existing != null) return existing;
+
+    final paginator = _pipelinePaginators[key];
+    if (paginator == null) {
+      throw StateError('Load the first pipeline page before loading the next.');
+    }
+    if (!paginator.hasMore) {
+      return Future.value(
+        const MergeRequestPipelinePage(items: [], hasMore: false),
+      );
+    }
+    return _loadPipelinePage(key, paginator);
+  }
+
+  Future<MergeRequestPipelinePage> _loadPipelinePage(
+    (int, int) key,
+    KeysetPaginator<MergeRequestPipeline> paginator,
+  ) {
+    final future = paginator.loadNext().then(
+      (page) =>
+          MergeRequestPipelinePage(items: page.items, hasMore: page.hasMore),
+    );
+    _pipelinePageLoads[key] = future;
+    return future.whenComplete(() {
+      if (identical(_pipelinePageLoads[key], future)) {
+        _pipelinePageLoads.remove(key);
+      }
+    });
+  }
+
+  @override
+  Future<MergeRequestApprovals> loadApprovals(
     int projectId,
     int mergeIid,
   ) async {

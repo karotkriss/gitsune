@@ -41,7 +41,10 @@ class MergeRequest {
       labels: rawLabels is List
           ? rawLabels.map(_labelName).toList(growable: false)
           : const [],
-      changesCount: json['changes_count']?.toString(),
+      changesCount: switch (json['changes_count']?.toString()) {
+        null || '' => null,
+        final value => value,
+      },
       webUrl: json['web_url'] as String?,
     );
   }
@@ -132,7 +135,7 @@ class MergeRequestPipeline {
     required this.status,
     required this.ref,
     required this.sha,
-    required this.updatedAt,
+    this.updatedAt,
     this.webUrl,
   });
 
@@ -142,7 +145,10 @@ class MergeRequestPipeline {
         status: _pipelineStatus(json),
         ref: json['ref'] as String,
         sha: json['sha'] as String,
-        updatedAt: DateTime.parse(json['updated_at'] as String),
+        updatedAt: switch (json['updated_at']) {
+          final String value => DateTime.parse(value),
+          _ => null,
+        },
         webUrl: json['web_url'] as String?,
       );
 
@@ -150,7 +156,7 @@ class MergeRequestPipeline {
   final CiStatus status;
   final String ref;
   final String sha;
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
   final String? webUrl;
 
   String get shortSha => sha.length <= 8 ? sha : sha.substring(0, 8);
@@ -194,18 +200,6 @@ class MergeRequestApprovals {
   String get summary => approvalsRequired == 0
       ? 'No approvals required'
       : '$approvedCount of $approvalsRequired approved';
-}
-
-class MergeRequestDetails {
-  const MergeRequestDetails({
-    required this.mergeRequest,
-    required this.pipelines,
-    required this.approvals,
-  });
-
-  final MergeRequest mergeRequest;
-  final List<MergeRequestPipeline> pipelines;
-  final MergeRequestApprovals approvals;
 }
 
 CiStatus _pipelineStatus(Map<String, dynamic> json) {

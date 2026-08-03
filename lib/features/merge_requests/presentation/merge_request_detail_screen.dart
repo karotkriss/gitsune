@@ -33,9 +33,16 @@ class MergeRequestDetailScreen extends StatefulWidget {
 
 class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
   MergeRequest? _mergeRequest;
-  MergeRequestDetails? _details;
+  List<MergeRequestPipeline>? _pipelines;
+  MergeRequestApprovals? _approvals;
   bool _loading = true;
   bool _failed = false;
+  bool _pipelinesLoading = true;
+  bool _pipelinesFailed = false;
+  bool _pipelinesHaveMore = false;
+  bool _loadingMorePipelines = false;
+  bool _approvalsLoading = true;
+  bool _approvalsFailed = false;
   int _generation = 0;
 
   @override
@@ -52,7 +59,8 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
         oldWidget.mergeIid != widget.mergeIid ||
         oldWidget.repository != widget.repository) {
       _mergeRequest = widget.initialMergeRequest;
-      _details = null;
+      _pipelines = null;
+      _approvals = null;
       _load();
     }
   }
@@ -62,16 +70,27 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
     setState(() {
       _loading = true;
       _failed = false;
+      _pipelinesLoading = true;
+      _pipelinesFailed = false;
+      _approvalsLoading = true;
+      _approvalsFailed = false;
     });
+    await Future.wait([
+      _loadCore(generation),
+      _loadPipelines(generation),
+      _loadApprovals(generation),
+    ]);
+  }
+
+  Future<void> _loadCore(int generation) async {
     try {
-      final details = await widget.repository.loadMergeRequest(
+      final mergeRequest = await widget.repository.loadMergeRequest(
         widget.projectId,
         widget.mergeIid,
       );
       if (!mounted || generation != _generation) return;
       setState(() {
-        _details = details;
-        _mergeRequest = details.mergeRequest;
+        _mergeRequest = mergeRequest;
         _loading = false;
       });
     } on Object {
@@ -90,11 +109,74 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
     }
   }
 
+  Future<void> _loadPipelines(int generation) async {
+    try {
+      final page = await widget.repository.loadFirstPipelinePage(
+        widget.projectId,
+        widget.mergeIid,
+      );
+      if (!mounted || generation != _generation) return;
+      setState(() {
+        _pipelines = page.items;
+        _pipelinesHaveMore = page.hasMore;
+        _pipelinesLoading = false;
+      });
+    } on Object {
+      if (!mounted || generation != _generation) return;
+      setState(() {
+        _pipelinesLoading = false;
+        _pipelinesFailed = true;
+      });
+    }
+  }
+
+  Future<void> _loadApprovals(int generation) async {
+    try {
+      final approvals = await widget.repository.loadApprovals(
+        widget.projectId,
+        widget.mergeIid,
+      );
+      if (!mounted || generation != _generation) return;
+      setState(() {
+        _approvals = approvals;
+        _approvalsLoading = false;
+      });
+    } on Object {
+      if (!mounted || generation != _generation) return;
+      setState(() {
+        _approvalsLoading = false;
+        _approvalsFailed = true;
+      });
+    }
+  }
+
+  Future<void> _loadMorePipelines() async {
+    if (_loadingMorePipelines || !_pipelinesHaveMore) return;
+    setState(() => _loadingMorePipelines = true);
+    try {
+      final page = await widget.repository.loadNextPipelinePage(
+        widget.projectId,
+        widget.mergeIid,
+      );
+      if (!mounted) return;
+      setState(() {
+        _pipelines = [...?_pipelines, ...page.items];
+        _pipelinesHaveMore = page.hasMore;
+        _loadingMorePipelines = false;
+      });
+    } on Object {
+      if (!mounted) return;
+      setState(() => _loadingMorePipelines = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to load more pipelines.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final gs = Theme.of(context).extension<GsTheme>()!;
     final mergeRequest = _mergeRequest;
-    final details = _details;
     return Scaffold(
       backgroundColor: gs.surfaceSubtle,
       appBar: AppBar(
@@ -153,15 +235,23 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
                           const SizedBox(height: 12),
                           _ChangedFilesCard(mergeRequest: mergeRequest),
                           const SizedBox(height: 12),
-                          if (details != null) ...[
-                            _PipelineSection(
-                              pipelines: details.pipelines,
-                              now: widget.now ?? DateTime.now(),
-                            ),
-                            const SizedBox(height: 12),
-                            _ApprovalsSection(approvals: details.approvals),
-                          ] else
-                            _DetailDataState(failed: _failed, onRetry: _load),
+                          _PipelineSectionState(
+                            pipelines: _pipelines,
+                            loading: _pipelinesLoading,
+                            failed: _pipelinesFailed,
+                            hasMore: _pipelinesHaveMore,
+                            loadingMore: _loadingMorePipelines,
+                            now: widget.now ?? DateTime.now(),
+                            onRetry: _load,
+                            onLoadMore: _loadMorePipelines,
+                          ),
+                          const SizedBox(height: 12),
+                          _ApprovalsSectionState(
+                            approvals: _approvals,
+                            loading: _approvalsLoading,
+                            failed: _approvalsFailed,
+                            onRetry: _load,
+                          ),
                         ],
                       ),
                     ),
@@ -313,40 +403,70 @@ class _ChangedFilesCard extends StatelessWidget {
   }
 }
 
-class _PipelineSection extends StatelessWidget {
-  const _PipelineSection({required this.pipelines, required this.now});
+class _PipelineSectionState extends StatelessWidget {
+  const _PipelineSectionState({
+    required this.pipelines,
+    required this.loading,
+    required this.failed,
+    required this.hasMore,
+    required this.loadingMore,
+    required this.now,
+    required this.onRetry,
+    required this.onLoadMore,
+  });
 
-  final List<MergeRequestPipeline> pipelines;
+  final List<MergeRequestPipeline>? pipelines;
+  final bool loading;
+  final bool failed;
+  final bool hasMore;
+  final bool loadingMore;
   final DateTime now;
+  final VoidCallback onRetry;
+  final VoidCallback onLoadMore;
 
   @override
   Widget build(BuildContext context) {
-    final summary = pipelines.isEmpty
+    final loadedPipelines = pipelines;
+    if (loadedPipelines == null) {
+      return _SupplementSectionState(
+        title: 'Pipelines',
+        loading: loading,
+        failed: failed,
+        onRetry: onRetry,
+      );
+    }
+    final summary = loadedPipelines.isEmpty
         ? 'No pipelines'
-        : '${pipelines.first.status.label} · ${pipelines.length} '
-              '${pipelines.length == 1 ? 'pipeline' : 'pipelines'}';
+        : '${loadedPipelines.first.status.label} · ${loadedPipelines.length} '
+              '${loadedPipelines.length == 1 ? 'pipeline' : 'pipelines'}';
     return CollapsibleMergeRequestSection(
       key: const ValueKey('pipelines-section'),
       title: 'Pipelines',
       summary: summary,
-      leading: pipelines.isEmpty
+      leading: loadedPipelines.isEmpty
           ? null
           : CiStatusBadge(
-              status: pipelines.first.status,
+              status: loadedPipelines.first.status,
               size: 20,
               excludeFromSemantics: true,
             ),
-      child: pipelines.isEmpty
+      child: loadedPipelines.isEmpty
           ? const _EmptySectionMessage(
               message: 'No pipelines are attached to this merge request.',
             )
           : Column(
               children: [
-                for (var index = 0; index < pipelines.length; index++)
+                for (var index = 0; index < loadedPipelines.length; index++)
                   _PipelineRow(
-                    pipeline: pipelines[index],
+                    pipeline: loadedPipelines[index],
                     now: now,
-                    showDivider: index < pipelines.length - 1,
+                    showDivider: index < loadedPipelines.length - 1 || hasMore,
+                  ),
+                if (hasMore)
+                  TextButton(
+                    key: const ValueKey('load-more-pipelines'),
+                    onPressed: loadingMore ? null : onLoadMore,
+                    child: Text(loadingMore ? 'Loading...' : 'Load more'),
                   ),
               ],
             ),
@@ -369,13 +489,16 @@ class _PipelineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final gs = theme.extension<GsTheme>()!;
-    final updated = formatMergeRequestRelativeTime(pipeline.updatedAt, now);
+    final updatedAt = pipeline.updatedAt;
+    final updated = updatedAt == null
+        ? null
+        : formatMergeRequestRelativeTime(updatedAt, now);
     return Semantics(
       container: true,
       label:
           'Pipeline ${pipeline.id}, ${pipeline.status.label}, '
-          'reference ${pipeline.ref}, commit ${pipeline.shortSha}, '
-          'updated $updated ago.',
+          'reference ${pipeline.ref}, commit ${pipeline.shortSha}'
+          '${updated == null ? '.' : ', updated $updated ago.'}',
       child: ExcludeSemantics(
         child: Container(
           constraints: const BoxConstraints(minHeight: 56),
@@ -430,7 +553,8 @@ class _PipelineRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(updated, style: gs.caption.copyWith(color: gs.textSubtle)),
+              if (updated != null)
+                Text(updated, style: gs.caption.copyWith(color: gs.textSubtle)),
             ],
           ),
         ),
@@ -439,35 +563,52 @@ class _PipelineRow extends StatelessWidget {
   }
 }
 
-class _ApprovalsSection extends StatelessWidget {
-  const _ApprovalsSection({required this.approvals});
+class _ApprovalsSectionState extends StatelessWidget {
+  const _ApprovalsSectionState({
+    required this.approvals,
+    required this.loading,
+    required this.failed,
+    required this.onRetry,
+  });
 
-  final MergeRequestApprovals approvals;
+  final MergeRequestApprovals? approvals;
+  final bool loading;
+  final bool failed;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
+    final loadedApprovals = approvals;
+    if (loadedApprovals == null) {
+      return _SupplementSectionState(
+        title: 'Approvals',
+        loading: loading,
+        failed: failed,
+        onRetry: onRetry,
+      );
+    }
     final gs = Theme.of(context).extension<GsTheme>()!;
     return CollapsibleMergeRequestSection(
       key: const ValueKey('approvals-section'),
       title: 'Approvals',
-      summary: approvals.summary,
+      summary: loadedApprovals.summary,
       leading: GsIcon(
         GsIconGlyph.approval,
         size: 20,
-        color: approvals.complete ? gs.statusSuccess : gs.textSubtle,
+        color: loadedApprovals.complete ? gs.statusSuccess : gs.textSubtle,
       ),
-      child: approvals.approvedBy.isEmpty
+      child: loadedApprovals.approvedBy.isEmpty
           ? const _EmptySectionMessage(message: 'No approvals yet.')
           : Column(
               children: [
                 for (
                   var index = 0;
-                  index < approvals.approvedBy.length;
+                  index < loadedApprovals.approvedBy.length;
                   index++
                 )
                   _ApprovalRow(
-                    approver: approvals.approvedBy[index],
-                    showDivider: index < approvals.approvedBy.length - 1,
+                    approver: loadedApprovals.approvedBy[index],
+                    showDivider: index < loadedApprovals.approvedBy.length - 1,
                   ),
               ],
             ),
@@ -692,28 +833,38 @@ class _EmptySectionMessage extends StatelessWidget {
   }
 }
 
-class _DetailDataState extends StatelessWidget {
-  const _DetailDataState({required this.failed, required this.onRetry});
+class _SupplementSectionState extends StatelessWidget {
+  const _SupplementSectionState({
+    required this.title,
+    required this.loading,
+    required this.failed,
+    required this.onRetry,
+  });
 
+  final String title;
+  final bool loading;
   final bool failed;
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    if (!failed) {
-      return const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
     return _Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: Row(
           children: [
-            const Text('Unable to load pipelines and approvals.'),
-            const SizedBox(height: 8),
-            TextButton(onPressed: onRetry, child: const Text('Try again')),
+            Expanded(
+              child: Text(
+                failed ? 'Unable to load $title.' : 'Loading $title...',
+              ),
+            ),
+            if (loading)
+              const SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else if (failed)
+              TextButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),
       ),
