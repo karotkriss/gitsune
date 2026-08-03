@@ -1,0 +1,22 @@
+[
+  {
+    "old_path": "lib/src/switcher_state.dart",
+    "new_path": "lib/src/switcher_state.dart",
+    "a_mode": "0",
+    "b_mode": "100644",
+    "new_file": true,
+    "renamed_file": false,
+    "deleted_file": false,
+    "diff": "@@ -0,0 +1,5 @@\n+/// Switcher state.\n+enum SwitcherState {\n+  idle,\n+  switching,\n+}\n"
+  },
+  {
+    "old_path": "lib/src/legacy_switcher.dart",
+    "new_path": "lib/src/legacy_switcher.dart",
+    "a_mode": "100644",
+    "b_mode": "0",
+    "new_file": false,
+    "renamed_file": false,
+    "deleted_file": true,
+    "diff": "@@ -1,3 +0,0 @@\n-// Legacy switcher, superseded.\n-class LegacySwitcher {}\n-\n"
+  }
+]
