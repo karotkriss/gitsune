@@ -152,8 +152,8 @@ class _SignInScreenState extends State<SignInScreen> {
                           ),
                         ),
                         helperText:
-                            'gitlab.com or any self-hosted instance. '
-                            'Sign-in opens in your browser.',
+                            'gitlab.com sign-in opens in your browser. '
+                            'Self-hosted sign-in is coming soon.',
                         helperMaxLines: 2,
                         errorText: _error,
                         errorMaxLines: 3,
