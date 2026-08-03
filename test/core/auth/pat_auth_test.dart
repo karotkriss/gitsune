@@ -1,16 +1,11 @@
-import 'package:dio/dio.dart';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/auth/pat_auth.dart';
 import 'package:gitsune/core/auth/token_store.dart';
 import 'package:gitsune/core/network/account_key.dart';
 
-Dio _stubDio(
-  void Function(RequestOptions, RequestInterceptorHandler) onRequest,
-) {
-  final dio = Dio();
-  dio.interceptors.add(InterceptorsWrapper(onRequest: onRequest));
-  return dio;
-}
+import '../../support/fake_gitlab_server.dart';
 
 class _MemoryTokenStore implements TokenStore {
   final tokens = <AccountKey, OAuthTokens>{};
@@ -27,35 +22,35 @@ class _MemoryTokenStore implements TokenStore {
 }
 
 void main() {
+  late FakeGitLabServer server;
+
+  setUp(() async {
+    server = await FakeGitLabServer.startSecure();
+  });
+
+  tearDown(() => server.close());
+
   test('a valid token is checked with GET /user and stored under the '
       'account composite key without refresh token or expiry', () async {
-    late RequestOptions request;
-    final dio = _stubDio((options, handler) {
-      request = options;
-      handler.resolve(
-        Response(
-          requestOptions: options,
-          data: {'id': 42, 'username': 'alice'},
-          statusCode: 200,
-        ),
-      );
+    String? authHeader;
+    server.handle('GET /api/v4/user', (request) async {
+      authHeader = request.headers.value('authorization');
+      request.response.headers.contentType = ContentType.json;
+      request.response.write('{"id":42,"username":"alice"}');
+      await request.response.close();
     });
     final store = _MemoryTokenStore();
-    final baseUrl = Uri.parse('https://gitlab.example.com');
 
     final session = await signInWithPat(
-      baseUrl: baseUrl,
+      baseUrl: server.baseUri,
       token: 'glpat-abc123',
       tokenStore: store,
-      dio: dio,
+      dio: server.createClient(),
     );
 
-    expect(request.uri.toString(), 'https://gitlab.example.com/api/v4/user');
-    expect(request.headers['Authorization'], 'Bearer glpat-abc123');
-    expect(dio.options.connectTimeout, patValidationTimeout);
-    expect(dio.options.receiveTimeout, patValidationTimeout);
+    expect(authHeader, 'Bearer glpat-abc123');
     final account = AccountKey(
-      instanceHost: baseUrl.authority,
+      instanceHost: server.baseUri.authority,
       accountId: '42',
     );
     expect(session.account, account);
@@ -67,22 +62,16 @@ void main() {
   });
 
   test('a rejected token throws and persists nothing', () async {
-    final dio = _stubDio((request, handler) {
-      handler.reject(
-        DioException.badResponse(
-          statusCode: 401,
-          requestOptions: request,
-          response: Response(requestOptions: request, statusCode: 401),
-        ),
-      );
-    });
+    server.respondJson('GET /api/v4/user', {
+      'message': '401 Unauthorized',
+    }, statusCode: 401);
     final store = _MemoryTokenStore();
 
     final attempt = signInWithPat(
-      baseUrl: Uri.parse('https://gitlab.example.com'),
+      baseUrl: server.baseUri,
       token: 'glpat-wrong',
       tokenStore: store,
-      dio: dio,
+      dio: server.createClient(),
     );
 
     await expectLater(
@@ -100,15 +89,15 @@ void main() {
 
   test('an HTTP instance is refused before the token is sent', () async {
     var requested = false;
-    final dio = _stubDio((_, _) {
+    server.handle('GET /api/v4/user', (_) async {
       requested = true;
     });
 
     final attempt = signInWithPat(
-      baseUrl: Uri.parse('http://gitlab.example.com'),
+      baseUrl: server.baseUri.replace(scheme: 'http'),
       token: 'glpat-secret',
       tokenStore: _MemoryTokenStore(),
-      dio: dio,
+      dio: server.createClient(),
     );
 
     await expectLater(
@@ -124,38 +113,28 @@ void main() {
     expect(requested, isFalse);
   });
 
-  test(
-    'a stalled validation is bounded and classified as a network error',
-    () async {
-      final dio = _stubDio((request, handler) {
-        handler.reject(
-          DioException(
-            requestOptions: request,
-            type: DioExceptionType.receiveTimeout,
-          ),
-        );
-      });
+  test('a dropped connection is classified as a network error', () async {
+    server.handle('GET /api/v4/user', (request) async {
+      final socket = await request.response.detachSocket();
+      socket.destroy();
+    });
 
-      final attempt = signInWithPat(
-        baseUrl: Uri.parse('https://gitlab.example.com'),
-        token: 'glpat-abc123',
-        tokenStore: _MemoryTokenStore(),
-        dio: dio,
-        timeout: const Duration(milliseconds: 50),
-      );
+    final attempt = signInWithPat(
+      baseUrl: server.baseUri,
+      token: 'glpat-abc123',
+      tokenStore: _MemoryTokenStore(),
+      dio: server.createClient(),
+    );
 
-      await expectLater(
-        attempt,
-        throwsA(
-          isA<PatSignInException>().having(
-            (error) => error.failure,
-            'failure',
-            PatSignInFailure.network,
-          ),
+    await expectLater(
+      attempt,
+      throwsA(
+        isA<PatSignInException>().having(
+          (error) => error.failure,
+          'failure',
+          PatSignInFailure.network,
         ),
-      );
-      expect(dio.options.connectTimeout, const Duration(milliseconds: 50));
-      expect(dio.options.receiveTimeout, const Duration(milliseconds: 50));
-    },
-  );
+      ),
+    );
+  });
 }

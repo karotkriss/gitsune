@@ -1,9 +1,16 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/auth/pat_auth.dart';
+import 'package:gitsune/core/auth/token_store.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/sign_in/pat_sign_in_screen.dart';
 import 'package:gitsune/features/sign_in/sign_in_screen.dart';
+
+import '../../support/fake_gitlab_server.dart';
+import '../../support/memory_secure_storage.dart';
 
 Widget app(SignInScreen screen) =>
     MaterialApp(theme: buildAppTheme(), home: screen);
@@ -11,6 +18,30 @@ Widget app(SignInScreen screen) =>
 Finder tokenField() => find.byWidgetPredicate(
   (widget) => widget is TextField && widget.obscureText,
 );
+
+class _RealHttpOverrides extends HttpOverrides {}
+
+Future<void> signInAgainst(
+  FakeGitLabServer server,
+  String token, {
+  Duration timeout = patValidationTimeout,
+}) => HttpOverrides.runWithHttpOverrides(() async {
+  await signInWithPat(
+    baseUrl: server.baseUri,
+    token: token,
+    tokenStore: SecureTokenStore(storage: MemorySecureStorage()),
+    dio: server.createClient(),
+    timeout: timeout,
+  );
+}, _RealHttpOverrides());
+
+Future<void> settleNetwork(WidgetTester tester) async {
+  await tester.pump();
+  await tester.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 200)),
+  );
+  await tester.pumpAndSettle();
+}
 
 void main() {
   testWidgets('the primary sign-in screen exposes no token or credential '
@@ -76,16 +107,31 @@ void main() {
       'error, field still editable, and a corrected token succeeds', (
     tester,
   ) async {
+    late Zone networkZone;
+    late FakeGitLabServer server;
+    await tester.runAsync(() async {
+      networkZone = Zone.current;
+      server = await FakeGitLabServer.startSecure();
+    });
+    addTearDown(server.close);
     final attempts = <String>[];
+    server.handle('GET /api/v4/user', (request) async {
+      final token = request.headers.value('authorization')!;
+      attempts.add(token.substring('Bearer '.length));
+      request.response.headers.contentType = ContentType.json;
+      if (token != 'Bearer glpat-right') {
+        request.response.statusCode = HttpStatus.unauthorized;
+        request.response.write('{"message":"401 Unauthorized"}');
+      } else {
+        request.response.write('{"id":42,"username":"alice"}');
+      }
+      await request.response.close();
+    });
     await tester.pumpWidget(
       app(
         SignInScreen(
-          signInWithToken: (base, token) async {
-            attempts.add(token);
-            if (token != 'glpat-right') {
-              throw const PatSignInException(PatSignInFailure.rejected);
-            }
-          },
+          signInWithToken: (_, token) =>
+              networkZone.run(() => signInAgainst(server, token)),
         ),
       ),
     );
@@ -95,8 +141,10 @@ void main() {
 
     await tester.enterText(tokenField(), 'glpat-wrong');
     await tester.tap(find.text('Sign in'));
-    await tester.pumpAndSettle();
+    await settleNetwork(tester);
 
+    expect(attempts, ['glpat-wrong']);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.byType(PatSignInScreen), findsOneWidget);
     expect(
       find.text(
@@ -110,10 +158,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('did not accept'), findsNothing);
     await tester.tap(find.text('Sign in'));
-    await tester.pumpAndSettle();
+    await settleNetwork(tester);
 
     expect(attempts, ['glpat-wrong', 'glpat-right']);
     expect(find.byType(PatSignInScreen), findsNothing);
+    await tester.runAsync(server.close);
   });
 
   testWidgets('an HTTP instance is refused before the token is sent', (
@@ -147,11 +196,22 @@ void main() {
   testWidgets('a network failure is not presented as token rejection', (
     tester,
   ) async {
+    late Zone networkZone;
+    late FakeGitLabServer server;
+    await tester.runAsync(() async {
+      networkZone = Zone.current;
+      server = await FakeGitLabServer.startSecure();
+    });
+    addTearDown(server.close);
+    server.handle('GET /api/v4/user', (request) async {
+      final socket = await request.response.detachSocket();
+      socket.destroy();
+    });
     await tester.pumpWidget(
       app(
         SignInScreen(
-          signInWithToken: (_, _) async =>
-              throw const PatSignInException(PatSignInFailure.network),
+          signInWithToken: (_, token) =>
+              networkZone.run(() => signInAgainst(server, token)),
         ),
       ),
     );
@@ -160,7 +220,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(tokenField(), 'glpat-valid');
     await tester.tap(find.text('Sign in'));
-    await tester.pumpAndSettle();
+    await settleNetwork(tester);
 
     expect(
       find.text(
@@ -171,6 +231,58 @@ void main() {
     );
     expect(find.textContaining('did not accept'), findsNothing);
     expect(tester.widget<TextField>(tokenField()).enabled, isTrue);
+    await tester.runAsync(server.close);
+  });
+
+  testWidgets('a stalled endpoint times out into the inline network error', (
+    tester,
+  ) async {
+    late Zone networkZone;
+    late FakeGitLabServer server;
+    await tester.runAsync(() async {
+      networkZone = Zone.current;
+      server = await FakeGitLabServer.startSecure();
+    });
+    final releaseResponse = Completer<void>();
+    addTearDown(() async {
+      if (!releaseResponse.isCompleted) releaseResponse.complete();
+      await server.close();
+    });
+    server.handle('GET /api/v4/user', (request) async {
+      await releaseResponse.future;
+      await request.response.close();
+    });
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signInWithToken: (_, token) => networkZone.run(
+            () => signInAgainst(
+              server,
+              token,
+              timeout: const Duration(milliseconds: 50),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Having trouble signing in?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(tokenField(), 'glpat-valid');
+    await tester.tap(find.text('Sign in'));
+    await settleNetwork(tester);
+
+    expect(
+      find.text(
+        'Could not reach gitlab.com. '
+        'Check your connection and try again.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(tester.widget<TextField>(tokenField()).enabled, isTrue);
+    releaseResponse.complete();
+    await tester.runAsync(server.close);
   });
 
   testWidgets('an empty token or invalid instance shows an inline error '
