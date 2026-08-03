@@ -379,8 +379,7 @@ class _PipelineInitialState extends StatelessWidget {
 
 Map<String, List<PipelineJob>> _groupJobsByStage(List<PipelineJob> jobs) {
   final stages = <String, List<PipelineJob>>{};
-  final orderedJobs = [...jobs]..sort((a, b) => a.id.compareTo(b.id));
-  for (final job in orderedJobs) {
+  for (final job in jobs) {
     stages.putIfAbsent(job.stage, () => []).add(job);
   }
   return stages;

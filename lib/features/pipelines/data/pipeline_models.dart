@@ -1,10 +1,47 @@
 import '../../../core/ci/ci_status.dart';
 
 class PipelineDetails {
-  const PipelineDetails({required this.pipeline, required this.jobs});
+  PipelineDetails({required this.pipeline, required Iterable<PipelineJob> jobs})
+    : jobs = _latestJobsInStageOrder(jobs);
 
   final Pipeline pipeline;
   final List<PipelineJob> jobs;
+}
+
+List<PipelineJob> _latestJobsInStageOrder(Iterable<PipelineJob> jobs) {
+  final firstIdByStage = <String, int>{};
+  final firstIdByJob = <(String, String), int>{};
+  final latestByJob = <(String, String), PipelineJob>{};
+
+  for (final job in jobs) {
+    firstIdByStage.update(
+      job.stage,
+      (id) => id < job.id ? id : job.id,
+      ifAbsent: () => job.id,
+    );
+    final key = (job.stage, job.name);
+    firstIdByJob.update(
+      key,
+      (id) => id < job.id ? id : job.id,
+      ifAbsent: () => job.id,
+    );
+    final latest = latestByJob[key];
+    if (latest == null || job.id > latest.id) latestByJob[key] = job;
+  }
+
+  final latestJobs = latestByJob.values.toList();
+  latestJobs.sort((a, b) {
+    final stageOrder = firstIdByStage[a.stage]!.compareTo(
+      firstIdByStage[b.stage]!,
+    );
+    if (stageOrder != 0) return stageOrder;
+    final jobOrder = firstIdByJob[(a.stage, a.name)]!.compareTo(
+      firstIdByJob[(b.stage, b.name)]!,
+    );
+    if (jobOrder != 0) return jobOrder;
+    return a.name.compareTo(b.name);
+  });
+  return List.unmodifiable(latestJobs);
 }
 
 class Pipeline {

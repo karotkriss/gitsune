@@ -40,6 +40,7 @@ class GitLabPipelinesRepository implements PipelinesRepository {
       dio: _client,
       initialUri: _apiUri('projects/$projectId/pipelines/$pipelineId/jobs', {
         'per_page': '100',
+        'include_retried': 'true',
       }),
       decode: PipelineJob.fromJson,
     );

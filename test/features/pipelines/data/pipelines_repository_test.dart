@@ -32,11 +32,16 @@ void main() {
     ) async {
       jobPageRequests++;
       expect(request.uri.queryParameters, containsPair('per_page', '100'));
+      expect(
+        request.uri.queryParameters,
+        containsPair('include_retried', 'true'),
+      );
       request.response.statusCode = HttpStatus.ok;
       request.response.headers.contentType = ContentType.json;
       if (request.uri.queryParameters['page'] == null) {
         final nextUri = server.baseUri.resolve(
-          '/api/v4/projects/7/pipelines/88123/jobs?per_page=100&page=2',
+          '/api/v4/projects/7/pipelines/88123/jobs'
+          '?per_page=100&include_retried=true&page=2',
         );
         request.response.headers.set('Link', '<$nextUri>; rel="next"');
         request.response.write(jsonEncode(fixtureJobs.take(4).toList()));
@@ -54,6 +59,12 @@ void main() {
     expect(details.pipeline.status, CiStatus.running);
     expect(details.pipeline.shortSha, 'a73f91c2');
     expect(details.jobs, hasLength(8));
+    expect(details.jobs.first.stage, 'build');
+    expect(details.jobs.first.id, 509);
+    expect(
+      details.jobs.where((job) => job.name == 'build:android'),
+      hasLength(1),
+    );
     expect(jobPageRequests, 2);
     expect(details.jobs.map((job) => job.status), contains(CiStatus.failed));
     expect(details.jobs.map((job) => job.status), contains(CiStatus.manual));

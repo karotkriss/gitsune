@@ -1,5 +1,17 @@
 [
   {
+    "id": 509,
+    "name": "build:android",
+    "stage": "build",
+    "status": "success",
+    "allow_failure": false,
+    "duration": 124,
+    "queued_duration": 2,
+    "started_at": "2026-08-02T09:50:00Z",
+    "finished_at": "2026-08-02T09:52:04Z",
+    "web_url": "https://gitlab.example.com/gitsune/app/-/jobs/509"
+  },
+  {
     "id": 508,
     "name": "cleanup:review",
     "stage": "cleanup",
