@@ -628,8 +628,4 @@ Future<void> _waitForHttp<T>(WidgetTester tester, Future<T> future) async {
   }
 }
 
-class _LoopbackHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) =>
-      super.createHttpClient(context);
-}
+class _LoopbackHttpOverrides extends HttpOverrides {}
