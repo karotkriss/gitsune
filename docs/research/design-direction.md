@@ -84,7 +84,8 @@ Visuals stay neutral and quiet: a light surface, GitLab Sans, one blue confirm a
 
 ### Home and project navigation
 
-The home screen adopts a shortcut-tile pattern (a grid of colored icon tiles mapped to Issues, Merge Requests, To-Do List, Pipelines, Projects, and Groups), editable and reorderable by the user, with tile colors drawn from the Pajamas ramps and glyphs from GitLab's own icon set.
+The home screen presents Issues, Merge Requests, To-Do List, Pipelines, Projects, and Groups as rows in a bordered card, with each row led by a colored icon tile drawn from the Pajamas ramps and GitLab's own icon set.
+Users can reorder the rows with a long press, and the order persists separately for each account.
 Project detail follows the same shape: a counts list, an inline README, a "Browse code" entry point, and the current branch shown as a monospace chip.
 The bottom tab bar carries four destinations: Home, To-Dos/Notifications, Explore/Search, and Profile.
 When more than one instance is signed in, Home shows a compact instance indicator so that identical-looking UI across two different instances is never ambiguous `[inferred]`.

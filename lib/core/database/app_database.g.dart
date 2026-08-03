@@ -3138,6 +3138,332 @@ class RecentlyViewedItemsCompanion extends UpdateCompanion<RecentlyViewedItem> {
   }
 }
 
+class $HomeTileOrdersTable extends HomeTileOrders
+    with TableInfo<$HomeTileOrdersTable, HomeTileOrder> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HomeTileOrdersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tileOrderMeta = const VerificationMeta(
+    'tileOrder',
+  );
+  @override
+  late final GeneratedColumn<String> tileOrder = GeneratedColumn<String>(
+    'tile_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    tileOrder,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'home_tile_orders';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<HomeTileOrder> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('tile_order')) {
+      context.handle(
+        _tileOrderMeta,
+        tileOrder.isAcceptableOrUnknown(data['tile_order']!, _tileOrderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tileOrderMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {instanceHost, accountId};
+  @override
+  HomeTileOrder map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return HomeTileOrder(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      tileOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tile_order'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $HomeTileOrdersTable createAlias(String alias) {
+    return $HomeTileOrdersTable(attachedDatabase, alias);
+  }
+}
+
+class HomeTileOrder extends DataClass implements Insertable<HomeTileOrder> {
+  final String instanceHost;
+  final String accountId;
+  final String tileOrder;
+  final DateTime updatedAt;
+  const HomeTileOrder({
+    required this.instanceHost,
+    required this.accountId,
+    required this.tileOrder,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    map['tile_order'] = Variable<String>(tileOrder);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  HomeTileOrdersCompanion toCompanion(bool nullToAbsent) {
+    return HomeTileOrdersCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      tileOrder: Value(tileOrder),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory HomeTileOrder.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return HomeTileOrder(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      tileOrder: serializer.fromJson<String>(json['tileOrder']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'tileOrder': serializer.toJson<String>(tileOrder),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  HomeTileOrder copyWith({
+    String? instanceHost,
+    String? accountId,
+    String? tileOrder,
+    DateTime? updatedAt,
+  }) => HomeTileOrder(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    tileOrder: tileOrder ?? this.tileOrder,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  HomeTileOrder copyWithCompanion(HomeTileOrdersCompanion data) {
+    return HomeTileOrder(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      tileOrder: data.tileOrder.present ? data.tileOrder.value : this.tileOrder,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HomeTileOrder(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('tileOrder: $tileOrder, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(instanceHost, accountId, tileOrder, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HomeTileOrder &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.tileOrder == this.tileOrder &&
+          other.updatedAt == this.updatedAt);
+}
+
+class HomeTileOrdersCompanion extends UpdateCompanion<HomeTileOrder> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<String> tileOrder;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const HomeTileOrdersCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.tileOrder = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  HomeTileOrdersCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    required String tileOrder,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       tileOrder = Value(tileOrder),
+       updatedAt = Value(updatedAt);
+  static Insertable<HomeTileOrder> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<String>? tileOrder,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (tileOrder != null) 'tile_order': tileOrder,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  HomeTileOrdersCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<String>? tileOrder,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return HomeTileOrdersCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      tileOrder: tileOrder ?? this.tileOrder,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (tileOrder.present) {
+      map['tile_order'] = Variable<String>(tileOrder.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HomeTileOrdersCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('tileOrder: $tileOrder, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3152,6 +3478,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $RepositoryTreeEntriesTable(this);
   late final $RecentlyViewedItemsTable recentlyViewedItems =
       $RecentlyViewedItemsTable(this);
+  late final $HomeTileOrdersTable homeTileOrders = $HomeTileOrdersTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3163,6 +3490,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     todoItems,
     repositoryTreeEntries,
     recentlyViewedItems,
+    homeTileOrders,
   ];
 }
 
@@ -4788,6 +5116,191 @@ typedef $$RecentlyViewedItemsTableProcessedTableManager =
       RecentlyViewedItem,
       PrefetchHooks Function()
     >;
+typedef $$HomeTileOrdersTableCreateCompanionBuilder =
+    HomeTileOrdersCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      required String tileOrder,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$HomeTileOrdersTableUpdateCompanionBuilder =
+    HomeTileOrdersCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<String> tileOrder,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$HomeTileOrdersTableFilterComposer
+    extends Composer<_$AppDatabase, $HomeTileOrdersTable> {
+  $$HomeTileOrdersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tileOrder => $composableBuilder(
+    column: $table.tileOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$HomeTileOrdersTableOrderingComposer
+    extends Composer<_$AppDatabase, $HomeTileOrdersTable> {
+  $$HomeTileOrdersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tileOrder => $composableBuilder(
+    column: $table.tileOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$HomeTileOrdersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $HomeTileOrdersTable> {
+  $$HomeTileOrdersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<String> get tileOrder =>
+      $composableBuilder(column: $table.tileOrder, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$HomeTileOrdersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $HomeTileOrdersTable,
+          HomeTileOrder,
+          $$HomeTileOrdersTableFilterComposer,
+          $$HomeTileOrdersTableOrderingComposer,
+          $$HomeTileOrdersTableAnnotationComposer,
+          $$HomeTileOrdersTableCreateCompanionBuilder,
+          $$HomeTileOrdersTableUpdateCompanionBuilder,
+          (
+            HomeTileOrder,
+            BaseReferences<_$AppDatabase, $HomeTileOrdersTable, HomeTileOrder>,
+          ),
+          HomeTileOrder,
+          PrefetchHooks Function()
+        > {
+  $$HomeTileOrdersTableTableManager(
+    _$AppDatabase db,
+    $HomeTileOrdersTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$HomeTileOrdersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$HomeTileOrdersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$HomeTileOrdersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<String> tileOrder = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => HomeTileOrdersCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                tileOrder: tileOrder,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                required String tileOrder,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => HomeTileOrdersCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                tileOrder: tileOrder,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$HomeTileOrdersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $HomeTileOrdersTable,
+      HomeTileOrder,
+      $$HomeTileOrdersTableFilterComposer,
+      $$HomeTileOrdersTableOrderingComposer,
+      $$HomeTileOrdersTableAnnotationComposer,
+      $$HomeTileOrdersTableCreateCompanionBuilder,
+      $$HomeTileOrdersTableUpdateCompanionBuilder,
+      (
+        HomeTileOrder,
+        BaseReferences<_$AppDatabase, $HomeTileOrdersTable, HomeTileOrder>,
+      ),
+      HomeTileOrder,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4804,4 +5317,6 @@ class $AppDatabaseManager {
       $$RepositoryTreeEntriesTableTableManager(_db, _db.repositoryTreeEntries);
   $$RecentlyViewedItemsTableTableManager get recentlyViewedItems =>
       $$RecentlyViewedItemsTableTableManager(_db, _db.recentlyViewedItems);
+  $$HomeTileOrdersTableTableManager get homeTileOrders =>
+      $$HomeTileOrdersTableTableManager(_db, _db.homeTileOrders);
 }
