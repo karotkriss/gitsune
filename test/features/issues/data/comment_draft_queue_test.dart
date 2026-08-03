@@ -121,6 +121,34 @@ void main() {
     expect(await restarted.watchDrafts(7, 142).first, isEmpty);
   });
 
+  test('a restarted queue allocates after persisted drafts when the clock '
+      'is behind', () async {
+    final port = await offlinePort();
+    final futureId = DateTime.now().microsecondsSinceEpoch + 1000000000;
+    await database
+        .into(database.commentDrafts)
+        .insert(
+          CommentDraftsCompanion.insert(
+            instanceHost: _account.instanceHost,
+            accountId: _account.accountId,
+            draftId: futureId,
+            projectId: 7,
+            issueIid: 142,
+            body: 'Persisted first',
+          ),
+        );
+
+    final restarted = queue(client(port));
+    await restarted.send(7, 142, 'Created after restart');
+
+    final drafts = await restarted.watchDrafts(7, 142).first;
+    expect(drafts.map((draft) => draft.body), [
+      'Persisted first',
+      'Created after restart',
+    ]);
+    expect(drafts.last.draftId, futureId + 1);
+  });
+
   test('a permanent rejection is surfaced, not retried, and does not '
       'block later drafts', () async {
     final server = await FakeGitLabServer.start();

@@ -130,8 +130,8 @@ class ReleaseEntries extends Table with AccountScoped {
 }
 
 /// Queued comment drafts awaiting send (the E14.2 offline outbox), scoped
-/// per account. [draftId] is client-assigned at creation (microseconds since
-/// epoch, bumped past the last issued id on a tie) and orders the queue.
+/// per account. [draftId] is allocated transactionally after the greatest
+/// persisted id and orders the queue.
 /// [lastError] is null while the draft is queued for sending; a permanent
 /// server rejection sets it (e.g. `HTTP 403`), which surfaces the draft as
 /// failed and excludes it from further send attempts. See

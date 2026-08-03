@@ -42,7 +42,6 @@ class CommentDraftQueue {
 
   final _sentController = StreamController<SentCommentDraft>.broadcast();
   late final StreamSubscription<void> _reconnectSubscription;
-  int _lastDraftId = 0;
   bool _flushing = false;
   bool _flushRequested = false;
 
@@ -64,28 +63,36 @@ class CommentDraftQueue {
 
   /// Persists [body] as a queued draft and attempts a flush.
   Future<void> send(int projectId, int issueIid, String body) async {
-    await database
-        .into(database.commentDrafts)
-        .insert(
-          CommentDraftsCompanion.insert(
-            instanceHost: account.instanceHost,
-            accountId: account.accountId,
-            draftId: _nextDraftId(),
-            projectId: projectId,
-            issueIid: issueIid,
-            body: body,
-          ),
-        );
+    await database.transaction(() async {
+      final draftId = database.commentDrafts.draftId.max();
+      final persistedMaximum = database.selectOnly(database.commentDrafts)
+        ..addColumns([draftId])
+        ..where(_accountScope(database.commentDrafts));
+      final persistedId =
+          (await persistedMaximum.getSingle()).read(draftId) ?? 0;
+      final now = DateTime.now().microsecondsSinceEpoch;
+      await database
+          .into(database.commentDrafts)
+          .insert(
+            CommentDraftsCompanion.insert(
+              instanceHost: account.instanceHost,
+              accountId: account.accountId,
+              draftId: now > persistedId ? now : persistedId + 1,
+              projectId: projectId,
+              issueIid: issueIid,
+              body: body,
+            ),
+          );
+    });
     await flush();
   }
 
   /// Removes a draft without sending it (e.g. to move a rejected draft's
   /// body back into the composer for editing).
   Future<void> discard(int draftId) async {
-    await (database.delete(database.commentDrafts)..where(
-          (t) => _accountScope(t) & t.draftId.equals(draftId),
-        ))
-        .go();
+    await (database.delete(
+      database.commentDrafts,
+    )..where((t) => _accountScope(t) & t.draftId.equals(draftId))).go();
   }
 
   /// Sends this account's queued drafts in order, applying the class-level
@@ -137,9 +144,9 @@ class CommentDraftQueue {
           status >= 400 &&
           status < 500) {
         // Permanent rejection: surface it and let later drafts still send.
-        await (database.update(database.commentDrafts)..where(
-              (t) => _accountScope(t) & t.draftId.equals(draft.draftId),
-            ))
+        await (database.update(
+              database.commentDrafts,
+            )..where((t) => _accountScope(t) & t.draftId.equals(draft.draftId)))
             .write(CommentDraftsCompanion(lastError: Value('HTTP $status')));
         return true;
       }
@@ -155,14 +162,6 @@ class CommentDraftQueue {
       // reconnect.
       return false;
     }
-  }
-
-  /// Client-assigned queue position: creation time in microseconds, bumped
-  /// past the last issued id when two drafts land in the same microsecond.
-  int _nextDraftId() {
-    final now = DateTime.now().microsecondsSinceEpoch;
-    _lastDraftId = now > _lastDraftId ? now : _lastDraftId + 1;
-    return _lastDraftId;
   }
 
   Expression<bool> _accountScope($CommentDraftsTable t) =>

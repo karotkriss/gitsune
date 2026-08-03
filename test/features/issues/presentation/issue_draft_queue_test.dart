@@ -29,7 +29,10 @@ class _OutboxTestRepository extends FixtureIssuesRepository {
 void main() {
   LiveTestWidgetsFlutterBinding.ensureInitialized();
   final now = DateTime.utc(2026, 8, 2, 10);
-  const account = AccountKey(instanceHost: 'gitlab.example.com', accountId: '1');
+  const account = AccountKey(
+    instanceHost: 'gitlab.example.com',
+    accountId: '1',
+  );
 
   late AppDatabase database;
   late StreamController<void> reconnect;
@@ -135,6 +138,35 @@ void main() {
       tester.widget<TextField>(find.byType(TextField)).controller?.text,
       'Not allowed',
     );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
+
+  testWidgets('a local persistence failure preserves the composer and '
+      'surfaces an error', (tester) async {
+    await database.customStatement('''
+      CREATE TRIGGER reject_comment_draft
+      BEFORE INSERT ON comment_drafts
+      BEGIN
+        SELECT RAISE(FAIL, 'simulated persistence failure');
+      END
+    ''');
+    await tester.pumpWidget(screen());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Keep this comment');
+    await tester.pump();
+    await tester.tap(find.byTooltip('Send comment'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller?.text,
+      'Keep this comment',
+    );
+    expect(find.text('Unable to save the comment.'), findsOneWidget);
+    expect(await queue.watchDrafts(7, 142).first, isEmpty);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));

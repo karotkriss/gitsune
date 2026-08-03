@@ -164,11 +164,22 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     if (body.isEmpty || _sendingComment) return;
     final queue = widget.draftQueue;
     if (queue != null) {
-      // Outbox path: the draft persists before the send attempt, so going
-      // offline queues it instead of losing it or erroring hard. The thread
-      // reflects it via _drafts, and a flushed note arrives via sentNotes.
-      setState(_commentController.clear);
-      await queue.send(widget.projectId, widget.issueIid, body);
+      final issueGeneration = _issueGeneration;
+      setState(() => _sendingComment = true);
+      try {
+        await queue.send(widget.projectId, widget.issueIid, body);
+        if (!mounted || issueGeneration != _issueGeneration) return;
+        setState(() {
+          _sendingComment = false;
+          _commentController.clear();
+        });
+      } on Object {
+        if (!mounted || issueGeneration != _issueGeneration) return;
+        setState(() => _sendingComment = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to save the comment.')),
+        );
+      }
       return;
     }
     final issueGeneration = _issueGeneration;
@@ -749,8 +760,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                                 );
                               }
                               if (index <= notes.length + _drafts.length) {
-                                final draft =
-                                    _drafts[index - notes.length - 1];
+                                final draft = _drafts[index - notes.length - 1];
                                 return Padding(
                                   key: ValueKey(
                                     'comment-draft-${draft.draftId}',
