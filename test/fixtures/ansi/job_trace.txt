@@ -1,0 +1,15 @@
+Running with gitlab-runner 17.5.3 (12345678)
+  on blue-4.saas-linux-small-amd64.runners-manager.gitlab.com XxUrkriX
+section_start:1738490000:prepare_executor[0K[0K[36;1mPreparing the "docker" executor[0;m
+Using Docker executor with image ghcr.io/cirruslabs/flutter:3.44.8 ...
+section_end:1738490005:prepare_executor[0K
+section_start:1738490005:step_script[0K[0K[36;1mExecuting "step_script" stage of the job script[0;m
+[32;1m$ flutter analyze[0;m
+Analyzing gitsune...
+
+[93mwarning: unused import (info)[0;m
+[32;1m$ flutter test[0;m
+00:03 +0: loading test/widget_test.dart00:12 +42: All tests passed!
+2026-08-02T10:15:42.123Z [runner] uploading artifacts
+section_end:1738490120:step_script[0K
+[32;1mJob succeeded[0;m

@@ -126,6 +126,22 @@ void main() {
     expect(job.status, CiStatus.running);
   });
 
+  test('fetches a job trace as plain text against the fake server', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    const trace = 'line one\n\x1b[32;1mline two\x1b[0;m\n';
+    server.handle('GET /api/v4/projects/7/jobs/502/trace', (request) async {
+      request.response.statusCode = HttpStatus.ok;
+      request.response.headers.contentType = ContentType.text;
+      request.response.write(trace);
+      await request.response.close();
+    });
+
+    final repository = GitLabPipelinesRepository(_client(server, account));
+
+    expect(await repository.loadJobLog(7, 502), trace);
+  });
+
   test(
     'withUpdatedJob replaces a same-id job and supersedes a retried one',
     () async {

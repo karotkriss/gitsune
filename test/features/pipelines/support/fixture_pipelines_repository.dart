@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:gitsune/core/ci/ci_status.dart';
 import 'package:gitsune/features/pipelines/data/pipeline_models.dart';
 import 'package:gitsune/features/pipelines/data/pipelines_repository.dart';
@@ -6,6 +8,7 @@ import '../../../support/fixtures.dart';
 
 class FixturePipelinesRepository implements PipelinesRepository {
   int loads = 0;
+  int logLoads = 0;
   final retriedJobIds = <int>[];
   final canceledJobIds = <int>[];
   final playedJobIds = <int>[];
@@ -41,6 +44,12 @@ class FixturePipelinesRepository implements PipelinesRepository {
   Future<PipelineJob> playJob(int projectId, int jobId) async {
     playedJobIds.add(jobId);
     return _updatedJob(jobId, CiStatus.running);
+  }
+
+  @override
+  Future<String> loadJobLog(int projectId, int jobId) async {
+    logLoads++;
+    return File('test/fixtures/ansi/job_trace.txt').readAsStringSync();
   }
 
   PipelineJob _updatedJob(int jobId, CiStatus status, {int? newId}) {

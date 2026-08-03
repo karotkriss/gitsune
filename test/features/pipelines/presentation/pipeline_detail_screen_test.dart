@@ -403,6 +403,10 @@ class _LargePipelineRepository implements PipelinesRepository {
   @override
   Future<PipelineJob> playJob(int projectId, int jobId) =>
       _fixture.playJob(projectId, jobId);
+
+  @override
+  Future<String> loadJobLog(int projectId, int jobId) =>
+      _fixture.loadJobLog(projectId, jobId);
 }
 
 class _DeferredCancelRepository implements PipelinesRepository {
@@ -435,6 +439,10 @@ class _DeferredCancelRepository implements PipelinesRepository {
   @override
   Future<PipelineJob> playJob(int projectId, int jobId) =>
       _fixture.playJob(projectId, jobId);
+
+  @override
+  Future<String> loadJobLog(int projectId, int jobId) =>
+      _fixture.loadJobLog(projectId, jobId);
 }
 
 class _DeferredRefreshRepository implements PipelinesRepository {
@@ -464,6 +472,10 @@ class _DeferredRefreshRepository implements PipelinesRepository {
   @override
   Future<PipelineJob> playJob(int projectId, int jobId) =>
       _fixture.playJob(projectId, jobId);
+
+  @override
+  Future<String> loadJobLog(int projectId, int jobId) =>
+      _fixture.loadJobLog(projectId, jobId);
 }
 
 class _FailingPipelineRepository implements PipelinesRepository {
@@ -484,6 +496,10 @@ class _FailingPipelineRepository implements PipelinesRepository {
 
   @override
   Future<PipelineJob> playJob(int projectId, int jobId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<String> loadJobLog(int projectId, int jobId) =>
       throw UnimplementedError();
 }
 
@@ -520,4 +536,8 @@ class _AllowedFailureRepository implements PipelinesRepository {
   @override
   Future<PipelineJob> playJob(int projectId, int jobId) =>
       _fixture.playJob(projectId, jobId);
+
+  @override
+  Future<String> loadJobLog(int projectId, int jobId) =>
+      _fixture.loadJobLog(projectId, jobId);
 }
