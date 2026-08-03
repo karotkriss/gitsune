@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/native.dart';
@@ -218,6 +219,33 @@ void main() {
     expect(await repository.watchDirectory(projectId).first, hasLength(4));
     expect(await otherRepository.watchDirectory(projectId).first, isEmpty);
   });
+
+  test(
+    'concurrent refreshes of the same directory are de-duplicated',
+    () async {
+      final server = await FakeGitLabServer.start();
+      addTearDown(server.close);
+      final releaseResponse = Completer<void>();
+      var requestCount = 0;
+      server.handle('GET /api/v4/projects/$projectId/repository/tree', (
+        request,
+      ) async {
+        requestCount++;
+        await releaseResponse.future;
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(Fixtures.raw('repository_tree_root_page1'));
+        await request.response.close();
+      });
+
+      final repository = repositoryFor(server);
+      final firstRefresh = repository.refreshDirectory(projectId);
+      final secondRefresh = repository.refreshDirectory(projectId);
+
+      releaseResponse.complete();
+      await Future.wait([firstRefresh, secondRefresh]);
+      expect(requestCount, 1);
+    },
+  );
 
   test('the composite key covers account, project, ref, and directory', () {
     expect(db.repositoryTreeEntries.primaryKey, {
