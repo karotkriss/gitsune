@@ -31,8 +31,9 @@ import '../todos/todos_screen.dart';
 /// account and project composition root owns a signed-in GitLab client.
 /// Keeping those dependencies optional lets the shell boot before E2's account
 /// wiring lands without hiding the route contracts exposed to project
-/// navigation. [searchRepository] likewise swaps the Explore tab's placeholder
-/// for the real [SearchScreen] once it's available.
+/// navigation. [searchRepository] swaps the Explore tab's placeholder for the
+/// real [SearchScreen], while [todosRepository] binds the To-Dos tab to its
+/// offline-first cache stream.
 GoRouter buildAppRouter({
   IssuesRepository? issuesRepository,
   MergeRequestsRepository? mergeRequestsRepository,
