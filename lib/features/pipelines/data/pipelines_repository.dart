@@ -18,6 +18,9 @@ abstract interface class PipelinesRepository {
 
   /// Runs a manual job, returning its updated state.
   Future<PipelineJob> playJob(int projectId, int jobId);
+
+  /// Fetches a job's raw trace log text.
+  Future<String> loadJobLog(int projectId, int jobId);
 }
 
 class GitLabPipelinesRepository implements PipelinesRepository {
@@ -48,6 +51,15 @@ class GitLabPipelinesRepository implements PipelinesRepository {
   @override
   Future<PipelineJob> playJob(int projectId, int jobId) =>
       _postJobAction(projectId, jobId, 'play');
+
+  @override
+  Future<String> loadJobLog(int projectId, int jobId) async {
+    final response = await _client.getUri<String>(
+      _apiUri('projects/$projectId/jobs/$jobId/trace'),
+      options: Options(responseType: ResponseType.plain),
+    );
+    return response.data ?? '';
+  }
 
   Future<PipelineJob> _postJobAction(
     int projectId,

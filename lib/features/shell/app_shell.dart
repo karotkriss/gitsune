@@ -14,7 +14,9 @@ import '../merge_requests/data/merge_request_models.dart';
 import '../merge_requests/data/merge_requests_repository.dart';
 import '../merge_requests/presentation/merge_request_detail_screen.dart';
 import '../merge_requests/presentation/merge_request_list_screen.dart';
+import '../pipelines/data/pipeline_models.dart';
 import '../pipelines/data/pipelines_repository.dart';
+import '../pipelines/presentation/job_log_screen.dart';
 import '../pipelines/presentation/pipeline_detail_screen.dart';
 import '../profile/profile_screen.dart';
 import '../search/data/search_repository.dart';
@@ -125,7 +127,7 @@ GoRouter buildAppRouter({
           },
         ),
       ],
-      if (pipelinesRepository != null)
+      if (pipelinesRepository != null) ...[
         GoRoute(
           path: '/projects/:projectId/pipelines/:pipelineId',
           builder: (context, state) {
@@ -139,9 +141,29 @@ GoRouter buildAppRouter({
               projectPath: projectPath,
               pipelineId: pipelineId,
               repository: pipelinesRepository,
+              onJobTap: (pipeline, job) => context.push(
+                Uri(
+                  path: '/projects/$projectId/jobs/${job.id}/log',
+                  queryParameters: {'ref': pipeline.ref},
+                ).toString(),
+                extra: job,
+              ),
             );
           },
         ),
+        GoRoute(
+          path: '/projects/:projectId/jobs/:jobId/log',
+          builder: (context, state) => JobLogScreen(
+            projectId: int.parse(state.pathParameters['projectId']!),
+            jobId: int.parse(state.pathParameters['jobId']!),
+            repository: pipelinesRepository,
+            job: state.extra is PipelineJob
+                ? state.extra! as PipelineJob
+                : null,
+            ref: state.uri.queryParameters['ref'],
+          ),
+        ),
+      ],
       if (mergeRequestsRepository != null) ...[
         GoRoute(
           path: '/projects/:projectId/merge_requests',

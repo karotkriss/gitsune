@@ -33,12 +33,16 @@ class PipelineDetailScreen extends StatefulWidget {
     required this.projectPath,
     required this.pipelineId,
     required this.repository,
+    this.onJobTap,
   });
 
   final int projectId;
   final String projectPath;
   final int pipelineId;
   final PipelinesRepository repository;
+
+  /// Called when a job row is tapped; null leaves the rows display-only.
+  final void Function(Pipeline pipeline, PipelineJob job)? onJobTap;
 
   @override
   State<PipelineDetailScreen> createState() => _PipelineDetailScreenState();
@@ -195,6 +199,9 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
                     details.jobs,
                     pendingJobIds: _pendingJobIds,
                     onAction: _performJobAction,
+                    onJobTap: widget.onJobTap == null
+                        ? null
+                        : (job) => widget.onJobTap!(details.pipeline, job),
                   ),
                 ],
               ),
@@ -307,6 +314,7 @@ class _JobRow extends StatelessWidget {
     required this.isLast,
     required this.pending,
     required this.onAction,
+    this.onTap,
   });
 
   final PipelineJob job;
@@ -314,6 +322,7 @@ class _JobRow extends StatelessWidget {
   final bool isLast;
   final bool pending;
   final void Function(PipelineJob job, _JobAction action) onAction;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -345,75 +354,79 @@ class _JobRow extends StatelessWidget {
           ),
           borderRadius: radius,
         ),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 60),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-            child: Row(
-              children: [
-                ExcludeSemantics(
-                  child: CiStatusBadge(
-                    status: job.badgeStatus,
-                    size: 20,
-                    excludeFromSemantics: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 60),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              child: Row(
+                children: [
+                  ExcludeSemantics(
+                    child: CiStatusBadge(
+                      status: job.badgeStatus,
+                      size: 20,
+                      excludeFromSemantics: true,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ExcludeSemantics(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          job.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: gs.textHeading,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ExcludeSemantics(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            job.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: gs.textHeading,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            job.allowFailure
+                                ? '${job.stage} · $duration · allowed to fail'
+                                : '${job.stage} · $duration',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: gs.caption.copyWith(color: gs.textSubtle),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 116),
+                        child: ExcludeSemantics(
+                          child: Text(
+                            job.status.label,
+                            maxLines: 2,
+                            textAlign: TextAlign.end,
+                            overflow: TextOverflow.ellipsis,
+                            style: gs.caption.copyWith(color: gs.textSubtle),
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          job.allowFailure
-                              ? '${job.stage} · $duration · allowed to fail'
-                              : '${job.stage} · $duration',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: gs.caption.copyWith(color: gs.textSubtle),
+                      ),
+                      if (action != null) ...[
+                        const SizedBox(height: 6),
+                        _JobActionButton(
+                          action: action,
+                          pending: pending,
+                          onPressed: () => onAction(job, action),
                         ),
                       ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 116),
-                      child: ExcludeSemantics(
-                        child: Text(
-                          job.status.label,
-                          maxLines: 2,
-                          textAlign: TextAlign.end,
-                          overflow: TextOverflow.ellipsis,
-                          style: gs.caption.copyWith(color: gs.textSubtle),
-                        ),
-                      ),
-                    ),
-                    if (action != null) ...[
-                      const SizedBox(height: 6),
-                      _JobActionButton(
-                        action: action,
-                        pending: pending,
-                        onPressed: () => onAction(job, action),
-                      ),
                     ],
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -509,6 +522,7 @@ List<Widget> _jobSlivers(
   List<PipelineJob> jobs, {
   required Set<int> pendingJobIds,
   required void Function(PipelineJob job, _JobAction action) onAction,
+  void Function(PipelineJob job)? onJobTap,
 }) {
   final theme = Theme.of(context);
   final gs = theme.extension<GsTheme>()!;
@@ -578,6 +592,7 @@ List<Widget> _jobSlivers(
             isLast: index == stage.value.length - 1,
             pending: pendingJobIds.contains(stage.value[index].id),
             onAction: onAction,
+            onTap: onJobTap == null ? null : () => onJobTap(stage.value[index]),
           ),
         ),
       ),
