@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/network/keyset_paginator.dart';
 import 'pipeline_models.dart';
 
-/// Read seam consumed by the pipeline detail surface.
+/// Data seam consumed by the pipeline detail surface.
 ///
 /// E14.1 adds the bounded offline cache for recently viewed pipelines. Until
 /// then this stays lightweight and network-backed, like the E3.3 seam.

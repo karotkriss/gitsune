@@ -15,9 +15,9 @@ class PipelineDetails {
 
   PipelineDetails._({
     required this.pipeline,
-    required List<PipelineJob> attempts,
+    required this._attempts,
     required this.jobs,
-  }) : _attempts = attempts;
+  });
 
   final Pipeline pipeline;
   final List<PipelineJob> jobs;
