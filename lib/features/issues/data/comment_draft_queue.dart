@@ -146,7 +146,9 @@ class CommentDraftQueue {
       );
     } on Object catch (error, stackTrace) {
       final status = error is DioException ? error.response?.statusCode : null;
-      if (error is DioException && _isPermanentRejection(status)) {
+      if (error is DioException &&
+          !isConnectivityError(error) &&
+          _isPermanentRejection(status)) {
         // Permanent rejection: surface it and let later drafts still send.
         await _updateDraft(
           draft.draftId,
@@ -183,11 +185,11 @@ class CommentDraftQueue {
   }
 
   bool _isPermanentRejection(int? status) =>
-      status == 400 ||
-      status == 401 ||
-      status == 403 ||
-      status == 404 ||
-      status == 422;
+      status != null &&
+      status >= 400 &&
+      status < 500 &&
+      status != 408 &&
+      status != 429;
 
   DateTime _retryAfter(DioException error, DateTime now) {
     final value = error.response?.headers.value('retry-after');

@@ -193,6 +193,25 @@ void main() {
     expect(attempts, 1);
   });
 
+  test('HTTP 409 is surfaced instead of retried', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    var attempts = 0;
+    server.handle(_notesPath, (request) async {
+      attempts++;
+      request.response.statusCode = HttpStatus.conflict;
+      await request.response.close();
+    });
+
+    final rejecting = queue(client(server.baseUri.port));
+    await rejecting.send(7, 142, 'Conflicting comment');
+    await rejecting.flush();
+
+    final drafts = await rejecting.watchDrafts(7, 142).first;
+    expect(drafts.single.lastError, 'HTTP 409');
+    expect(attempts, 1);
+  });
+
   test('a transient server failure keeps the draft queued for the next '
       'reconnect', () async {
     final server = await FakeGitLabServer.start();
