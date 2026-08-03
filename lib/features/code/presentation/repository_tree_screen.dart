@@ -150,8 +150,12 @@ class _RepositoryTreeScreenState extends State<RepositoryTreeScreen> {
                         isFirst: index == 0,
                         isLast: index == entries.length - 1,
                         onTap: entries[index].entryType == 'tree'
-                            ? () => widget.onDirectoryTap?.call(entries[index])
-                            : () => widget.onFileTap?.call(entries[index]),
+                            ? widget.onDirectoryTap == null
+                                  ? null
+                                  : () => widget.onDirectoryTap!(entries[index])
+                            : widget.onFileTap == null
+                            ? null
+                            : () => widget.onFileTap!(entries[index]),
                       ),
                     ),
                   ),
@@ -267,8 +271,9 @@ class _TreeEntryRow extends StatelessWidget {
       bottom: isLast ? const Radius.circular(12) : Radius.zero,
     );
     return Semantics(
-      button: isDirectory,
+      button: onTap != null,
       label: isDirectory ? 'Directory ${entry.name}' : 'File ${entry.name}',
+      onTap: onTap,
       child: ExcludeSemantics(
         child: DecoratedBox(
           decoration: BoxDecoration(

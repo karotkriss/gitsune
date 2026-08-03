@@ -57,6 +57,7 @@ void main() {
   });
 
   testWidgets('tapping a file opens the file view', (tester) async {
+    final semantics = tester.ensureSemantics();
     final repository = FixtureRepositoryTreeRepository();
     final router = buildAppRouter(
       repositoryTreeRepository: repository,
@@ -67,6 +68,16 @@ void main() {
       MaterialApp.router(theme: buildAppTheme(), routerConfig: router),
     );
     await tester.pumpAndSettle();
+
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('File README.md')),
+      matchesSemantics(
+        label: 'File README.md',
+        isButton: true,
+        hasTapAction: true,
+      ),
+    );
+    semantics.dispose();
 
     await tester.tap(find.byKey(const ValueKey('tree-entry-README.md')));
     await tester.pumpAndSettle();
