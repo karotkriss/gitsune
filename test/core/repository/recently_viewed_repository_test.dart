@@ -299,42 +299,44 @@ void main() {
     );
   });
 
-  test('a pipeline mutation writes through for a later offline read', () async {
-    final server = await FakeGitLabServer.start();
-    addTearDown(server.close);
-    server.respondJson(
-      'GET /api/v4/projects/7/pipelines/88123',
-      Fixtures.json('pipeline_88123'),
-    );
-    server.respondJson(
-      'GET /api/v4/projects/7/pipelines/88123/jobs',
-      Fixtures.json('pipeline_88123_jobs'),
-    );
-    final cache = cacheFor(account);
-    final online = pipelineRepository(cache, clientFor(server.baseUri));
-    final viewed = await online.load();
-    final updated = viewed.withUpdatedJob(
-      const PipelineJob(
-        id: 502,
-        name: 'test:flutter',
-        stage: 'test',
-        status: CiStatus.canceled,
-        allowFailure: false,
-      ),
-    );
+  test(
+    'a mutation invalidates then a later view re-caches fresh data',
+    () async {
+      final server = await FakeGitLabServer.start();
+      addTearDown(server.close);
+      server.respondJson(
+        'GET /api/v4/projects/7/pipelines/88123',
+        Fixtures.json('pipeline_88123'),
+      );
+      server.respondJson(
+        'GET /api/v4/projects/7/pipelines/88123/jobs',
+        Fixtures.json('pipeline_88123_jobs'),
+      );
+      final cache = cacheFor(account);
+      final online = pipelineRepository(cache, clientFor(server.baseUri));
+      await online.load();
 
-    await online.writeThrough(updated);
+      await online.invalidate();
+      expect(
+        await cache.watchPayload(RecentlyViewedType.pipeline, 7, 88123).first,
+        isNull,
+      );
 
-    final offline = pipelineRepository(
-      cache,
-      clientFor(await offlineBaseUri()),
-    );
-    final cached = await offline.readCached();
-    expect(
-      cached!.jobs.firstWhere((job) => job.id == 502).status,
-      CiStatus.canceled,
-    );
-  });
+      final jobs = (Fixtures.json('pipeline_88123_jobs') as List)
+          .map((value) => Map<String, dynamic>.from(value as Map))
+          .toList();
+      jobs.firstWhere((job) => job['id'] == 502)['status'] = 'canceled';
+      server.respondJson('GET /api/v4/projects/7/pipelines/88123/jobs', jobs);
+      await online.load();
+
+      final cached = await online.readCached();
+      expect(
+        cached!.jobs.firstWhere((job) => job.id == 502).status,
+        CiStatus.canceled,
+      );
+      expect(cached.pipeline.updatedAt, DateTime.parse('2026-08-02T09:58:00Z'));
+    },
+  );
 
   test('the bound evicts the least recently viewed entries', () async {
     final cache = cacheFor(account, maxEntriesPerType: 3);

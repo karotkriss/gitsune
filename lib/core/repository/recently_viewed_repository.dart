@@ -199,9 +199,11 @@ class RecentItemRepository<T> implements OfflineFirstRepository<T?> {
 
   /// Fetches the item and writes it through to the cache, rethrowing network
   /// failures so an imperative caller can fall back to [readCached].
-  Future<T> load() async {
+  Future<T> load({bool Function()? shouldPersist}) async {
     final item = await _fetch();
-    await writeThrough(item);
+    if (shouldPersist?.call() ?? true) {
+      await writeThrough(item);
+    }
     return item;
   }
 
@@ -221,6 +223,19 @@ class RecentItemRepository<T> implements OfflineFirstRepository<T?> {
     } on Object catch (error, stackTrace) {
       log(
         'Unable to persist recently viewed item',
+        name: 'gitsune.recently_viewed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> invalidate() async {
+    try {
+      await cache.remove(type, projectId, itemId);
+    } on Object catch (error, stackTrace) {
+      log(
+        'Unable to invalidate recently viewed item',
         name: 'gitsune.recently_viewed',
         error: error,
         stackTrace: stackTrace,

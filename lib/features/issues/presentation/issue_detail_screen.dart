@@ -187,7 +187,9 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     }
     try {
       final issue = recent != null
-          ? await recent.load()
+          ? await recent.load(
+              shouldPersist: () => issueStateRevision == _issueStateRevision,
+            )
           : await widget.repository.loadIssue(
               widget.projectId,
               widget.issueIid,
@@ -473,8 +475,6 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         ...before.labels,
         ..._projectLabels,
       ]);
-      await _recentIssue?.writeThrough(folded);
-      if (!mounted || issueGeneration != _issueGeneration) return;
       setState(() {
         _issueStateRevision++;
         _localEvents.addAll(_triageEvents(before, folded));
@@ -483,6 +483,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         _issueFailed = false;
         _triaging = false;
       });
+      await _recentIssue?.invalidate();
     } on Object {
       if (!mounted || issueGeneration != _issueGeneration) return;
       setState(() => _triaging = false);

@@ -130,7 +130,11 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
     }
     try {
       final details = recent != null
-          ? await recent.load()
+          ? await recent.load(
+              shouldPersist: () =>
+                  screenGeneration == _screenGeneration &&
+                  mutationRevision == _mutationRevision,
+            )
           : await widget.repository.loadPipeline(
               widget.projectId,
               widget.pipelineId,
@@ -178,19 +182,13 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
         _JobAction.run => await repository.playJob(projectId, job.id),
       };
       if (!mounted || screenGeneration != _screenGeneration) return;
-      final details = _details?.withUpdatedJob(
-        updated,
-        updatedAt: DateTime.now().toUtc(),
-      );
-      if (details != null) {
-        await _recentPipeline?.writeThrough(details);
-      }
-      if (!mounted || screenGeneration != _screenGeneration) return;
+      final details = _details?.withUpdatedJob(updated);
       setState(() {
         _mutationRevision++;
         _details = details;
         _pendingJobIds.remove(job.id);
       });
+      await _recentPipeline?.invalidate();
     } on Object {
       if (!mounted || screenGeneration != _screenGeneration) return;
       setState(() => _pendingJobIds.remove(job.id));

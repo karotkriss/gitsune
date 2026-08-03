@@ -538,9 +538,7 @@ void main() {
     expect(row.lastViewedAt.toUtc(), clock);
   });
 
-  testWidgets('triage writes the updated issue through to the cache', (
-    tester,
-  ) async {
+  testWidgets('triage invalidates the cached issue', (tester) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);
     final cache = RecentlyViewedCache(
@@ -571,11 +569,10 @@ void main() {
     await tester.tap(find.text('Close issue'));
     await tester.pumpAndSettle();
 
-    final payload = await cache
-        .watchPayload(RecentlyViewedType.issue, 7, 142)
-        .first;
-    final cached = Issue.fromJson(jsonDecode(payload!) as Map<String, dynamic>);
-    expect(cached.state, IssueState.closed);
+    expect(
+      await cache.watchPayload(RecentlyViewedType.issue, 7, 142).first,
+      isNull,
+    );
   });
 
   testWidgets('a stale issue refresh cannot overwrite committed triage', (
@@ -620,21 +617,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Closed'), findsOneWidget);
-    final payload = await cache
-        .watchPayload(RecentlyViewedType.issue, 7, 142)
-        .first;
     expect(
-      Issue.fromJson(jsonDecode(payload!) as Map<String, dynamic>).state,
-      IssueState.closed,
+      await cache.watchPayload(RecentlyViewedType.issue, 7, 142).first,
+      isNull,
     );
   });
 
-  testWidgets('a cache write failure does not fail successful triage', (
+  testWidgets('a cache invalidation failure does not fail successful triage', (
     tester,
   ) async {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);
-    final cache = _FailingWriteRecentlyViewedCache(
+    final cache = _FailingRemoveRecentlyViewedCache(
       database: db,
       account: const AccountKey(
         instanceHost: 'gitlab.example.com',
@@ -1440,18 +1434,13 @@ class _OfflineIssuesRepository extends FixtureIssuesRepository {
   }
 }
 
-class _FailingWriteRecentlyViewedCache extends RecentlyViewedCache {
-  _FailingWriteRecentlyViewedCache({
+class _FailingRemoveRecentlyViewedCache extends RecentlyViewedCache {
+  _FailingRemoveRecentlyViewedCache({
     required super.database,
     required super.account,
   });
 
   @override
-  Future<bool> putIf(
-    RecentlyViewedType type,
-    int projectId,
-    int itemId,
-    String payload, {
-    required bool Function(String? existingPayload) shouldReplace,
-  }) => Future.error(StateError('cache write failed'));
+  Future<void> remove(RecentlyViewedType type, int projectId, int itemId) =>
+      Future.error(StateError('cache invalidation failed'));
 }
