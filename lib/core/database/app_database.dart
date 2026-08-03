@@ -142,6 +142,8 @@ class CommentDrafts extends Table with AccountScoped {
   IntColumn get issueIid => integer()();
   TextColumn get body => text()();
   TextColumn get lastError => text().nullable()();
+  DateTimeColumn get ambiguousSince => dateTime().nullable()();
+  DateTimeColumn get retryAfter => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {instanceHost, accountId, draftId};
@@ -220,6 +222,10 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 10) {
         await migrator.createTable(commentDrafts);
+      }
+      if (from >= 9 && from < 10) {
+        await migrator.addColumn(commentDrafts, commentDrafts.ambiguousSince);
+        await migrator.addColumn(commentDrafts, commentDrafts.retryAfter);
       }
     },
   );

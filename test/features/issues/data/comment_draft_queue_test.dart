@@ -31,12 +31,21 @@ void main() {
     await database.close();
   });
 
-  CommentDraftQueue queue(Dio client, {AccountKey account = _account}) {
+  CommentDraftQueue queue(
+    Dio client, {
+    AccountKey account = _account,
+    DateTime Function() now = DateTime.now,
+    Duration retryBackoff = const Duration(seconds: 30),
+  }) {
+    final repository = GitLabIssuesRepository(client);
     final created = CommentDraftQueue(
       database: database,
       account: account,
-      repository: GitLabIssuesRepository(client),
+      repository: repository,
+      loadRecentNotes: repository.loadRecentNotes,
       onReconnect: reconnect.stream,
+      now: now,
+      retryBackoff: retryBackoff,
     );
     addTearDown(created.dispose);
     return created;
@@ -93,6 +102,7 @@ void main() {
       'Second, while offline',
     ]);
     expect(drafts.map((draft) => draft.lastError), everyElement(isNull));
+    expect(drafts.map((draft) => draft.ambiguousSince), everyElement(isNull));
 
     // A restart: a fresh queue over the same database still sees the drafts.
     await offline.dispose();
@@ -207,6 +217,110 @@ void main() {
 
     expect(bodies, ['Survives a 500']);
     expect(await flaky.watchDrafts(7, 142).first, isEmpty);
+  });
+
+  for (final status in [
+    HttpStatus.requestTimeout,
+    HttpStatus.tooManyRequests,
+  ]) {
+    test('HTTP $status stays queued until its retry backoff elapses', () async {
+      var now = DateTime.utc(2026, 8, 3, 12);
+      final server = await FakeGitLabServer.start();
+      addTearDown(server.close);
+      var attempts = 0;
+      server.handle(_notesPath, (request) async {
+        attempts++;
+        request.response.statusCode = status;
+        if (status == HttpStatus.tooManyRequests) {
+          request.response.headers.set('retry-after', '45');
+        }
+        await request.response.close();
+      });
+
+      final retrying = queue(client(server.baseUri.port), now: () => now);
+      await retrying.send(7, 142, 'Retry this response');
+
+      var drafts = await retrying.watchDrafts(7, 142).first;
+      expect(drafts.single.lastError, isNull);
+      expect(
+        drafts.single.retryAfter?.toUtc(),
+        now.add(Duration(seconds: status == 429 ? 45 : 30)),
+      );
+      await retrying.flush();
+      expect(attempts, 1);
+
+      final bodies = serveNotes(server);
+      final sent = retrying.sentNotes.first;
+      now = now.add(const Duration(seconds: 46));
+      await retrying.flush();
+      await sent;
+
+      expect(bodies, ['Retry this response']);
+      drafts = await retrying.watchDrafts(7, 142).first;
+      expect(drafts, isEmpty);
+    });
+  }
+
+  test('an ambiguous lost response reconciles the created note without a '
+      'duplicate post', () async {
+    var now = DateTime.utc(2026, 8, 3, 12);
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    var postAttempts = 0;
+    late Map<String, dynamic> createdNote;
+    server.handle(_notesPath, (request) async {
+      postAttempts++;
+      final body =
+          jsonDecode(await utf8.decoder.bind(request).join())
+              as Map<String, dynamic>;
+      createdNote =
+          Map<String, dynamic>.from(
+            Fixtures.json('issue_142_note_created') as Map,
+          )..addAll({
+            'id': 9991,
+            'body': body['body'],
+            'author': {
+              'id': 1,
+              'username': 'current-user',
+              'name': 'Current User',
+              'avatar_url': null,
+            },
+            'created_at': now.toIso8601String(),
+          });
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode(createdNote));
+      await request.response.close();
+    });
+    final timedClient = client(server.baseUri.port)
+      ..options.receiveTimeout = const Duration(milliseconds: 20);
+    final ambiguous = queue(timedClient, now: () => now);
+
+    await ambiguous.send(7, 142, 'May already exist');
+
+    var drafts = await ambiguous.watchDrafts(7, 142).first;
+    expect(drafts.single.ambiguousSince?.toUtc(), now);
+    late Map<String, String> recentNotesQuery;
+    server.handle('GET /api/v4/projects/7/issues/142/notes', (request) async {
+      recentNotesQuery = request.uri.queryParameters;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode([createdNote]));
+      await request.response.close();
+    });
+    final sent = ambiguous.sentNotes.first;
+    now = now.add(const Duration(seconds: 1));
+    await ambiguous.flush();
+    final event = await sent;
+
+    expect(postAttempts, 1);
+    expect(event.note.id, 9991);
+    expect(recentNotesQuery, {
+      'sort': 'desc',
+      'order_by': 'created_at',
+      'per_page': '20',
+    });
+    drafts = await ambiguous.watchDrafts(7, 142).first;
+    expect(drafts, isEmpty);
   });
 
   test('one account\'s queue never reads or flushes another\'s '

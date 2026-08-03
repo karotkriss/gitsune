@@ -208,6 +208,19 @@ class GitLabIssuesRepository implements IssuesRepository {
     return IssueNote.fromJson(response.data!);
   }
 
+  Future<List<IssueNote>> loadRecentNotes(int projectId, int issueIid) async {
+    final response = await _client.getUri<List<dynamic>>(
+      _apiUri('projects/$projectId/issues/$issueIid/notes', {
+        'sort': 'desc',
+        'order_by': 'created_at',
+        'per_page': '20',
+      }),
+    );
+    return response.data!
+        .map((value) => IssueNote.fromJson(value as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
   @override
   Future<List<IssueLabel>> loadProjectLabels(int projectId) async {
     // ponytail: single page of 100; wire a paginator if a project outgrows it.

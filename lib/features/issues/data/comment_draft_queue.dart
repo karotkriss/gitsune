@@ -13,6 +13,8 @@ import 'issues_repository.dart';
 /// A note created by flushing a queued draft, so the issue's thread can fold
 /// it into local state without a refetch (the E6.2 pattern).
 typedef SentCommentDraft = ({int projectId, int issueIid, IssueNote note});
+typedef LoadRecentIssueNotes =
+    Future<List<IssueNote>> Function(int projectId, int issueIid);
 
 /// The E14.2 account-scoped offline comment outbox, backed by
 /// [AppDatabase.commentDrafts].
@@ -31,8 +33,11 @@ class CommentDraftQueue {
     required this.database,
     required this.account,
     required this.repository,
+    required this.loadRecentNotes,
     required Stream<void> onReconnect,
-  }) {
+    DateTime Function() now = DateTime.now,
+    this.retryBackoff = const Duration(seconds: 30),
+  }) : _now = now {
     _reconnectSubscription = onReconnect.listen(
       (_) => unawaited(_flushBestEffort()),
     );
@@ -41,6 +46,9 @@ class CommentDraftQueue {
   final AppDatabase database;
   final AccountKey account;
   final IssuesRepository repository;
+  final LoadRecentIssueNotes loadRecentNotes;
+  final Duration retryBackoff;
+  final DateTime Function() _now;
 
   final _sentController = StreamController<SentCommentDraft>.broadcast();
   late final StreamSubscription<void> _reconnectSubscription;
@@ -72,7 +80,7 @@ class CommentDraftQueue {
         ..where(_accountScope(database.commentDrafts));
       final persistedId =
           (await persistedMaximum.getSingle()).read(draftId) ?? 0;
-      final now = DateTime.now().microsecondsSinceEpoch;
+      final now = _now().microsecondsSinceEpoch;
       await database
           .into(database.commentDrafts)
           .insert(
@@ -125,6 +133,22 @@ class CommentDraftQueue {
 
   /// Sends one draft; returns whether the pass should continue.
   Future<bool> _sendDraft(CommentDraft draft) async {
+    final now = _now();
+    if (draft.retryAfter case final retryAfter? when now.isBefore(retryAfter)) {
+      return false;
+    }
+    if (draft.ambiguousSince != null) {
+      final reconciled = await _reconcile(draft);
+      if (reconciled == null) return false;
+      if (reconciled) return true;
+      await _updateDraft(
+        draft.draftId,
+        const CommentDraftsCompanion(
+          ambiguousSince: Value(null),
+          retryAfter: Value(null),
+        ),
+      );
+    }
     try {
       final note = await repository.createNote(
         draft.projectId,
@@ -140,17 +164,27 @@ class CommentDraftQueue {
       return true;
     } on Object catch (error, stackTrace) {
       final status = error is DioException ? error.response?.statusCode : null;
-      if (error is DioException &&
-          !isConnectivityError(error) &&
-          status != null &&
-          status >= 400 &&
-          status < 500) {
+      if (error is DioException && _isPermanentRejection(status)) {
         // Permanent rejection: surface it and let later drafts still send.
-        await (database.update(
-              database.commentDrafts,
-            )..where((t) => _accountScope(t) & t.draftId.equals(draft.draftId)))
-            .write(CommentDraftsCompanion(lastError: Value('HTTP $status')));
+        await _updateDraft(
+          draft.draftId,
+          CommentDraftsCompanion(lastError: Value('HTTP $status')),
+        );
         return true;
+      }
+      if (error is DioException && (status == 408 || status == 429)) {
+        await _updateDraft(
+          draft.draftId,
+          CommentDraftsCompanion(retryAfter: Value(_retryAfter(error, now))),
+        );
+        return false;
+      }
+      if (error is DioException && hasAmbiguousRequestOutcome(error)) {
+        await _updateDraft(
+          draft.draftId,
+          CommentDraftsCompanion(ambiguousSince: Value(now)),
+        );
+        return false;
       }
       if (error is! DioException) {
         log(
@@ -165,6 +199,56 @@ class CommentDraftQueue {
       return false;
     }
   }
+
+  Future<bool?> _reconcile(CommentDraft draft) async {
+    try {
+      final notes = await loadRecentNotes(draft.projectId, draft.issueIid);
+      final ambiguousSince = draft.ambiguousSince!;
+      final earliest = ambiguousSince.subtract(const Duration(minutes: 2));
+      final latest = ambiguousSince.add(const Duration(minutes: 2));
+      for (final note in notes) {
+        if (note.body == draft.body &&
+            note.author.id.toString() == account.accountId &&
+            !note.createdAt.isBefore(earliest) &&
+            !note.createdAt.isAfter(latest)) {
+          await discard(draft.draftId);
+          _sentController.add((
+            projectId: draft.projectId,
+            issueIid: draft.issueIid,
+            note: note,
+          ));
+          return true;
+        }
+      }
+      return false;
+    } on Object catch (error, stackTrace) {
+      log(
+        'Unable to reconcile an ambiguous comment draft',
+        name: 'gitsune.comment_drafts',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return null;
+    }
+  }
+
+  bool _isPermanentRejection(int? status) =>
+      status == 400 ||
+      status == 401 ||
+      status == 403 ||
+      status == 404 ||
+      status == 422;
+
+  DateTime _retryAfter(DioException error, DateTime now) {
+    final value = error.response?.headers.value('retry-after');
+    final seconds = value == null ? null : int.tryParse(value);
+    return now.add(seconds == null ? retryBackoff : Duration(seconds: seconds));
+  }
+
+  Future<void> _updateDraft(int draftId, CommentDraftsCompanion companion) =>
+      (database.update(database.commentDrafts)
+            ..where((t) => _accountScope(t) & t.draftId.equals(draftId)))
+          .write(companion);
 
   Future<void> _flushBestEffort() async {
     try {
