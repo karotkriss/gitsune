@@ -98,8 +98,10 @@ void main() {
       expect(tokens.refreshToken, 'rt-1');
       // Expiry comes from the server's expires_in, measured from receipt.
       final expiresAt = tokens.expiresAt!;
-      expect(expiresAt.isAfter(before.add(const Duration(seconds: 7199))),
-          isTrue);
+      expect(
+        expiresAt.isAfter(before.add(const Duration(seconds: 7199))),
+        isTrue,
+      );
       expect(
         expiresAt.isBefore(DateTime.now().add(const Duration(seconds: 7201))),
         isTrue,
