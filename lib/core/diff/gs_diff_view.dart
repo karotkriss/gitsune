@@ -70,12 +70,18 @@ class GsDiffView extends StatefulWidget {
     List<_HorizontalScrollGroup> scrollGroups,
     TextStyle monoStyle,
     TextDirection textDirection,
+    TextScaler textScaler,
   ) {
     final items = <_DiffListItem>[];
     for (var fileIndex = 0; fileIndex < files.length; fileIndex++) {
       final file = files[fileIndex];
       final scrollGroup = scrollGroups[fileIndex];
-      final contentWidth = _contentWidthForFile(file, monoStyle, textDirection);
+      final contentWidth = _contentWidthForFile(
+        file,
+        monoStyle,
+        textDirection,
+        textScaler,
+      );
       items.add(_FileHeaderItem(file));
       final languageId = detectLanguageId(file.languagePath);
       var rows = <_DiffContentRow>[];
@@ -114,6 +120,7 @@ class GsDiffView extends StatefulWidget {
     DiffFile file,
     TextStyle monoStyle,
     TextDirection textDirection,
+    TextScaler textScaler,
   ) {
     var longestHeader = '';
     var longestLineColumns = 0;
@@ -133,8 +140,8 @@ class GsDiffView extends StatefulWidget {
       return math.max(
         width,
         math.max(
-          _measureText(glyph, monoStyle, textDirection),
-          _measureText(glyph, italicStyle, textDirection),
+          _measureText(glyph, monoStyle, textDirection, textScaler),
+          _measureText(glyph, italicStyle, textDirection, textScaler),
         ),
       );
     });
@@ -142,6 +149,7 @@ class GsDiffView extends StatefulWidget {
       longestHeader,
       monoStyle.copyWith(fontSize: 11, fontStyle: FontStyle.italic),
       textDirection,
+      textScaler,
     );
     return math.max(
           longestLineColumns * characterWidth * 1.05 + 104,
@@ -154,10 +162,12 @@ class GsDiffView extends StatefulWidget {
     String text,
     TextStyle style,
     TextDirection textDirection,
+    TextScaler textScaler,
   ) {
     final painter = TextPainter(
       text: TextSpan(text: text, style: style),
       textDirection: textDirection,
+      textScaler: textScaler,
       maxLines: 1,
     )..layout();
     final width = painter.width;
@@ -206,6 +216,7 @@ class _GsDiffViewState extends State<GsDiffView> {
       _scrollGroups,
       gs.mono,
       Directionality.of(context),
+      MediaQuery.textScalerOf(context),
     );
     return ListView.builder(
       controller: widget.controller,

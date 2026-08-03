@@ -131,7 +131,7 @@ void main() {
     expect(find.byType(RichText).evaluate().length, lessThan(200));
   });
 
-  testWidgets('horizontal position stays synchronized across file chunks', (
+  testWidgets('scaled horizontal position stays synchronized across chunks', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -150,7 +150,12 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _app(GsDiffView(files: [file], onOpenInBrowser: () {})),
+      _app(
+        MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
+          child: GsDiffView(files: [file], onOpenInBrowser: () {}),
+        ),
+      ),
     );
 
     final firstFinder = find.byKey(const ValueKey('diff-horizontal-0-0'));
