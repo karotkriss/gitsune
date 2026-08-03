@@ -116,7 +116,7 @@ Implementation detail lives in `docs/research/auth-blueprint.md`.
 - A user can sign in to gitlab.com in one tap, to a self-hosted instance through the guided wizard, and through the PAT fallback where OAuth registration is impossible.
 - Multiple accounts across different instances coexist, and a failed refresh on one isolates to that account.
 - The named wizard failure cases (registration disabled, instance too old for PKCE, redirect-URI mismatch, confidential left checked, scope mismatch, pasted whitespace) each surface a correct, actionable message, covered by tests against fixtures and the fake server.
-- The token refresh-and-retry round trip and the single-use rotation race are covered by an `integration_test` against the fake server.
+- The token refresh-and-retry round trip and the single-use rotation race are covered by unit tests using the in-process fake server and in-memory secure storage.
 
 ---
 

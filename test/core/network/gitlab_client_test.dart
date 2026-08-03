@@ -28,8 +28,8 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'tok-abc',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      readToken: (_) async => const TokenReadResult('tok-abc'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
 
     final response = await dio.get('/projects');
@@ -52,8 +52,8 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'account-token',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      readToken: (_) async => const TokenReadResult('account-token'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
 
     await dio.get(
@@ -84,12 +84,14 @@ void main() {
     });
 
     var refreshCalls = 0;
+    String? rejectedToken;
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'stale-token',
-      refreshToken: (_) async {
+      readToken: (_) async => const TokenReadResult('stale-token'),
+      refreshToken: (_, rejected) async {
         refreshCalls++;
+        rejectedToken = rejected;
         return 'fresh-token';
       },
     );
@@ -99,6 +101,8 @@ void main() {
     expect(response.statusCode, 200);
     expect(response.data, 'authorized-with-Bearer fresh-token');
     expect(refreshCalls, 1);
+    // The refresher is told which token the 401'd request carried.
+    expect(rejectedToken, 'stale-token');
     expect(callCount, 2);
   });
 
@@ -117,8 +121,8 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'stale-token',
-      refreshToken: (_) async {
+      readToken: (_) async => const TokenReadResult('stale-token'),
+      refreshToken: (_, _) async {
         refreshCalls++;
         return 'still-bad-token';
       },
@@ -158,8 +162,8 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'stale-token',
-      refreshToken: (_) async => 'fresh-token',
+      readToken: (_) async => const TokenReadResult('stale-token'),
+      refreshToken: (_, _) async => 'fresh-token',
     );
 
     final response = await dio.post(
@@ -189,8 +193,8 @@ void main() {
     final dio = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'stale-token',
-      refreshToken: (_) async {
+      readToken: (_) async => const TokenReadResult('stale-token'),
+      refreshToken: (_, _) async {
         refreshCalls++;
         return 'fresh-token';
       },

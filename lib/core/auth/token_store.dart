@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../network/account_key.dart';
+
 /// One signed-in session's OAuth tokens as returned by the token endpoint.
 class OAuthTokens {
   const OAuthTokens({
@@ -9,6 +11,19 @@ class OAuthTokens {
     this.refreshToken,
     this.expiresAt,
   });
+
+  /// Parses a token-endpoint response body, computing [expiresAt] from the
+  /// server's `expires_in` at receipt time (never a hardcoded lifetime).
+  factory OAuthTokens.fromTokenResponse(Map<String, dynamic> body) {
+    final expiresIn = body['expires_in'];
+    return OAuthTokens(
+      accessToken: body['access_token'] as String,
+      refreshToken: body['refresh_token'] as String?,
+      expiresAt: expiresIn is int
+          ? DateTime.now().add(Duration(seconds: expiresIn))
+          : null,
+    );
+  }
 
   /// Decodes a value produced by [encode]; throws [FormatException] if the
   /// stored value is not a valid encoding.
@@ -56,12 +71,14 @@ class OAuthTokens {
   });
 }
 
-/// Where a session's tokens live. E2.5 extends this seam with per-account
-/// namespacing and rotating refresh; E2.1 needs only save/read/clear.
+/// Where sessions' tokens live, namespaced per account by the composite key
+/// (`instanceHost` + `accountId`, the same scoping as
+/// `core/database/account_scope.dart`) so multiple accounts and instances
+/// coexist without collision.
 abstract interface class TokenStore {
-  Future<void> save(OAuthTokens tokens);
-  Future<OAuthTokens?> read();
-  Future<void> clear();
+  Future<void> save(AccountKey account, OAuthTokens tokens);
+  Future<OAuthTokens?> read(AccountKey account);
+  Future<void> clear(AccountKey account);
 }
 
 /// [TokenStore] backed by the platform's Keychain/Keystore secure storage.
@@ -70,17 +87,19 @@ class SecureTokenStore implements TokenStore {
 
   final FlutterSecureStorage _storage;
 
-  // ponytail: one fixed key holds the single signed-in session; E2.5
-  // namespaces keys per AccountKey for multi-account.
-  static const _key = 'gitsune.oauth.tokens';
+  // Hosts cannot contain '/', so keys are collision-free across accounts.
+  static String _key(AccountKey account) =>
+      'gitsune.oauth.tokens.${account.instanceHost}/${account.accountId}';
+
+  /// One write persists access token, refresh token, and expiry together as
+  /// a single value, so a rotation can never strand a half-updated pair.
+  @override
+  Future<void> save(AccountKey account, OAuthTokens tokens) =>
+      _storage.write(key: _key(account), value: tokens.encode());
 
   @override
-  Future<void> save(OAuthTokens tokens) =>
-      _storage.write(key: _key, value: tokens.encode());
-
-  @override
-  Future<OAuthTokens?> read() async {
-    final raw = await _storage.read(key: _key);
+  Future<OAuthTokens?> read(AccountKey account) async {
+    final raw = await _storage.read(key: _key(account));
     if (raw == null) {
       return null;
     }
@@ -93,5 +112,5 @@ class SecureTokenStore implements TokenStore {
   }
 
   @override
-  Future<void> clear() => _storage.delete(key: _key);
+  Future<void> clear(AccountKey account) => _storage.delete(key: _key(account));
 }

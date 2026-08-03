@@ -39,8 +39,8 @@ void main() {
     final client = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      readToken: (_) async => const TokenReadResult('tok'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final repository = CurrentUserRepository(
       database: db,
@@ -65,8 +65,8 @@ void main() {
     final client = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      readToken: (_) async => const TokenReadResult('tok'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final repository = CurrentUserRepository(
       database: db,
@@ -105,8 +105,8 @@ void main() {
     final client = createGitLabClient(
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
-      readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      readToken: (_) async => const TokenReadResult('tok'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final repository = CurrentUserRepository(
       database: db,
