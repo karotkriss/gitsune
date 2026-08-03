@@ -48,7 +48,9 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
   PipelineDetails? _details;
   bool _loading = true;
   bool _failed = false;
-  int _generation = 0;
+  int _screenGeneration = 0;
+  int _loadGeneration = 0;
+  int _mutationRevision = 0;
   final _pendingJobIds = <int>{};
 
   @override
@@ -63,13 +65,17 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.pipelineId != widget.pipelineId ||
         oldWidget.repository != widget.repository) {
+      _screenGeneration++;
       _details = null;
+      _pendingJobIds.clear();
       _load();
     }
   }
 
   Future<void> _load() async {
-    final generation = ++_generation;
+    final screenGeneration = _screenGeneration;
+    final loadGeneration = ++_loadGeneration;
+    final mutationRevision = _mutationRevision;
     setState(() {
       _loading = true;
       _failed = false;
@@ -79,13 +85,25 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
         widget.projectId,
         widget.pipelineId,
       );
-      if (!mounted || generation != _generation) return;
+      if (!mounted ||
+          screenGeneration != _screenGeneration ||
+          loadGeneration != _loadGeneration) {
+        return;
+      }
+      if (mutationRevision != _mutationRevision) {
+        setState(() => _loading = false);
+        return;
+      }
       setState(() {
         _details = details;
         _loading = false;
       });
     } on Object {
-      if (!mounted || generation != _generation) return;
+      if (!mounted ||
+          screenGeneration != _screenGeneration ||
+          loadGeneration != _loadGeneration) {
+        return;
+      }
       setState(() {
         _loading = false;
         _failed = true;
@@ -99,29 +117,24 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
   }
 
   Future<void> _performJobAction(PipelineJob job, _JobAction action) async {
+    final screenGeneration = _screenGeneration;
+    final repository = widget.repository;
+    final projectId = widget.projectId;
     setState(() => _pendingJobIds.add(job.id));
     try {
       final updated = switch (action) {
-        _JobAction.retry => await widget.repository.retryJob(
-          widget.projectId,
-          job.id,
-        ),
-        _JobAction.cancel => await widget.repository.cancelJob(
-          widget.projectId,
-          job.id,
-        ),
-        _JobAction.run => await widget.repository.playJob(
-          widget.projectId,
-          job.id,
-        ),
+        _JobAction.retry => await repository.retryJob(projectId, job.id),
+        _JobAction.cancel => await repository.cancelJob(projectId, job.id),
+        _JobAction.run => await repository.playJob(projectId, job.id),
       };
-      if (!mounted) return;
+      if (!mounted || screenGeneration != _screenGeneration) return;
       setState(() {
+        _mutationRevision++;
         _details = _details?.withUpdatedJob(updated);
         _pendingJobIds.remove(job.id);
       });
     } on Object {
-      if (!mounted) return;
+      if (!mounted || screenGeneration != _screenGeneration) return;
       setState(() => _pendingJobIds.remove(job.id));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -317,36 +330,37 @@ class _JobRow extends StatelessWidget {
     );
     return Semantics(
       container: true,
+      explicitChildNodes: true,
       label:
           '${job.name}, ${job.status.label}, ${job.stage} stage, '
           '$duration$failurePolicy.',
-      child: ExcludeSemantics(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: gs.surfaceCard,
-            border: Border(
-              top: isFirst
-                  ? BorderSide(color: gs.borderSubtle)
-                  : BorderSide.none,
-              left: BorderSide(color: gs.borderSubtle),
-              right: BorderSide(color: gs.borderSubtle),
-              bottom: BorderSide(color: gs.borderSubtle),
-            ),
-            borderRadius: radius,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: gs.surfaceCard,
+          border: Border(
+            top: isFirst ? BorderSide(color: gs.borderSubtle) : BorderSide.none,
+            left: BorderSide(color: gs.borderSubtle),
+            right: BorderSide(color: gs.borderSubtle),
+            bottom: BorderSide(color: gs.borderSubtle),
           ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 60),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              child: Row(
-                children: [
-                  CiStatusBadge(
+          borderRadius: radius,
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 60),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            child: Row(
+              children: [
+                ExcludeSemantics(
+                  child: CiStatusBadge(
                     status: job.badgeStatus,
                     size: 20,
                     excludeFromSemantics: true,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ExcludeSemantics(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -371,13 +385,15 @@ class _JobRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 116),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 116),
+                      child: ExcludeSemantics(
                         child: Text(
                           job.status.label,
                           maxLines: 2,
@@ -386,18 +402,18 @@ class _JobRow extends StatelessWidget {
                           style: gs.caption.copyWith(color: gs.textSubtle),
                         ),
                       ),
-                      if (action != null) ...[
-                        const SizedBox(height: 6),
-                        _JobActionButton(
-                          action: action,
-                          pending: pending,
-                          onPressed: () => onAction(job, action),
-                        ),
-                      ],
+                    ),
+                    if (action != null) ...[
+                      const SizedBox(height: 6),
+                      _JobActionButton(
+                        action: action,
+                        pending: pending,
+                        onPressed: () => onAction(job, action),
+                      ),
                     ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -420,28 +436,24 @@ class _JobActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gs = Theme.of(context).extension<GsTheme>()!;
-    return SizedBox(
-      height: 28,
-      child: TextButton.icon(
-        onPressed: pending ? null : onPressed,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          foregroundColor: gs.accent,
-        ),
-        icon: pending
-            ? SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: gs.accent,
-                ),
-              )
-            : GsIcon(action.glyph, size: 14, color: gs.accent),
-        label: Text(action.label, style: gs.caption.copyWith(color: gs.accent)),
+    return TextButton.icon(
+      onPressed: pending ? null : onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: const Size(48, 48),
+        foregroundColor: gs.accent,
       ),
+      icon: pending
+          ? SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: gs.accent,
+              ),
+            )
+          : GsIcon(action.glyph, size: 14, color: gs.accent),
+      label: Text(action.label, style: gs.caption.copyWith(color: gs.accent)),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/ci/ci_status.dart';
@@ -49,6 +51,12 @@ void main() {
       expect(find.text('Retry'), findsOneWidget);
       expect(find.text('Cancel'), findsOneWidget);
       expect(find.text('Run'), findsNothing);
+      expect(find.bySemanticsLabel('Retry'), findsOneWidget);
+      expect(find.bySemanticsLabel('Cancel'), findsOneWidget);
+      expect(
+        tester.getSize(find.widgetWithText(TextButton, 'Cancel')).height,
+        greaterThanOrEqualTo(48),
+      );
       await tester.scrollUntilVisible(
         find.text('DEPLOY'),
         240,
@@ -147,6 +155,79 @@ void main() {
       expect(find.text('Run'), findsNothing);
     },
   );
+
+  testWidgets('action completion cannot update a replacement pipeline', (
+    tester,
+  ) async {
+    final oldRepository = _DeferredCancelRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: PipelineDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          pipelineId: 88123,
+          repository: oldRepository,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pump();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: PipelineDetailScreen(
+          projectId: 8,
+          projectPath: 'gitsune/other',
+          pipelineId: 99234,
+          repository: FixturePipelinesRepository(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    oldRepository.completeCancel();
+    await tester.pump();
+
+    expect(find.text('Cancel'), findsOneWidget);
+  });
+
+  testWidgets('action result wins over an older refresh response', (
+    tester,
+  ) async {
+    final repository = _DeferredRefreshRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: PipelineDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          pipelineId: 88123,
+          repository: repository,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final refresh = tester
+        .state<RefreshIndicatorState>(find.byType(RefreshIndicator))
+        .show();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(repository.loads, 2);
+    await tester.tap(find.text('Cancel'));
+    await tester.pump();
+    expect(find.text('Cancel'), findsNothing);
+
+    await repository.completeRefresh();
+    await refresh;
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cancel'), findsNothing);
+  });
 
   testWidgets('loading failure remains display-only', (tester) async {
     await tester.pumpWidget(
@@ -309,6 +390,67 @@ class _LargePipelineRepository implements PipelinesRepository {
         ),
       ),
     );
+  }
+
+  @override
+  Future<PipelineJob> retryJob(int projectId, int jobId) =>
+      _fixture.retryJob(projectId, jobId);
+
+  @override
+  Future<PipelineJob> cancelJob(int projectId, int jobId) =>
+      _fixture.cancelJob(projectId, jobId);
+
+  @override
+  Future<PipelineJob> playJob(int projectId, int jobId) =>
+      _fixture.playJob(projectId, jobId);
+}
+
+class _DeferredCancelRepository implements PipelinesRepository {
+  final _fixture = FixturePipelinesRepository();
+  final _cancel = Completer<PipelineJob>();
+
+  void completeCancel() {
+    _cancel.complete(
+      const PipelineJob(
+        id: 502,
+        name: 'test:flutter',
+        stage: 'test',
+        status: CiStatus.canceled,
+        allowFailure: false,
+      ),
+    );
+  }
+
+  @override
+  Future<PipelineDetails> loadPipeline(int projectId, int pipelineId) =>
+      _fixture.loadPipeline(projectId, pipelineId);
+
+  @override
+  Future<PipelineJob> retryJob(int projectId, int jobId) =>
+      _fixture.retryJob(projectId, jobId);
+
+  @override
+  Future<PipelineJob> cancelJob(int projectId, int jobId) => _cancel.future;
+
+  @override
+  Future<PipelineJob> playJob(int projectId, int jobId) =>
+      _fixture.playJob(projectId, jobId);
+}
+
+class _DeferredRefreshRepository implements PipelinesRepository {
+  final _fixture = FixturePipelinesRepository();
+  final _refresh = Completer<PipelineDetails>();
+  int loads = 0;
+
+  Future<void> completeRefresh() async {
+    _refresh.complete(await _fixture.loadPipeline(7, 88123));
+  }
+
+  @override
+  Future<PipelineDetails> loadPipeline(int projectId, int pipelineId) {
+    loads++;
+    if (loads == 1) return _fixture.loadPipeline(projectId, pipelineId);
+    return _refresh.future;
   }
 
   @override
