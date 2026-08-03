@@ -110,6 +110,25 @@ class RecentlyViewedItems extends Table with AccountScoped {
   };
 }
 
+/// Cached releases of a project (`GET /projects/:id/releases`), scoped per
+/// account. [assetsJson] is the release's raw `assets` API object (sources
+/// plus links) and [position] preserves GitLab's server-side ordering
+/// (newest release first). See
+/// `features/releases/data/releases_repository.dart`.
+class ReleaseEntries extends Table with AccountScoped {
+  IntColumn get projectId => integer()();
+  TextColumn get tagName => text()();
+  TextColumn get name => text()();
+  TextColumn get description => text()();
+  DateTimeColumn get releasedAt => dateTime()();
+  TextColumn get authorName => text().nullable()();
+  TextColumn get assetsJson => text()();
+  IntColumn get position => integer()();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId, projectId, tagName};
+}
+
 /// The persisted Home shortcut-tile order, one row per account holding the
 /// comma-separated tile ids. See `features/home/home_tiles.dart`.
 class HomeTileOrders extends Table with AccountScoped {
@@ -129,6 +148,7 @@ class HomeTileOrders extends Table with AccountScoped {
     RepositoryTreeEntries,
     RecentlyViewedItems,
     HomeTileOrders,
+    ReleaseEntries,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -137,7 +157,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -159,6 +179,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 7) {
         await migrator.createTable(homeTileOrders);
+      }
+      if (from < 8) {
+        await migrator.createTable(releaseEntries);
       }
     },
   );

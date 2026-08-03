@@ -3464,6 +3464,639 @@ class HomeTileOrdersCompanion extends UpdateCompanion<HomeTileOrder> {
   }
 }
 
+class $ReleaseEntriesTable extends ReleaseEntries
+    with TableInfo<$ReleaseEntriesTable, ReleaseEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReleaseEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
+  @override
+  late final GeneratedColumn<int> projectId = GeneratedColumn<int>(
+    'project_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tagNameMeta = const VerificationMeta(
+    'tagName',
+  );
+  @override
+  late final GeneratedColumn<String> tagName = GeneratedColumn<String>(
+    'tag_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _releasedAtMeta = const VerificationMeta(
+    'releasedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> releasedAt = GeneratedColumn<DateTime>(
+    'released_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _authorNameMeta = const VerificationMeta(
+    'authorName',
+  );
+  @override
+  late final GeneratedColumn<String> authorName = GeneratedColumn<String>(
+    'author_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _assetsJsonMeta = const VerificationMeta(
+    'assetsJson',
+  );
+  @override
+  late final GeneratedColumn<String> assetsJson = GeneratedColumn<String>(
+    'assets_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    projectId,
+    tagName,
+    name,
+    description,
+    releasedAt,
+    authorName,
+    assetsJson,
+    position,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'release_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ReleaseEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('project_id')) {
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_projectIdMeta);
+    }
+    if (data.containsKey('tag_name')) {
+      context.handle(
+        _tagNameMeta,
+        tagName.isAcceptableOrUnknown(data['tag_name']!, _tagNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tagNameMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_descriptionMeta);
+    }
+    if (data.containsKey('released_at')) {
+      context.handle(
+        _releasedAtMeta,
+        releasedAt.isAcceptableOrUnknown(data['released_at']!, _releasedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_releasedAtMeta);
+    }
+    if (data.containsKey('author_name')) {
+      context.handle(
+        _authorNameMeta,
+        authorName.isAcceptableOrUnknown(data['author_name']!, _authorNameMeta),
+      );
+    }
+    if (data.containsKey('assets_json')) {
+      context.handle(
+        _assetsJsonMeta,
+        assetsJson.isAcceptableOrUnknown(data['assets_json']!, _assetsJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_assetsJsonMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {
+    instanceHost,
+    accountId,
+    projectId,
+    tagName,
+  };
+  @override
+  ReleaseEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReleaseEntry(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}project_id'],
+      )!,
+      tagName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tag_name'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      )!,
+      releasedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}released_at'],
+      )!,
+      authorName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}author_name'],
+      ),
+      assetsJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}assets_json'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+    );
+  }
+
+  @override
+  $ReleaseEntriesTable createAlias(String alias) {
+    return $ReleaseEntriesTable(attachedDatabase, alias);
+  }
+}
+
+class ReleaseEntry extends DataClass implements Insertable<ReleaseEntry> {
+  final String instanceHost;
+  final String accountId;
+  final int projectId;
+  final String tagName;
+  final String name;
+  final String description;
+  final DateTime releasedAt;
+  final String? authorName;
+  final String assetsJson;
+  final int position;
+  const ReleaseEntry({
+    required this.instanceHost,
+    required this.accountId,
+    required this.projectId,
+    required this.tagName,
+    required this.name,
+    required this.description,
+    required this.releasedAt,
+    this.authorName,
+    required this.assetsJson,
+    required this.position,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    map['project_id'] = Variable<int>(projectId);
+    map['tag_name'] = Variable<String>(tagName);
+    map['name'] = Variable<String>(name);
+    map['description'] = Variable<String>(description);
+    map['released_at'] = Variable<DateTime>(releasedAt);
+    if (!nullToAbsent || authorName != null) {
+      map['author_name'] = Variable<String>(authorName);
+    }
+    map['assets_json'] = Variable<String>(assetsJson);
+    map['position'] = Variable<int>(position);
+    return map;
+  }
+
+  ReleaseEntriesCompanion toCompanion(bool nullToAbsent) {
+    return ReleaseEntriesCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      projectId: Value(projectId),
+      tagName: Value(tagName),
+      name: Value(name),
+      description: Value(description),
+      releasedAt: Value(releasedAt),
+      authorName: authorName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(authorName),
+      assetsJson: Value(assetsJson),
+      position: Value(position),
+    );
+  }
+
+  factory ReleaseEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReleaseEntry(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      projectId: serializer.fromJson<int>(json['projectId']),
+      tagName: serializer.fromJson<String>(json['tagName']),
+      name: serializer.fromJson<String>(json['name']),
+      description: serializer.fromJson<String>(json['description']),
+      releasedAt: serializer.fromJson<DateTime>(json['releasedAt']),
+      authorName: serializer.fromJson<String?>(json['authorName']),
+      assetsJson: serializer.fromJson<String>(json['assetsJson']),
+      position: serializer.fromJson<int>(json['position']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'projectId': serializer.toJson<int>(projectId),
+      'tagName': serializer.toJson<String>(tagName),
+      'name': serializer.toJson<String>(name),
+      'description': serializer.toJson<String>(description),
+      'releasedAt': serializer.toJson<DateTime>(releasedAt),
+      'authorName': serializer.toJson<String?>(authorName),
+      'assetsJson': serializer.toJson<String>(assetsJson),
+      'position': serializer.toJson<int>(position),
+    };
+  }
+
+  ReleaseEntry copyWith({
+    String? instanceHost,
+    String? accountId,
+    int? projectId,
+    String? tagName,
+    String? name,
+    String? description,
+    DateTime? releasedAt,
+    Value<String?> authorName = const Value.absent(),
+    String? assetsJson,
+    int? position,
+  }) => ReleaseEntry(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    projectId: projectId ?? this.projectId,
+    tagName: tagName ?? this.tagName,
+    name: name ?? this.name,
+    description: description ?? this.description,
+    releasedAt: releasedAt ?? this.releasedAt,
+    authorName: authorName.present ? authorName.value : this.authorName,
+    assetsJson: assetsJson ?? this.assetsJson,
+    position: position ?? this.position,
+  );
+  ReleaseEntry copyWithCompanion(ReleaseEntriesCompanion data) {
+    return ReleaseEntry(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      projectId: data.projectId.present ? data.projectId.value : this.projectId,
+      tagName: data.tagName.present ? data.tagName.value : this.tagName,
+      name: data.name.present ? data.name.value : this.name,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      releasedAt: data.releasedAt.present
+          ? data.releasedAt.value
+          : this.releasedAt,
+      authorName: data.authorName.present
+          ? data.authorName.value
+          : this.authorName,
+      assetsJson: data.assetsJson.present
+          ? data.assetsJson.value
+          : this.assetsJson,
+      position: data.position.present ? data.position.value : this.position,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReleaseEntry(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('projectId: $projectId, ')
+          ..write('tagName: $tagName, ')
+          ..write('name: $name, ')
+          ..write('description: $description, ')
+          ..write('releasedAt: $releasedAt, ')
+          ..write('authorName: $authorName, ')
+          ..write('assetsJson: $assetsJson, ')
+          ..write('position: $position')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    instanceHost,
+    accountId,
+    projectId,
+    tagName,
+    name,
+    description,
+    releasedAt,
+    authorName,
+    assetsJson,
+    position,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReleaseEntry &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.projectId == this.projectId &&
+          other.tagName == this.tagName &&
+          other.name == this.name &&
+          other.description == this.description &&
+          other.releasedAt == this.releasedAt &&
+          other.authorName == this.authorName &&
+          other.assetsJson == this.assetsJson &&
+          other.position == this.position);
+}
+
+class ReleaseEntriesCompanion extends UpdateCompanion<ReleaseEntry> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<int> projectId;
+  final Value<String> tagName;
+  final Value<String> name;
+  final Value<String> description;
+  final Value<DateTime> releasedAt;
+  final Value<String?> authorName;
+  final Value<String> assetsJson;
+  final Value<int> position;
+  final Value<int> rowid;
+  const ReleaseEntriesCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.projectId = const Value.absent(),
+    this.tagName = const Value.absent(),
+    this.name = const Value.absent(),
+    this.description = const Value.absent(),
+    this.releasedAt = const Value.absent(),
+    this.authorName = const Value.absent(),
+    this.assetsJson = const Value.absent(),
+    this.position = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReleaseEntriesCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    required int projectId,
+    required String tagName,
+    required String name,
+    required String description,
+    required DateTime releasedAt,
+    this.authorName = const Value.absent(),
+    required String assetsJson,
+    required int position,
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       projectId = Value(projectId),
+       tagName = Value(tagName),
+       name = Value(name),
+       description = Value(description),
+       releasedAt = Value(releasedAt),
+       assetsJson = Value(assetsJson),
+       position = Value(position);
+  static Insertable<ReleaseEntry> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<int>? projectId,
+    Expression<String>? tagName,
+    Expression<String>? name,
+    Expression<String>? description,
+    Expression<DateTime>? releasedAt,
+    Expression<String>? authorName,
+    Expression<String>? assetsJson,
+    Expression<int>? position,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (projectId != null) 'project_id': projectId,
+      if (tagName != null) 'tag_name': tagName,
+      if (name != null) 'name': name,
+      if (description != null) 'description': description,
+      if (releasedAt != null) 'released_at': releasedAt,
+      if (authorName != null) 'author_name': authorName,
+      if (assetsJson != null) 'assets_json': assetsJson,
+      if (position != null) 'position': position,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReleaseEntriesCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<int>? projectId,
+    Value<String>? tagName,
+    Value<String>? name,
+    Value<String>? description,
+    Value<DateTime>? releasedAt,
+    Value<String?>? authorName,
+    Value<String>? assetsJson,
+    Value<int>? position,
+    Value<int>? rowid,
+  }) {
+    return ReleaseEntriesCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      projectId: projectId ?? this.projectId,
+      tagName: tagName ?? this.tagName,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      releasedAt: releasedAt ?? this.releasedAt,
+      authorName: authorName ?? this.authorName,
+      assetsJson: assetsJson ?? this.assetsJson,
+      position: position ?? this.position,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (projectId.present) {
+      map['project_id'] = Variable<int>(projectId.value);
+    }
+    if (tagName.present) {
+      map['tag_name'] = Variable<String>(tagName.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (releasedAt.present) {
+      map['released_at'] = Variable<DateTime>(releasedAt.value);
+    }
+    if (authorName.present) {
+      map['author_name'] = Variable<String>(authorName.value);
+    }
+    if (assetsJson.present) {
+      map['assets_json'] = Variable<String>(assetsJson.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReleaseEntriesCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('projectId: $projectId, ')
+          ..write('tagName: $tagName, ')
+          ..write('name: $name, ')
+          ..write('description: $description, ')
+          ..write('releasedAt: $releasedAt, ')
+          ..write('authorName: $authorName, ')
+          ..write('assetsJson: $assetsJson, ')
+          ..write('position: $position, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3479,6 +4112,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RecentlyViewedItemsTable recentlyViewedItems =
       $RecentlyViewedItemsTable(this);
   late final $HomeTileOrdersTable homeTileOrders = $HomeTileOrdersTable(this);
+  late final $ReleaseEntriesTable releaseEntries = $ReleaseEntriesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3491,6 +4125,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     repositoryTreeEntries,
     recentlyViewedItems,
     homeTileOrders,
+    releaseEntries,
   ];
 }
 
@@ -5301,6 +5936,313 @@ typedef $$HomeTileOrdersTableProcessedTableManager =
       HomeTileOrder,
       PrefetchHooks Function()
     >;
+typedef $$ReleaseEntriesTableCreateCompanionBuilder =
+    ReleaseEntriesCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      required int projectId,
+      required String tagName,
+      required String name,
+      required String description,
+      required DateTime releasedAt,
+      Value<String?> authorName,
+      required String assetsJson,
+      required int position,
+      Value<int> rowid,
+    });
+typedef $$ReleaseEntriesTableUpdateCompanionBuilder =
+    ReleaseEntriesCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<int> projectId,
+      Value<String> tagName,
+      Value<String> name,
+      Value<String> description,
+      Value<DateTime> releasedAt,
+      Value<String?> authorName,
+      Value<String> assetsJson,
+      Value<int> position,
+      Value<int> rowid,
+    });
+
+class $$ReleaseEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $ReleaseEntriesTable> {
+  $$ReleaseEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tagName => $composableBuilder(
+    column: $table.tagName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get releasedAt => $composableBuilder(
+    column: $table.releasedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get authorName => $composableBuilder(
+    column: $table.authorName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get assetsJson => $composableBuilder(
+    column: $table.assetsJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ReleaseEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReleaseEntriesTable> {
+  $$ReleaseEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tagName => $composableBuilder(
+    column: $table.tagName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get releasedAt => $composableBuilder(
+    column: $table.releasedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get authorName => $composableBuilder(
+    column: $table.authorName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get assetsJson => $composableBuilder(
+    column: $table.assetsJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ReleaseEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReleaseEntriesTable> {
+  $$ReleaseEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<int> get projectId =>
+      $composableBuilder(column: $table.projectId, builder: (column) => column);
+
+  GeneratedColumn<String> get tagName =>
+      $composableBuilder(column: $table.tagName, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get releasedAt => $composableBuilder(
+    column: $table.releasedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get authorName => $composableBuilder(
+    column: $table.authorName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get assetsJson => $composableBuilder(
+    column: $table.assetsJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+}
+
+class $$ReleaseEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ReleaseEntriesTable,
+          ReleaseEntry,
+          $$ReleaseEntriesTableFilterComposer,
+          $$ReleaseEntriesTableOrderingComposer,
+          $$ReleaseEntriesTableAnnotationComposer,
+          $$ReleaseEntriesTableCreateCompanionBuilder,
+          $$ReleaseEntriesTableUpdateCompanionBuilder,
+          (
+            ReleaseEntry,
+            BaseReferences<_$AppDatabase, $ReleaseEntriesTable, ReleaseEntry>,
+          ),
+          ReleaseEntry,
+          PrefetchHooks Function()
+        > {
+  $$ReleaseEntriesTableTableManager(
+    _$AppDatabase db,
+    $ReleaseEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReleaseEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReleaseEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReleaseEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<int> projectId = const Value.absent(),
+                Value<String> tagName = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> description = const Value.absent(),
+                Value<DateTime> releasedAt = const Value.absent(),
+                Value<String?> authorName = const Value.absent(),
+                Value<String> assetsJson = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReleaseEntriesCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                projectId: projectId,
+                tagName: tagName,
+                name: name,
+                description: description,
+                releasedAt: releasedAt,
+                authorName: authorName,
+                assetsJson: assetsJson,
+                position: position,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                required int projectId,
+                required String tagName,
+                required String name,
+                required String description,
+                required DateTime releasedAt,
+                Value<String?> authorName = const Value.absent(),
+                required String assetsJson,
+                required int position,
+                Value<int> rowid = const Value.absent(),
+              }) => ReleaseEntriesCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                projectId: projectId,
+                tagName: tagName,
+                name: name,
+                description: description,
+                releasedAt: releasedAt,
+                authorName: authorName,
+                assetsJson: assetsJson,
+                position: position,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ReleaseEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ReleaseEntriesTable,
+      ReleaseEntry,
+      $$ReleaseEntriesTableFilterComposer,
+      $$ReleaseEntriesTableOrderingComposer,
+      $$ReleaseEntriesTableAnnotationComposer,
+      $$ReleaseEntriesTableCreateCompanionBuilder,
+      $$ReleaseEntriesTableUpdateCompanionBuilder,
+      (
+        ReleaseEntry,
+        BaseReferences<_$AppDatabase, $ReleaseEntriesTable, ReleaseEntry>,
+      ),
+      ReleaseEntry,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5319,4 +6261,6 @@ class $AppDatabaseManager {
       $$RecentlyViewedItemsTableTableManager(_db, _db.recentlyViewedItems);
   $$HomeTileOrdersTableTableManager get homeTileOrders =>
       $$HomeTileOrdersTableTableManager(_db, _db.homeTileOrders);
+  $$ReleaseEntriesTableTableManager get releaseEntries =>
+      $$ReleaseEntriesTableTableManager(_db, _db.releaseEntries);
 }

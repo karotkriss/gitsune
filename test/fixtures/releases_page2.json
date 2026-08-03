@@ -1,0 +1,26 @@
+[
+  {
+    "tag_name": "v1.0.0",
+    "name": "First stable release",
+    "description": "Initial stable release. `flutter build` artifacts attached.",
+    "created_at": "2026-01-05T12:00:00.000Z",
+    "released_at": "2026-01-05T12:00:00.000Z",
+    "upcoming_release": false,
+    "author": {
+      "id": 42,
+      "username": "alice",
+      "name": "Alice Doe",
+      "avatar_url": "https://gitlab.example.com/uploads/user/avatar/42/avatar.png"
+    },
+    "assets": {
+      "count": 1,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://gitlab.example.com/acme/app/-/archive/v1.0.0/app-v1.0.0.zip"
+        }
+      ],
+      "links": []
+    }
+  }
+]

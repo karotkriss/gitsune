@@ -24,6 +24,9 @@ import '../pipelines/data/pipelines_repository.dart';
 import '../pipelines/presentation/job_log_screen.dart';
 import '../pipelines/presentation/pipeline_detail_screen.dart';
 import '../profile/profile_screen.dart';
+import '../releases/data/releases_repository.dart';
+import '../releases/presentation/release_detail_screen.dart';
+import '../releases/presentation/release_list_screen.dart';
 import '../search/data/search_repository.dart';
 import '../search/presentation/search_screen.dart';
 import '../sign_in/sign_in_screen.dart';
@@ -49,6 +52,7 @@ GoRouter buildAppRouter({
   IssuesRepository? issuesRepository,
   MergeRequestsRepository? mergeRequestsRepository,
   PipelinesRepository? pipelinesRepository,
+  ReleasesRepository? releasesRepository,
   RepositoryTreeRepository? repositoryTreeRepository,
   SearchRepository? searchRepository,
   OfflineFirstRepository<List<TodoItem>>? todosRepository,
@@ -146,6 +150,47 @@ GoRouter buildAppRouter({
               repository: issuesRepository,
               recentlyViewedCache: recentlyViewedCache,
               initialIssue: state.extra is Issue ? state.extra! as Issue : null,
+            );
+          },
+        ),
+      ],
+      if (releasesRepository != null) ...[
+        GoRoute(
+          path: '/projects/:projectId/releases',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            final projectPath =
+                state.uri.queryParameters['projectPath'] ??
+                'Project $projectId';
+            return ReleaseListScreen(
+              projectId: projectId,
+              projectPath: projectPath,
+              repository: releasesRepository,
+              // The tag rides a query parameter rather than a path segment
+              // because GitLab tag names may contain '/'.
+              onReleaseTap: (release) => context.push(
+                Uri(
+                  path: '/projects/$projectId/releases/detail',
+                  queryParameters: {
+                    'projectPath': projectPath,
+                    'tag': release.tagName,
+                  },
+                ).toString(),
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/projects/:projectId/releases/detail',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            return ReleaseDetailScreen(
+              projectId: projectId,
+              projectPath:
+                  state.uri.queryParameters['projectPath'] ??
+                  'Project $projectId',
+              tagName: state.uri.queryParameters['tag'] ?? '',
+              repository: releasesRepository,
             );
           },
         ),
