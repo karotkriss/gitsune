@@ -50,7 +50,8 @@ Color _statusColor(GsTheme gs, CiStatus status) => switch (status) {
   CiStatus.running => gs.statusInfo,
   CiStatus.pending ||
   CiStatus.warning ||
-  CiStatus.waitingForResource => gs.statusWarning,
+  CiStatus.waitingForResource ||
+  CiStatus.waitingForCallback => gs.statusWarning,
   CiStatus.canceled ||
   CiStatus.canceling ||
   CiStatus.skipped ||
@@ -71,7 +72,9 @@ String _svgBody(CiStatus status) => switch (status) {
   CiStatus.running =>
     '<path d="M7 0a7 7 0 1 1 0 14A7 7 0 0 1 7 0zm0 1a6 6 0 1 0 0 12A6 6 0 0 0 7 1z"/>'
         '<path d="M7 3c2.2 0 4 1.8 4 4s-1.8 4-4 4c-1.3 0-2.5-.7-3.3-1.7L7 7V3"/>',
-  CiStatus.pending || CiStatus.waitingForResource =>
+  CiStatus.pending ||
+  CiStatus.waitingForResource ||
+  CiStatus.waitingForCallback =>
     '<path d="M7 0a7 7 0 1 1 0 14A7 7 0 0 1 7 0zm0 1a6 6 0 1 0 0 12A6 6 0 0 0 7 1z"/>'
         '<path d="M4.7 5.3c0-.2.1-.3.3-.3h.9c.2 0 .3.1.3.3v3.4c0 .2-.1.3-.3.3H5c-.2 0-.3-.1-.3-.3V5.3m3 0c0-.2.1-.3.3-.3h.9c.2 0 .3.1.3.3v3.4c0 .2-.1.3-.3.3H8c-.2 0-.3-.1-.3-.3V5.3"/>',
   CiStatus.created =>

@@ -11,6 +11,10 @@ void main() {
       CiStatus.fromApi('waiting_for_resource'),
       CiStatus.waitingForResource,
     );
+    expect(
+      CiStatus.fromApi('waiting_for_callback'),
+      CiStatus.waitingForCallback,
+    );
     expect(CiStatus.fromApi('canceling'), CiStatus.canceling);
     expect(CiStatus.fromApi('new_server_state'), CiStatus.unknown);
   });
@@ -37,6 +41,10 @@ void main() {
     expect(find.bySemanticsLabel('CI status: Passed'), findsOneWidget);
     expect(
       find.bySemanticsLabel('CI status: Waiting for resource'),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel('CI status: Waiting for callback'),
       findsOneWidget,
     );
     expect(find.bySemanticsLabel('CI status: Unknown'), findsOneWidget);

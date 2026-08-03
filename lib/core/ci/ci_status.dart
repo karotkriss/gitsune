@@ -13,6 +13,7 @@ enum CiStatus {
   scheduled,
   preparing,
   waitingForResource,
+  waitingForCallback,
   unknown;
 
   factory CiStatus.fromApi(String value) => switch (value) {
@@ -29,6 +30,7 @@ enum CiStatus {
     'scheduled' => CiStatus.scheduled,
     'preparing' => CiStatus.preparing,
     'waiting_for_resource' => CiStatus.waitingForResource,
+    'waiting_for_callback' => CiStatus.waitingForCallback,
     _ => CiStatus.unknown,
   };
 
@@ -46,6 +48,7 @@ enum CiStatus {
     CiStatus.scheduled => 'Scheduled',
     CiStatus.preparing => 'Preparing',
     CiStatus.waitingForResource => 'Waiting for resource',
+    CiStatus.waitingForCallback => 'Waiting for callback',
     CiStatus.unknown => 'Unknown',
   };
 }
