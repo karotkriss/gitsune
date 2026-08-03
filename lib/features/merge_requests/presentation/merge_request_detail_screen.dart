@@ -98,6 +98,7 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
             ),
             decode: MergeRequest.fromJson,
             encode: (mergeRequest) => mergeRequest.toJson(),
+            updatedAt: (mergeRequest) => mergeRequest.updatedAt,
           );
   }
 

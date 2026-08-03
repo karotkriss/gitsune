@@ -37,10 +37,17 @@ class PipelineDetails {
   /// Applies a job action's response, replacing same-id jobs (cancel, play)
   /// or adding a new attempt (retry creates a new job id) then re-deriving
   /// the latest-per-stage-and-name view.
-  PipelineDetails withUpdatedJob(PipelineJob updated) => PipelineDetails(
-    pipeline: pipeline,
-    jobs: [..._attempts.where((job) => job.id != updated.id), updated],
-  );
+  PipelineDetails withUpdatedJob(PipelineJob updated, {DateTime? updatedAt}) {
+    final nextUpdatedAt = updatedAt == null
+        ? pipeline.updatedAt
+        : updatedAt.isAfter(pipeline.updatedAt)
+        ? updatedAt
+        : pipeline.updatedAt.add(const Duration(microseconds: 1));
+    return PipelineDetails(
+      pipeline: pipeline.withUpdatedAt(nextUpdatedAt),
+      jobs: [..._attempts.where((job) => job.id != updated.id), updated],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'pipeline': pipeline.toJson(),
@@ -134,6 +141,18 @@ class Pipeline {
   };
 
   String get shortSha => sha.length <= 8 ? sha : sha.substring(0, 8);
+
+  Pipeline withUpdatedAt(DateTime value) => Pipeline(
+    id: id,
+    status: status,
+    ref: ref,
+    sha: sha,
+    source: source,
+    createdAt: createdAt,
+    updatedAt: value,
+    duration: duration,
+    webUrl: webUrl,
+  );
 }
 
 class PipelineJob {

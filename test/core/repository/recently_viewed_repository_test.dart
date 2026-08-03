@@ -75,6 +75,7 @@ void main() {
       fetch: () => issues.loadIssue(7, 142),
       decode: Issue.fromJson,
       encode: (issue) => issue.toJson(),
+      updatedAt: (issue) => issue.updatedAt,
     );
   }
 
@@ -91,6 +92,7 @@ void main() {
       fetch: () => mergeRequests.loadMergeRequest(7, 142),
       decode: MergeRequest.fromJson,
       encode: (mergeRequest) => mergeRequest.toJson(),
+      updatedAt: (mergeRequest) => mergeRequest.updatedAt,
     );
   }
 
@@ -107,6 +109,7 @@ void main() {
       fetch: () => pipelines.loadPipeline(7, 88123),
       decode: PipelineDetails.fromJson,
       encode: (details) => details.toJson(),
+      updatedAt: (details) => details.pipeline.updatedAt,
     );
   }
 

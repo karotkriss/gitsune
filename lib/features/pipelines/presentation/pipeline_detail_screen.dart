@@ -101,6 +101,7 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
             ),
             decode: PipelineDetails.fromJson,
             encode: (details) => details.toJson(),
+            updatedAt: (details) => details.pipeline.updatedAt,
           );
   }
 
@@ -177,7 +178,10 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
         _JobAction.run => await repository.playJob(projectId, job.id),
       };
       if (!mounted || screenGeneration != _screenGeneration) return;
-      final details = _details?.withUpdatedJob(updated);
+      final details = _details?.withUpdatedJob(
+        updated,
+        updatedAt: DateTime.now().toUtc(),
+      );
       if (details != null) {
         await _recentPipeline?.writeThrough(details);
       }

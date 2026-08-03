@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
@@ -59,8 +60,23 @@ class RecentlyViewedCache {
     int projectId,
     int itemId,
     String payload,
-  ) {
+  ) async {
+    await putIf(type, projectId, itemId, payload, shouldReplace: (_) => true);
+  }
+
+  Future<bool> putIf(
+    RecentlyViewedType type,
+    int projectId,
+    int itemId,
+    String payload, {
+    required bool Function(String? existingPayload) shouldReplace,
+  }) {
     return database.transaction(() async {
+      final existing =
+          await (database.select(database.recentlyViewedItems)
+                ..where((t) => _itemScope(t, type, projectId, itemId)))
+              .getSingleOrNull();
+      if (!shouldReplace(existing?.payload)) return false;
       await database
           .into(database.recentlyViewedItems)
           .insertOnConflictUpdate(
@@ -75,6 +91,7 @@ class RecentlyViewedCache {
             ),
           );
       await _evict(type);
+      return true;
     });
   }
 
@@ -138,6 +155,7 @@ class RecentItemRepository<T> implements OfflineFirstRepository<T?> {
     required this._fetch,
     required this._decode,
     required this._encode,
+    required this._updatedAt,
   });
 
   final RecentlyViewedCache cache;
@@ -147,6 +165,7 @@ class RecentItemRepository<T> implements OfflineFirstRepository<T?> {
   final Future<T> Function() _fetch;
   final T Function(Map<String, dynamic> json) _decode;
   final Map<String, dynamic> Function(T item) _encode;
+  final DateTime Function(T item) _updatedAt;
 
   @override
   Stream<T?> watch() {
@@ -176,8 +195,27 @@ class RecentItemRepository<T> implements OfflineFirstRepository<T?> {
     return item;
   }
 
-  Future<void> writeThrough(T item) {
-    return cache.put(type, projectId, itemId, jsonEncode(_encode(item)));
+  Future<void> writeThrough(T item) async {
+    try {
+      await cache.putIf(
+        type,
+        projectId,
+        itemId,
+        jsonEncode(_encode(item)),
+        shouldReplace: (payload) {
+          if (payload == null) return true;
+          final existing = _decode(jsonDecode(payload) as Map<String, dynamic>);
+          return !_updatedAt(item).isBefore(_updatedAt(existing));
+        },
+      );
+    } on Object catch (error, stackTrace) {
+      log(
+        'Unable to persist recently viewed item',
+        name: 'gitsune.recently_viewed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   /// One-shot cached read that also records the view, keeping an item the

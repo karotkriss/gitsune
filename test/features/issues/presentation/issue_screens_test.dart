@@ -581,6 +581,15 @@ void main() {
   testWidgets('a stale issue refresh cannot overwrite committed triage', (
     tester,
   ) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final cache = RecentlyViewedCache(
+      database: db,
+      account: const AccountKey(
+        instanceHost: 'gitlab.example.com',
+        accountId: 'alice',
+      ),
+    );
     final staleIssue = Completer<Issue>();
     final repository = _TriageRegressionRepository(delayedIssue: staleIssue);
     await tester.pumpWidget(
@@ -591,6 +600,7 @@ void main() {
           projectPath: 'gitsune/app',
           issueIid: 142,
           repository: repository,
+          recentlyViewedCache: cache,
           initialIssue: _fixtureIssue(),
           now: now,
         ),
@@ -610,6 +620,50 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Closed'), findsOneWidget);
+    final payload = await cache
+        .watchPayload(RecentlyViewedType.issue, 7, 142)
+        .first;
+    expect(
+      Issue.fromJson(jsonDecode(payload!) as Map<String, dynamic>).state,
+      IssueState.closed,
+    );
+  });
+
+  testWidgets('a cache write failure does not fail successful triage', (
+    tester,
+  ) async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    final cache = _FailingWriteRecentlyViewedCache(
+      database: db,
+      account: const AccountKey(
+        instanceHost: 'gitlab.example.com',
+        accountId: 'alice',
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: FixtureIssuesRepository(),
+          recentlyViewedCache: cache,
+          initialIssue: _fixtureIssue(),
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Close issue'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Closed'), findsOneWidget);
+    expect(find.text('Unable to update the issue.'), findsNothing);
   });
 
   testWidgets('a pending notes refresh preserves later triage events', (
@@ -1384,4 +1438,20 @@ class _OfflineIssuesRepository extends FixtureIssuesRepository {
   Future<IssueNotePage> loadFirstNotesPage(int projectId, int issueIid) async {
     throw const SocketException('offline');
   }
+}
+
+class _FailingWriteRecentlyViewedCache extends RecentlyViewedCache {
+  _FailingWriteRecentlyViewedCache({
+    required super.database,
+    required super.account,
+  });
+
+  @override
+  Future<bool> putIf(
+    RecentlyViewedType type,
+    int projectId,
+    int itemId,
+    String payload, {
+    required bool Function(String? existingPayload) shouldReplace,
+  }) => Future.error(StateError('cache write failed'));
 }

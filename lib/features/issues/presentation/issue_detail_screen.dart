@@ -81,6 +81,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                 widget.repository.loadIssue(widget.projectId, widget.issueIid),
             decode: Issue.fromJson,
             encode: (issue) => issue.toJson(),
+            updatedAt: (issue) => issue.updatedAt,
           );
   }
 
