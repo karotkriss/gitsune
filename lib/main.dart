@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/database/app_database.dart';
+import 'core/repository/offline_first_repository.dart';
 import 'core/theme/app_theme.dart';
 import 'features/issues/data/issues_repository.dart';
 import 'features/shell/app_shell.dart';
@@ -11,9 +13,10 @@ void main() {
 }
 
 class GitsuneApp extends StatefulWidget {
-  const GitsuneApp({super.key, this.issuesRepository});
+  const GitsuneApp({super.key, this.issuesRepository, this.todosRepository});
 
   final IssuesRepository? issuesRepository;
+  final OfflineFirstRepository<List<TodoItem>>? todosRepository;
 
   @override
   State<GitsuneApp> createState() => _GitsuneAppState();
@@ -22,6 +25,7 @@ class GitsuneApp extends StatefulWidget {
 class _GitsuneAppState extends State<GitsuneApp> {
   late final GoRouter _router = buildAppRouter(
     issuesRepository: widget.issuesRepository,
+    todosRepository: widget.todosRepository,
   );
 
   @override

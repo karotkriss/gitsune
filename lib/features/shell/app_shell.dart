@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/database/app_database.dart';
 import '../../core/icons/gs_icons.dart';
+import '../../core/repository/offline_first_repository.dart';
 import '../explore/explore_screen.dart';
 import '../home/home_screen.dart';
 import '../issues/data/issue_models.dart';
@@ -29,13 +31,15 @@ import '../todos/todos_screen.dart';
 /// account and project composition root owns a signed-in GitLab client.
 /// Keeping those dependencies optional lets the shell boot before E2's account
 /// wiring lands without hiding the route contracts exposed to project
-/// navigation. [searchRepository] likewise swaps the Explore tab's placeholder
-/// for the real [SearchScreen] once it's available.
+/// navigation. [searchRepository] swaps the Explore tab's placeholder for the
+/// real [SearchScreen], while [todosRepository] binds the To-Dos tab to its
+/// offline-first cache stream.
 GoRouter buildAppRouter({
   IssuesRepository? issuesRepository,
   MergeRequestsRepository? mergeRequestsRepository,
   PipelinesRepository? pipelinesRepository,
   SearchRepository? searchRepository,
+  OfflineFirstRepository<List<TodoItem>>? todosRepository,
   String initialLocation = '/home',
 }) {
   return GoRouter(
@@ -56,7 +60,9 @@ GoRouter buildAppRouter({
             routes: [
               GoRoute(
                 path: '/todos',
-                builder: (context, state) => const TodosScreen(),
+                builder: (context, state) => todosRepository == null
+                    ? const TodosScreen()
+                    : TodosScreen(repository: todosRepository),
               ),
             ],
           ),
