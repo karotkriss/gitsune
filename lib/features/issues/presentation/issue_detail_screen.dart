@@ -30,7 +30,10 @@ class IssueDetailScreen extends StatefulWidget {
 
 class _IssueDetailScreenState extends State<IssueDetailScreen> {
   final _scrollController = ScrollController();
-  final _notes = <IssueNote>[];
+  final _commentController = TextEditingController();
+  final _loadedNotes = <IssueNote>[];
+  final _createdNotes = <int, IssueNote>{};
+  bool _sendingComment = false;
   Issue? _issue;
   bool _issueLoading = true;
   bool _issueFailed = false;
@@ -40,6 +43,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   bool _notesNextFailed = false;
   bool _notesHaveMore = false;
   int _generation = 0;
+  int _issueGeneration = 0;
 
   @override
   void initState() {
@@ -55,8 +59,12 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.issueIid != widget.issueIid ||
         oldWidget.repository != widget.repository) {
+      _issueGeneration++;
       _issue = widget.initialIssue;
-      _notes.clear();
+      _loadedNotes.clear();
+      _createdNotes.clear();
+      _commentController.clear();
+      _sendingComment = false;
       _notesHaveMore = false;
       _reload();
     }
@@ -67,7 +75,34 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     _scrollController
       ..removeListener(_handleScroll)
       ..dispose();
+    _commentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendComment() async {
+    final body = normalizeIssueDraft(_commentController.text);
+    if (body.isEmpty || _sendingComment) return;
+    final issueGeneration = _issueGeneration;
+    setState(() => _sendingComment = true);
+    try {
+      final note = await widget.repository.createNote(
+        widget.projectId,
+        widget.issueIid,
+        body,
+      );
+      if (!mounted || issueGeneration != _issueGeneration) return;
+      setState(() {
+        _createdNotes[note.id] = note;
+        _sendingComment = false;
+        _commentController.clear();
+      });
+    } on Object {
+      if (!mounted || issueGeneration != _issueGeneration) return;
+      setState(() => _sendingComment = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to post the comment.')),
+      );
+    }
   }
 
   void _handleScroll() {
@@ -124,7 +159,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       );
       if (!mounted || generation != _generation) return;
       setState(() {
-        _notes
+        _loadedNotes
           ..clear()
           ..addAll(page.items);
         _notesHaveMore = page.hasMore;
@@ -174,7 +209,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       );
       if (!mounted || generation != _generation) return;
       setState(() {
-        _notes.addAll(page.items);
+        _loadedNotes.addAll(page.items);
         _notesHaveMore = page.hasMore;
         _notesLoadingMore = false;
       });
@@ -202,10 +237,22 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     });
   }
 
+  List<IssueNote> get _notes {
+    final notesById = <int, IssueNote>{
+      for (final note in _loadedNotes) note.id: note,
+      ..._createdNotes,
+    };
+    return notesById.values.toList(growable: false)..sort((left, right) {
+      final byCreatedAt = left.createdAt.compareTo(right.createdAt);
+      return byCreatedAt != 0 ? byCreatedAt : left.id.compareTo(right.id);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final gs = Theme.of(context).extension<GsTheme>()!;
     final issue = _issue;
+    final notes = _notes;
     final now = widget.now ?? DateTime.now();
     return Scaffold(
       backgroundColor: gs.surfaceSubtle,
@@ -240,78 +287,169 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
               failed: _issueFailed,
               onRetry: _reload,
             )
-          : RefreshIndicator(
-              onRefresh: _reload,
-              color: gs.accent,
-              child: CustomScrollView(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  if (_issueLoading)
-                    const SliverToBoxAdapter(
-                      child: LinearProgressIndicator(minHeight: 2),
-                    ),
-                  SliverToBoxAdapter(
-                    child: _IssueHeader(
-                      issue: issue,
-                      projectPath: widget.projectPath,
-                      now: now,
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                    sliver: SliverList.builder(
-                      itemCount: _notes.length + 2,
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: IssueCommentCard(
-                              author: issue.author,
-                              timeLabel: formatIssueRelativeTime(
-                                issue.createdAt,
-                                now,
-                              ),
-                              body: issue.description,
-                              opening: true,
-                            ),
-                          );
-                        }
-                        if (index <= _notes.length) {
-                          final note = _notes[index - 1];
-                          final timeLabel = formatIssueRelativeTime(
-                            note.createdAt,
-                            now,
-                          );
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: note.system
-                                ? IssueSystemEvent(
-                                    note: note,
-                                    timeLabel: timeLabel,
-                                  )
-                                : IssueCommentCard(
-                                    author: note.author,
-                                    timeLabel: timeLabel,
-                                    body: note.body,
-                                    internal: note.internal,
+          : Column(
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _reload,
+                    color: gs.accent,
+                    child: CustomScrollView(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        if (_issueLoading)
+                          const SliverToBoxAdapter(
+                            child: LinearProgressIndicator(minHeight: 2),
+                          ),
+                        SliverToBoxAdapter(
+                          child: _IssueHeader(
+                            issue: issue,
+                            projectPath: widget.projectPath,
+                            now: now,
+                          ),
+                        ),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                          sliver: SliverList.builder(
+                            itemCount: notes.length + 2,
+                            itemBuilder: (context, index) {
+                              if (index == 0) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: IssueCommentCard(
+                                    author: issue.author,
+                                    timeLabel: formatIssueRelativeTime(
+                                      issue.createdAt,
+                                      now,
+                                    ),
+                                    body: issue.description,
+                                    opening: true,
                                   ),
-                          );
-                        }
-                        return _NotesFooter(
-                          hasNotes: _notes.isNotEmpty,
-                          loading: _notesLoading || _notesLoadingMore,
-                          firstPageFailed: _notesInitialFailed,
-                          nextPageFailed: _notesNextFailed,
-                          onRetryFirst: _retryFirstNotesPage,
-                          onRetryNext: _retryNextNotesPage,
-                        );
-                      },
+                                );
+                              }
+                              if (index <= notes.length) {
+                                final note = notes[index - 1];
+                                final timeLabel = formatIssueRelativeTime(
+                                  note.createdAt,
+                                  now,
+                                );
+                                return Padding(
+                                  key: ValueKey('issue-note-${note.id}'),
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: note.system
+                                      ? IssueSystemEvent(
+                                          note: note,
+                                          timeLabel: timeLabel,
+                                        )
+                                      : IssueCommentCard(
+                                          author: note.author,
+                                          timeLabel: timeLabel,
+                                          body: note.body,
+                                          internal: note.internal,
+                                        ),
+                                );
+                              }
+                              return _NotesFooter(
+                                hasNotes: notes.isNotEmpty,
+                                loading: _notesLoading || _notesLoadingMore,
+                                firstPageFailed: _notesInitialFailed,
+                                nextPageFailed: _notesNextFailed,
+                                onRetryFirst: _retryFirstNotesPage,
+                                onRetryNext: _retryNextNotesPage,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                ),
+                _CommentComposer(
+                  controller: _commentController,
+                  sending: _sendingComment,
+                  onChanged: (_) => setState(() {}),
+                  onSend: _sendComment,
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _CommentComposer extends StatelessWidget {
+  const _CommentComposer({
+    required this.controller,
+    required this.sending,
+    required this.onChanged,
+    required this.onSend,
+  });
+
+  final TextEditingController controller;
+  final bool sending;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    final body = normalizeIssueDraft(controller.text);
+    final canSend = !sending && body.isNotEmpty;
+    return ColoredBox(
+      color: gs.surfaceApp,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (body.isNotEmpty)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 160),
+                  child: SingleChildScrollView(
+                    child: IssueDraftPreview(draft: body),
+                  ),
+                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      enabled: !sending,
+                      minLines: 1,
+                      maxLines: 5,
+                      onChanged: onChanged,
+                      decoration: const InputDecoration(
+                        hintText: 'Write a comment (Markdown supported)',
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  if (sending)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  else
+                    IconButton(
+                      tooltip: 'Send comment',
+                      onPressed: canSend ? onSend : null,
+                      icon: GsIcon(
+                        GsIconGlyph.paperAirplane,
+                        size: 20,
+                        color: canSend ? gs.accent : gs.statusNeutral,
+                      ),
+                    ),
                 ],
               ),
-            ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

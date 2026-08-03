@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -118,6 +119,61 @@ void main() {
     expect(secondNotes.items.single.id, 9002);
     expect(secondNotes.items.single.system, isFalse);
     expect(secondNotes.hasMore, isFalse);
+  });
+  test('creates an issue and decodes the created payload', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    Map<String, dynamic>? postedBody;
+    server.handle('POST /api/v4/projects/7/issues', (request) async {
+      postedBody =
+          jsonDecode(await utf8.decodeStream(request)) as Map<String, dynamic>;
+      request.response.statusCode = HttpStatus.created;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(Fixtures.raw('issue_created_143'));
+      await request.response.close();
+    });
+
+    final repository = GitLabIssuesRepository(_client(server, account));
+    final issue = await repository.createIssue(
+      7,
+      title: 'Track reconnect regressions',
+      description: 'Watch the reconnect flow for **regressions**.',
+    );
+
+    expect(postedBody, {
+      'title': 'Track reconnect regressions',
+      'description': 'Watch the reconnect flow for **regressions**.',
+    });
+    expect(issue.iid, 143);
+    expect(issue.title, 'Track reconnect regressions');
+    expect(issue.state, IssueState.opened);
+    expect(issue.author.username, 'marin');
+  });
+
+  test('posts a comment and decodes the created note', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    Map<String, dynamic>? postedBody;
+    server.handle('POST /api/v4/projects/7/issues/142/notes', (request) async {
+      postedBody =
+          jsonDecode(await utf8.decodeStream(request)) as Map<String, dynamic>;
+      request.response.statusCode = HttpStatus.created;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(Fixtures.raw('issue_142_note_created'));
+      await request.response.close();
+    });
+
+    final repository = GitLabIssuesRepository(_client(server, account));
+    final note = await repository.createNote(
+      7,
+      142,
+      'Confirmed on the **latest** build.',
+    );
+
+    expect(postedBody, {'body': 'Confirmed on the **latest** build.'});
+    expect(note.id, 9101);
+    expect(note.body, 'Confirmed on the **latest** build.');
+    expect(note.system, isFalse);
   });
 }
 

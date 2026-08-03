@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../data/issue_models.dart';
 import '../data/issues_repository.dart';
 import 'issue_components.dart';
+import 'issue_create_screen.dart';
 import 'issue_detail_screen.dart';
 
 class IssueListScreen extends StatefulWidget {
@@ -137,6 +138,20 @@ class _IssueListScreenState extends State<IssueListScreen> {
     });
   }
 
+  Future<void> _createIssue() async {
+    final created = await Navigator.of(context).push<Issue>(
+      MaterialPageRoute<Issue>(
+        builder: (context) => IssueCreateScreen(
+          projectId: widget.projectId,
+          projectPath: widget.projectPath,
+          repository: widget.repository,
+        ),
+      ),
+    );
+    if (created == null || !mounted) return;
+    setState(() => _issues.insert(0, created));
+  }
+
   void _openIssue(Issue issue) {
     final callback = widget.onIssueTap;
     if (callback != null) {
@@ -181,6 +196,11 @@ class _IssueListScreenState extends State<IssueListScreen> {
             context,
           ).textTheme.titleMedium?.copyWith(color: gs.textHeading),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'New issue',
+        onPressed: _createIssue,
+        child: const GsIcon(GsIconGlyph.plus, size: 20),
       ),
       body: RefreshIndicator(
         onRefresh: _loadFirstPage,
