@@ -43,6 +43,21 @@ class GitLabOAuth {
     tokenStore: SecureTokenStore(),
   );
 
+  /// The self-hosted sign-in entry point (E2.2): endpoints derived from the
+  /// instance [baseUrl], the user's pasted [applicationId] as the client ID,
+  /// and the same fixed redirect and secure storage as gitlab.com. The E2.3
+  /// registration wizard calls this once it has a validated Application ID.
+  factory GitLabOAuth.selfHosted({
+    required Uri baseUrl,
+    required String applicationId,
+  }) => GitLabOAuth(
+    config: GitLabOAuthConfig.selfHosted(
+      baseUrl: baseUrl,
+      applicationId: applicationId,
+    ),
+    tokenStore: SecureTokenStore(),
+  );
+
   final GitLabOAuthConfig config;
   final TokenStore tokenStore;
   final Authorizer _authorize;

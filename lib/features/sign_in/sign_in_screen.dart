@@ -8,10 +8,15 @@ import '../../core/theme/app_theme.dart';
 /// The sign-in surface specified by `docs/research/design-direction.md` and
 /// `docs/decisions/0001-auth-posture.md`.
 ///
-/// Reachable self-hosted instances show an inline limitation until the E2.3
-/// registration wizard is implemented.
+/// Production keeps showing an inline limitation for reachable self-hosted
+/// instances until the E2.3 registration wizard wires [signInSelfHosted].
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key, this.signIn, this.probeInstance});
+  const SignInScreen({
+    super.key,
+    this.signIn,
+    this.probeInstance,
+    this.signInSelfHosted,
+  });
 
   /// Starts the gitlab.com OAuth sign-in (E2.1). Injectable so tests never
   /// reach a real browser; defaults to [GitLabOAuth.gitlabCom].
@@ -20,6 +25,12 @@ class SignInScreen extends StatefulWidget {
   /// Checks that a self-hosted URL answers as a GitLab instance. Injectable
   /// so tests never touch the network; defaults to [isGitLabInstance].
   final Future<bool> Function(Uri base)? probeInstance;
+
+  /// Starts self-hosted OAuth sign-in (E2.2) for a confirmed-reachable
+  /// instance [base]. The E2.3 registration wizard attaches here: it
+  /// supplies and validates the instance's Application ID, then runs
+  /// [GitLabOAuth.selfHosted]. Null keeps the inline not-yet-available note.
+  final Future<void> Function(Uri base)? signInSelfHosted;
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -59,9 +70,9 @@ class _SignInScreenState extends State<SignInScreen> {
           error =
               '${base.host} does not answer as a GitLab instance. '
               'Check the address and try again.';
+        } else if (widget.signInSelfHosted case final selfHosted?) {
+          await selfHosted(base);
         } else {
-          // The E2.3 self-hosted registration wizard attaches here, taking
-          // over once the instance is confirmed reachable.
           error =
               'Self-hosted sign-in is not available yet. '
               'Use gitlab.com for now.';

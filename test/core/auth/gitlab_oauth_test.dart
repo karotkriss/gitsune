@@ -33,6 +33,46 @@ const _tokenResponse = {
 };
 
 void main() {
+  test('self-hosted config derives both endpoints from the instance base '
+      'URL and uses the pasted Application ID as the client id', () {
+    final config = GitLabOAuthConfig.selfHosted(
+      baseUrl: Uri.parse('https://gitlab.example.com:8443'),
+      applicationId: 'pasted-application-id',
+    );
+    expect(config.clientId, 'pasted-application-id');
+    expect(
+      config.authorizeEndpoint,
+      Uri.parse('https://gitlab.example.com:8443/oauth/authorize'),
+    );
+    expect(
+      config.tokenEndpoint,
+      Uri.parse('https://gitlab.example.com:8443/oauth/token'),
+    );
+  });
+
+  test('self-hosted authorization request carries the Application ID and '
+      'the same fixed redirect gitlab.com uses', () {
+    final oauth = GitLabOAuth(
+      config: GitLabOAuthConfig.selfHosted(
+        baseUrl: Uri.parse('https://gitlab.example.com'),
+        applicationId: 'pasted-application-id',
+      ),
+      tokenStore: _MemoryTokenStore(),
+    );
+    final request = oauth.buildAuthorizationRequest();
+    expect(request.clientId, 'pasted-application-id');
+    expect(request.redirectUrl, 'dev.gitsune://oauth-callback');
+    expect(request.scopes, ['api', 'read_user']);
+    expect(
+      request.serviceConfiguration?.authorizationEndpoint,
+      'https://gitlab.example.com/oauth/authorize',
+    );
+    expect(
+      request.serviceConfiguration?.tokenEndpoint,
+      'https://gitlab.example.com/oauth/token',
+    );
+  });
+
   test('authorization request targets gitlab.com with the baked-in '
       'public client id, fixed redirect, and blueprint scopes', () {
     final oauth = GitLabOAuth(
@@ -62,12 +102,13 @@ void main() {
 
     tearDown(() => server.close());
 
+    // Every fake-server test runs as a self-hosted instance: endpoints
+    // derived from the server's base URL, client id overridden (E2.2).
     GitLabOAuth oauth({Authorizer? authorizer, TokenStore? tokenStore}) =>
         GitLabOAuth(
-          config: GitLabOAuthConfig(
-            clientId: 'test-client',
-            authorizeEndpoint: server.baseUri.replace(path: '/oauth/authorize'),
-            tokenEndpoint: server.baseUri.replace(path: '/oauth/token'),
+          config: GitLabOAuthConfig.selfHosted(
+            baseUrl: server.baseUri,
+            applicationId: 'test-client',
           ),
           tokenStore: tokenStore ?? _MemoryTokenStore(),
           authorizer: authorizer,

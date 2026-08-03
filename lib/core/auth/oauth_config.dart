@@ -32,12 +32,26 @@ class GitLabOAuthConfig {
   });
 
   /// gitlab.com's baked-in configuration. A self-hosted instance instead
-  /// derives endpoints from its base URL and takes the user's pasted
-  /// Application ID (E2.2).
+  /// uses [GitLabOAuthConfig.selfHosted].
   static final gitlabCom = GitLabOAuthConfig(
     clientId: gitlabComClientId,
     authorizeEndpoint: Uri.parse('https://gitlab.com/oauth/authorize'),
     tokenEndpoint: Uri.parse('https://gitlab.com/oauth/token'),
+  );
+
+  /// A self-hosted instance's configuration (E2.2): the authorize and token
+  /// endpoints derive from the instance [baseUrl] (the same `/oauth/*` shape
+  /// gitlab.com uses, rooted at the user's host), and the user's pasted
+  /// [applicationId] replaces the baked-in gitlab.com client ID. The
+  /// redirect stays [oauthRedirectUri] and the client stays public (PKCE,
+  /// no secret). [baseUrl] is host-level, as produced by `parseInstanceUrl`.
+  factory GitLabOAuthConfig.selfHosted({
+    required Uri baseUrl,
+    required String applicationId,
+  }) => GitLabOAuthConfig(
+    clientId: applicationId,
+    authorizeEndpoint: baseUrl.replace(path: '/oauth/authorize'),
+    tokenEndpoint: baseUrl.replace(path: '/oauth/token'),
   );
 
   final String clientId;
