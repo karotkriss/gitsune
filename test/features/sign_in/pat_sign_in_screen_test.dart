@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gitsune/core/auth/pat_auth.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/sign_in/pat_sign_in_screen.dart';
 import 'package:gitsune/features/sign_in/sign_in_screen.dart';
@@ -81,7 +82,9 @@ void main() {
         SignInScreen(
           signInWithToken: (base, token) async {
             attempts.add(token);
-            if (token != 'glpat-right') throw StateError('401');
+            if (token != 'glpat-right') {
+              throw const PatSignInException(PatSignInFailure.rejected);
+            }
           },
         ),
       ),
@@ -96,8 +99,10 @@ void main() {
 
     expect(find.byType(PatSignInScreen), findsOneWidget);
     expect(
-      find.text('gitlab.com did not accept that token. '
-          'Check it and enter it again.'),
+      find.text(
+        'gitlab.com did not accept that token. '
+        'Check it and enter it again.',
+      ),
       findsOneWidget,
     );
 
@@ -111,13 +116,68 @@ void main() {
     expect(find.byType(PatSignInScreen), findsNothing);
   });
 
+  testWidgets('an HTTP instance is refused before the token is sent', (
+    tester,
+  ) async {
+    var attempted = false;
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signInWithToken: (_, _) async {
+            attempted = true;
+          },
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'http://gitlab.example.com');
+    await tester.tap(find.text('Having trouble signing in?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(tokenField(), 'glpat-secret');
+    await tester.tap(find.text('Sign in'));
+    await tester.pumpAndSettle();
+
+    expect(attempted, isFalse);
+    expect(
+      find.text('Personal access token sign-in requires an HTTPS instance.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('a network failure is not presented as token rejection', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signInWithToken: (_, _) async =>
+              throw const PatSignInException(PatSignInFailure.network),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Having trouble signing in?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(tokenField(), 'glpat-valid');
+    await tester.tap(find.text('Sign in'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Could not reach gitlab.com. '
+        'Check your connection and try again.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('did not accept'), findsNothing);
+    expect(tester.widget<TextField>(tokenField()).enabled, isTrue);
+  });
+
   testWidgets('an empty token or invalid instance shows an inline error '
       'and never signs in', (tester) async {
     await tester.pumpWidget(
       app(
-        SignInScreen(
-          signInWithToken: (_, _) async => fail('must not sign in'),
-        ),
+        SignInScreen(signInWithToken: (_, _) async => fail('must not sign in')),
       ),
     );
 

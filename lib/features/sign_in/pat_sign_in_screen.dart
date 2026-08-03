@@ -50,6 +50,13 @@ class _PatSignInScreenState extends State<PatSignInScreen> {
       setState(() => _error = 'Enter a valid instance URL, like gitlab.com.');
       return;
     }
+    if (base.scheme != 'https') {
+      setState(
+        () => _error =
+            'Personal access token sign-in requires an HTTPS instance.',
+      );
+      return;
+    }
     final token = _tokenController.text.trim();
     if (token.isEmpty) {
       setState(() => _error = 'Paste your personal access token.');
@@ -68,14 +75,36 @@ class _PatSignInScreenState extends State<PatSignInScreen> {
           ))(base, token);
       if (mounted) Navigator.of(context).pop();
       return;
-    } catch (_) {
-      // A rejected token routes back to re-entering it, never a dead end.
+    } on PatSignInException catch (error) {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error =
+          _error = switch (error.failure) {
+            PatSignInFailure.insecureTransport =>
+              'Personal access token sign-in requires an HTTPS instance.',
+            PatSignInFailure.rejected =>
               '${base.host} did not accept that token. '
-              'Check it and enter it again.';
+                  'Check it and enter it again.',
+            PatSignInFailure.network =>
+              'Could not reach ${base.host}. '
+                  'Check your connection and try again.',
+            PatSignInFailure.server =>
+              '${base.host} could not complete token validation. '
+                  'Try again later.',
+            PatSignInFailure.invalidResponse =>
+              '${base.host} returned an unexpected response. '
+                  'Check the instance URL and try again.',
+            PatSignInFailure.storage =>
+              'Your token was accepted, but could not be saved securely. '
+                  'Check secure storage access and try again.',
+          };
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = 'Could not finish signing in. Try again.';
         });
       }
     }
@@ -147,7 +176,8 @@ class _PatSignInScreenState extends State<PatSignInScreen> {
                 },
                 onSubmitted: _busy ? null : (_) => _signIn(),
                 decoration: InputDecoration(
-                  helperText: 'Checked against your instance, then stored '
+                  helperText:
+                      'Checked against your instance, then stored '
                       'only in your device\'s secure storage.',
                   helperMaxLines: 2,
                   errorText: _error,
