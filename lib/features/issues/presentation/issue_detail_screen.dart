@@ -50,6 +50,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   bool _notesHaveMore = false;
   int _generation = 0;
   int _issueGeneration = 0;
+  int _issueMutationRevision = 0;
 
   @override
   void initState() {
@@ -136,18 +137,27 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   }
 
   Future<void> _refreshIssue(int generation) async {
+    final mutationRevision = _issueMutationRevision;
     try {
       final issue = await widget.repository.loadIssue(
         widget.projectId,
         widget.issueIid,
       );
-      if (!mounted || generation != _generation) return;
+      if (!mounted ||
+          generation != _generation ||
+          mutationRevision != _issueMutationRevision) {
+        return;
+      }
       setState(() {
         _issue = issue;
         _issueLoading = false;
       });
     } on Object {
-      if (!mounted || generation != _generation) return;
+      if (!mounted ||
+          generation != _generation ||
+          mutationRevision != _issueMutationRevision) {
+        return;
+      }
       setState(() {
         _issueLoading = false;
         _issueFailed = true;
@@ -161,6 +171,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   }
 
   Future<void> _refreshNotes(int generation) async {
+    final localEventIds = _localEvents.map((event) => event.id).toSet();
     try {
       final page = await widget.repository.loadFirstNotesPage(
         widget.projectId,
@@ -171,9 +182,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         _loadedNotes
           ..clear()
           ..addAll(page.items);
-        // A refetched thread carries the server's own system notes for any
-        // triage just performed, so the local stand-ins retire here.
-        _localEvents.clear();
+        _localEvents.removeWhere((event) => localEventIds.contains(event.id));
         _notesHaveMore = page.hasMore;
         _notesLoading = false;
       });
@@ -252,47 +261,63 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   Future<void> _editLabels() async {
     final issue = _issue;
     if (issue == null) return;
+    final issueGeneration = _issueGeneration;
     final List<IssueLabel> options;
     try {
       options = await widget.repository.loadProjectLabels(widget.projectId);
     } on Object {
-      if (!mounted) return;
+      if (!mounted || issueGeneration != _issueGeneration) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to load project labels.')),
       );
       return;
     }
-    if (!mounted) return;
-    _projectLabels = options;
+    if (!mounted || issueGeneration != _issueGeneration) return;
+    final optionsByName = {
+      for (final label in issue.labels) label.name: label,
+      for (final label in options) label.name: label,
+    };
+    _projectLabels = optionsByName.values.toList(growable: false);
     final selection = await _showTriagePicker<String>(
       title: 'Labels',
-      options: [for (final label in options) (label.name, label.name)],
+      options: [for (final label in _projectLabels) (label.name, label.name)],
       initial: issue.labels.map((label) => label.name).toSet(),
     );
-    if (selection == null) return;
+    if (!mounted || issueGeneration != _issueGeneration || selection == null) {
+      return;
+    }
     await _applyTriage(labels: selection);
   }
 
   Future<void> _editAssignees() async {
     final issue = _issue;
     if (issue == null) return;
+    final issueGeneration = _issueGeneration;
     final List<IssueAuthor> options;
     try {
       options = await widget.repository.loadProjectMembers(widget.projectId);
     } on Object {
-      if (!mounted) return;
+      if (!mounted || issueGeneration != _issueGeneration) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to load project members.')),
       );
       return;
     }
-    if (!mounted) return;
+    if (!mounted || issueGeneration != _issueGeneration) return;
+    final optionsById = {
+      for (final assignee in issue.assignees) assignee.id: assignee,
+      for (final member in options) member.id: member,
+    };
     final selection = await _showTriagePicker<int>(
       title: 'Assignees',
-      options: [for (final member in options) (member.id, member.name)],
+      options: [
+        for (final member in optionsById.values) (member.id, member.name),
+      ],
       initial: issue.assignees.map((assignee) => assignee.id).toSet(),
     );
-    if (selection == null) return;
+    if (!mounted || issueGeneration != _issueGeneration || selection == null) {
+      return;
+    }
     await _applyTriage(assigneeIds: selection);
   }
 
@@ -375,8 +400,11 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         ..._projectLabels,
       ]);
       setState(() {
+        _issueMutationRevision++;
         _localEvents.addAll(_triageEvents(before, folded));
         _issue = folded;
+        _issueLoading = false;
+        _issueFailed = false;
         _triaging = false;
       });
     } on Object {
