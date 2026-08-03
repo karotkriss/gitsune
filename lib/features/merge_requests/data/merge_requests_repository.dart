@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/diff/diff_file.dart';
 import '../../../core/network/keyset_paginator.dart';
+import 'merge_request_discussion_models.dart';
 import 'merge_request_models.dart';
 
 class MergeRequestPage {
@@ -44,6 +45,28 @@ abstract interface class MergeRequestsRepository {
   /// Loads the merge request's full multi-file diff, following every
   /// pagination link, in the order GitLab returns the files.
   Future<List<DiffFile>> loadDiffs(int projectId, int mergeIid);
+
+  /// Loads every discussion on the merge request, following every
+  /// pagination link.
+  Future<List<Discussion>> loadDiscussions(int projectId, int mergeIid);
+
+  /// Starts a new thread on a diff line, returning the created discussion
+  /// as the server shaped it.
+  Future<Discussion> createDiffDiscussion(
+    int projectId,
+    int mergeIid, {
+    required String body,
+    required DiffPosition position,
+  });
+
+  /// Resolves or unresolves a thread, returning the updated discussion as
+  /// the server shaped it.
+  Future<Discussion> setDiscussionResolved(
+    int projectId,
+    int mergeIid,
+    String discussionId, {
+    required bool resolved,
+  });
 }
 
 /// GitLab REST v4 merge request reader with Link-header pagination.
@@ -196,6 +219,55 @@ class GitLabMergeRequestsRepository implements MergeRequestsRepository {
       files.addAll(page.items);
     }
     return files;
+  }
+
+  @override
+  Future<List<Discussion>> loadDiscussions(int projectId, int mergeIid) async {
+    final paginator = KeysetPaginator<Discussion>(
+      dio: _client,
+      initialUri: _apiUri(
+        'projects/$projectId/merge_requests/$mergeIid/discussions',
+        {'per_page': '50'},
+      ),
+      decode: Discussion.fromJson,
+    );
+    final discussions = <Discussion>[];
+    while (paginator.hasMore) {
+      final page = await paginator.loadNext();
+      discussions.addAll(page.items);
+    }
+    return discussions;
+  }
+
+  @override
+  Future<Discussion> createDiffDiscussion(
+    int projectId,
+    int mergeIid, {
+    required String body,
+    required DiffPosition position,
+  }) async {
+    final response = await _client.postUri<Map<String, dynamic>>(
+      _apiUri('projects/$projectId/merge_requests/$mergeIid/discussions'),
+      data: {'body': body, 'position': position.toJson()},
+    );
+    return Discussion.fromJson(response.data!);
+  }
+
+  @override
+  Future<Discussion> setDiscussionResolved(
+    int projectId,
+    int mergeIid,
+    String discussionId, {
+    required bool resolved,
+  }) async {
+    final response = await _client.putUri<Map<String, dynamic>>(
+      _apiUri(
+        'projects/$projectId/merge_requests/$mergeIid/discussions/'
+        '$discussionId',
+        {'resolved': '$resolved'},
+      ),
+    );
+    return Discussion.fromJson(response.data!);
   }
 
   Uri _apiUri(String path, [Map<String, String>? queryParameters]) {

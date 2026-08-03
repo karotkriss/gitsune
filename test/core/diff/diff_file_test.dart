@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/diff/diff_file.dart';
 import 'package:gitsune/core/diff/diff_hunk_parser.dart';
@@ -98,6 +99,36 @@ void main() {
     expect(GsDiffView.offsetForFile(files, 0), 0);
     expect(GsDiffView.offsetForFile(files, 1), 140);
     expect(GsDiffView.offsetForFile(files, 2), 140 + 100);
+  });
+
+  test('includes indexed annotations in extents and jump offsets', () {
+    final files = [_fileOfLines(3), _fileOfLines(1)];
+    final annotations = [
+      DiffLineAnnotation(
+        path: 'a.txt',
+        newLine: 1,
+        builder: (_) => const SizedBox.shrink(),
+      ),
+      DiffLineAnnotation(
+        path: 'a.txt',
+        oldLine: 2,
+        builder: (_) => const SizedBox.shrink(),
+      ),
+      DiffLineAnnotation(
+        path: 'other.txt',
+        newLine: 3,
+        builder: (_) => const SizedBox.shrink(),
+      ),
+    ];
+
+    expect(
+      GsDiffView.extentForFile(files.first, annotations: annotations),
+      140 + 2 * GsDiffView.annotationHeight,
+    );
+    expect(
+      GsDiffView.offsetForFile(files, 1, annotations: annotations),
+      140 + 2 * GsDiffView.annotationHeight,
+    );
   });
 }
 
