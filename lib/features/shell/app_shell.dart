@@ -8,6 +8,8 @@ import '../issues/data/issue_models.dart';
 import '../issues/data/issues_repository.dart';
 import '../issues/presentation/issue_detail_screen.dart';
 import '../issues/presentation/issue_list_screen.dart';
+import '../pipelines/data/pipelines_repository.dart';
+import '../pipelines/presentation/pipeline_detail_screen.dart';
 import '../profile/profile_screen.dart';
 import '../todos/todos_screen.dart';
 
@@ -17,12 +19,14 @@ import '../todos/todos_screen.dart';
 /// A fresh router per app instance (rather than a shared global) so app
 /// restarts and tests never inherit a previous instance's location.
 ///
-/// [issuesRepository] enables the project issue routes once the account and
-/// project composition root owns a signed-in GitLab client. Keeping that
-/// dependency optional lets the shell boot before E2's account wiring lands,
-/// without hiding the route contract E6.1 exposes to project navigation.
+/// [issuesRepository] and [pipelinesRepository] enable their project routes
+/// once the account and project composition root owns a signed-in GitLab
+/// client. Keeping those dependencies optional lets the shell boot before E2's
+/// account wiring lands without hiding the route contracts exposed to project
+/// navigation.
 GoRouter buildAppRouter({
   IssuesRepository? issuesRepository,
+  PipelinesRepository? pipelinesRepository,
   String initialLocation = '/home',
 }) {
   return GoRouter(
@@ -104,6 +108,23 @@ GoRouter buildAppRouter({
           },
         ),
       ],
+      if (pipelinesRepository != null)
+        GoRoute(
+          path: '/projects/:projectId/pipelines/:pipelineId',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            final pipelineId = int.parse(state.pathParameters['pipelineId']!);
+            final projectPath =
+                state.uri.queryParameters['projectPath'] ??
+                'Project $projectId';
+            return PipelineDetailScreen(
+              projectId: projectId,
+              projectPath: projectPath,
+              pipelineId: pipelineId,
+              repository: pipelinesRepository,
+            );
+          },
+        ),
     ],
   );
 }

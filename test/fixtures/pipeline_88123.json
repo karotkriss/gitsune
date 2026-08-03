@@ -1,0 +1,13 @@
+{
+  "id": 88123,
+  "iid": 340,
+  "project_id": 7,
+  "status": "running",
+  "source": "merge_request_event",
+  "ref": "feat/status-surface",
+  "sha": "a73f91c2f7d87c438cb4793e05f823d0a3ad7451",
+  "web_url": "https://gitlab.example.com/gitsune/app/-/pipelines/88123",
+  "created_at": "2026-08-02T09:41:00Z",
+  "updated_at": "2026-08-02T09:58:00Z",
+  "duration": 558
+}
