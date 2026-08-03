@@ -14,14 +14,30 @@ class OAuthTokens {
   /// stored value is not a valid encoding.
   factory OAuthTokens.decode(String encoded) {
     final decoded = jsonDecode(encoded);
-    if (decoded is! Map<String, dynamic> || decoded['accessToken'] is! String) {
+    if (decoded is! Map<String, dynamic>) {
       throw const FormatException('Malformed stored OAuth tokens');
     }
+
+    final accessToken = decoded['accessToken'];
+    final refreshToken = decoded['refreshToken'];
     final expiresAt = decoded['expiresAt'];
+    if (accessToken is! String ||
+        refreshToken != null && refreshToken is! String ||
+        expiresAt != null && expiresAt is! String) {
+      throw const FormatException('Malformed stored OAuth tokens');
+    }
+
+    final parsedExpiresAt = expiresAt == null
+        ? null
+        : DateTime.tryParse(expiresAt);
+    if (expiresAt != null && parsedExpiresAt == null) {
+      throw const FormatException('Malformed stored OAuth tokens');
+    }
+
     return OAuthTokens(
-      accessToken: decoded['accessToken'] as String,
-      refreshToken: decoded['refreshToken'] as String?,
-      expiresAt: expiresAt is String ? DateTime.parse(expiresAt) : null,
+      accessToken: accessToken,
+      refreshToken: refreshToken as String?,
+      expiresAt: parsedExpiresAt,
     );
   }
 

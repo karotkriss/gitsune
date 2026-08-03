@@ -82,8 +82,10 @@ void main() {
   });
 
   test('an empty store reads as signed out', () async {
-    expect(await SecureTokenStore(storage: _MemorySecureStorage()).read(),
-        isNull);
+    expect(
+      await SecureTokenStore(storage: _MemorySecureStorage()).read(),
+      isNull,
+    );
   });
 
   test('a corrupt stored entry reads as signed out, not a crash', () async {
@@ -92,6 +94,18 @@ void main() {
     expect(await SecureTokenStore(storage: storage).read(), isNull);
 
     storage.values['gitsune.oauth.tokens'] = '{"wrong": "shape"}';
+    expect(await SecureTokenStore(storage: storage).read(), isNull);
+  });
+
+  test('wrong-typed stored token fields read as signed out', () async {
+    final storage = _MemorySecureStorage();
+
+    storage.values['gitsune.oauth.tokens'] =
+        '{"accessToken":"at","refreshToken":7,"expiresAt":null}';
+    expect(await SecureTokenStore(storage: storage).read(), isNull);
+
+    storage.values['gitsune.oauth.tokens'] =
+        '{"accessToken":"at","refreshToken":null,"expiresAt":7}';
     expect(await SecureTokenStore(storage: storage).read(), isNull);
   });
 
