@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/shell/app_shell.dart';
+import 'package:gitsune/features/sign_in/self_hosted_wizard_screen.dart';
 import 'package:gitsune/features/sign_in/sign_in_screen.dart';
 
 Widget app(SignInScreen screen) =>
@@ -126,6 +127,26 @@ void main() {
     );
   });
 
+  testWidgets('an HTTP instance is rejected before probing or sign-in', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signIn: () async => fail('must not sign in'),
+          probeInstance: (_) async => fail('must not probe'),
+          signInSelfHosted: (_) async => fail('must not sign in'),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'http://gitlab.example.com');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign-in requires an HTTPS instance.'), findsOneWidget);
+  });
+
   testWidgets('a reachable self-hosted instance starts self-hosted sign-in '
       'with the parsed base URL, never gitlab.com OAuth', (tester) async {
     Uri? signedInto;
@@ -147,8 +168,8 @@ void main() {
     expect(find.textContaining('not available yet'), findsNothing);
   });
 
-  testWidgets('a reachable self-hosted instance shows the honest inline note '
-      'while no self-hosted sign-in is wired', (tester) async {
+  testWidgets('a reachable self-hosted instance opens the E2.3 registration '
+      'wizard by default', (tester) async {
     await tester.pumpWidget(
       app(
         SignInScreen(
@@ -162,12 +183,8 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text(
-        'Self-hosted sign-in is not available yet. Use gitlab.com for now.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.byType(SelfHostedWizardScreen), findsOneWidget);
+    expect(find.text('dev.gitsune://oauth-callback'), findsOneWidget);
   });
 
   testWidgets('editing the field clears the inline error', (tester) async {

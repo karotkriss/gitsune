@@ -53,7 +53,7 @@ Sign-in (gitlab.com):
      redirect = <gitsune's fixed custom scheme>://oauth-callback
      authorize endpoint = https://gitlab.com/oauth/authorize
      token endpoint     = https://gitlab.com/oauth/token
-     scopes = [api, read_user]  (or [read_api, read_user] for read-only mode)
+     scopes = [api, read_user]
      PKCE S256, generated automatically
         |
    the system browser opens GitLab's sign-in page
@@ -76,6 +76,7 @@ Sign-in (a self-hosted instance):
    - the client ID comes from the wizard (the user pastes their instance's
      Application ID), not a baked-in value
    - the authorize/token endpoints are derived from the instance's own URL
+   - the instance URL must use HTTPS
 
 Refreshing a token (any account):
   the app sends the stored refresh token to the instance's token endpoint
@@ -104,10 +105,11 @@ GitLab exposes this under the user's own profile settings (an "Applications" pag
 | Name | A suggested, recognizable name | Free text; helps the user recognize the application later |
 | Redirect URI | Gitsune's fixed custom-scheme redirect | Must match byte-for-byte; the wizard shows a copy button and warns against extra whitespace |
 | Confidential | Unchecked | Gitsune is a public client with no secret; leaving this checked breaks the flow |
-| Scopes | `api` (read/write) or `read_api` (read-only), plus `read_user` | Matches the read/write vs. read-only mode the wizard offers |
+| Scopes | `api` and `read_user` | Grants the read/write API access and user identity access Gitsune requires |
 | Expire access tokens | Left at its default (on) | Gitsune depends on GitLab's standard expiring-token-plus-refresh behavior |
 
 After saving, GitLab shows an Application ID, which is all the wizard asks the user to paste back; it never asks for or stores the accompanying secret, since the application is registered as public.
+The wizard trims surrounding whitespace from the pasted ID, rejects interior whitespace, and rejects values with GitLab's `gloas-` application-secret prefix.
 
 **Every failure the wizard needs to handle gracefully:**
 
@@ -115,7 +117,7 @@ After saving, GitLab shows an Application ID, which is all the wizard asks the u
 2. **The instance is too old** for a needed piece of OAuth behavior; PKCE support has been present for long enough that this is unlikely on any currently supported GitLab version, but the wizard degrades to the PAT path if it detects an incompatibility.
 3. **The redirect URI does not match exactly**, which GitLab reports as an explicit "invalid redirect URI" error; the wizard re-displays the exact expected string.
 4. **The Confidential checkbox was left checked**, which makes the server expect a client secret Gitsune will never send; the wizard explains this specific fix.
-5. **A scope mismatch**, such as choosing read-only mode and then attempting a write action; the wizard names the missing scope.
+5. **A scope mismatch**; the wizard tells the user to select both `api` and `read_user`.
 6. **A paste error**, such as accidental whitespace in the pasted Application ID; the wizard trims and validates the format before storing it.
 
 Source: docs.gitlab.com/integration/oauth_provider/ (application registration paths and fields); GitLab's documentation on public-client OAuth application setup (clearing the confidential checkbox).
@@ -156,5 +158,5 @@ Personal Access Tokens do not refresh, so a failed request on a token-based acco
 - **Packages:** `flutter_appauth` for the OAuth2-with-PKCE flow using the system browser and explicit (not auto-discovered) endpoints, and `flutter_secure_storage` for token storage in the platform's Keychain or Keystore-backed secure storage.
 - **Shipped configuration:** one baked-in gitlab.com client ID, registered once by this project, and one fixed custom URI scheme used identically on every instance.
 - **Per-instance endpoint derivation:** the authorize and token endpoints are always derived from the instance's own base URL, following the same trimming rules GitLab's own CLI uses.
-- **Requested scopes:** `api read_user` for the default read/write mode, or `read_api read_user` for a read-only mode.
+- **Requested scopes:** `api read_user`.
 - **Non-negotiables:** never embed a web view for sign-in; never disable PKCE; never store a client secret on the device; never silently fall back from a failed OAuth account to a Personal Access Token; never put the Personal Access Token option on the primary sign-in screen; never hardcode a fixed token lifetime instead of reading the server's actual response.

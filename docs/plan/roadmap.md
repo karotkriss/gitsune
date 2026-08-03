@@ -106,7 +106,7 @@ Implementation detail lives in `docs/research/auth-blueprint.md`.
 
 - OAuth2 Authorization Code with PKCE (S256), public client, no client secret ever stored or sent, run entirely in the system browser (`flutter_appauth`), never an embedded webview.
 - gitlab.com one-tap sign-in with the baked-in client ID.
-- The guided self-hosted registration wizard: it shows the user exactly what to enter on their instance's Applications page (name, the fixed custom-scheme redirect URI byte-for-byte, public/non-confidential, and the `api`/`read_api` plus `read_user` scopes), and the user pastes back only the Application ID.
+- The guided self-hosted registration wizard: it shows the user exactly what to enter on their instance's Applications page, using the values owned by `docs/research/auth-blueprint.md`, and the user pastes back only the Application ID.
 - The de-emphasized PAT fallback behind a secondary "having trouble signing in" affordance, for instances where user-level OAuth app creation is disabled and the user is not an admin.
 - Multi-instance, multi-account session management: tokens namespaced per account in `flutter_secure_storage`, lazy on-demand refresh reading the server's actual expiry, single-use rotating refresh tokens written atomically, no double-refresh under concurrent requests, and a failed refresh that marks only the one account for re-auth without signing out the others.
 - The sign-in surface per `docs/research/design-direction.md`: the instance field is permanently visible and pre-filled with `gitlab.com`, there are no credential fields on the primary screen, and an unreachable or non-GitLab URL produces an inline error rather than a silent hang.
