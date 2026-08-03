@@ -232,7 +232,10 @@ void main() {
         attempts++;
         request.response.statusCode = status;
         if (status == HttpStatus.tooManyRequests) {
-          request.response.headers.set('retry-after', '45');
+          request.response.headers.set(
+            'retry-after',
+            HttpDate.format(now.add(const Duration(seconds: 45))),
+          );
         }
         await request.response.close();
       });
@@ -322,6 +325,62 @@ void main() {
     drafts = await ambiguous.watchDrafts(7, 142).first;
     expect(drafts, isEmpty);
   });
+
+  test(
+    'a failed local delete reconciles a successful post before retrying',
+    () async {
+      final now = DateTime.utc(2026, 8, 3, 12);
+      final server = await FakeGitLabServer.start();
+      addTearDown(server.close);
+      var postAttempts = 0;
+      final createdNote =
+          Map<String, dynamic>.from(
+            Fixtures.json('issue_142_note_created') as Map,
+          )..addAll({
+            'id': 9992,
+            'body': 'Created before delete failed',
+            'author': {
+              'id': 1,
+              'username': 'current-user',
+              'name': 'Current User',
+              'avatar_url': null,
+            },
+            'created_at': now.toIso8601String(),
+          });
+      server.handle(_notesPath, (request) async {
+        postAttempts++;
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(jsonEncode(createdNote));
+        await request.response.close();
+      });
+      server.respondJson('GET /api/v4/projects/7/issues/142/notes', [
+        createdNote,
+      ]);
+      await database.customStatement('''
+      CREATE TRIGGER reject_comment_draft_delete
+      BEFORE DELETE ON comment_drafts
+      BEGIN
+        SELECT RAISE(FAIL, 'simulated delete failure');
+      END
+    ''');
+      final reconciling = queue(client(server.baseUri.port), now: () => now);
+
+      await reconciling.send(7, 142, 'Created before delete failed');
+
+      var drafts = await reconciling.watchDrafts(7, 142).first;
+      expect(drafts.single.ambiguousSince?.toUtc(), now);
+      await database.customStatement(
+        'DROP TRIGGER reject_comment_draft_delete',
+      );
+      final sent = reconciling.sentNotes.first;
+      await reconciling.flush();
+      await sent;
+
+      expect(postAttempts, 1);
+      drafts = await reconciling.watchDrafts(7, 142).first;
+      expect(drafts, isEmpty);
+    },
+  );
 
   test('one account\'s queue never reads or flushes another\'s '
       'drafts', () async {

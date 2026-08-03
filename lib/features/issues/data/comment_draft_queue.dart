@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
@@ -141,48 +142,52 @@ class CommentDraftQueue {
       final reconciled = await _reconcile(draft);
       if (reconciled == null) return false;
       if (reconciled) return true;
-      await _updateDraft(
-        draft.draftId,
-        const CommentDraftsCompanion(
-          ambiguousSince: Value(null),
-          retryAfter: Value(null),
-        ),
-      );
     }
+    await _updateDraft(
+      draft.draftId,
+      CommentDraftsCompanion(
+        ambiguousSince: Value(now),
+        retryAfter: const Value(null),
+      ),
+    );
+    late final IssueNote note;
     try {
-      final note = await repository.createNote(
+      note = await repository.createNote(
         draft.projectId,
         draft.issueIid,
         draft.body,
       );
-      await discard(draft.draftId);
-      _sentController.add((
-        projectId: draft.projectId,
-        issueIid: draft.issueIid,
-        note: note,
-      ));
-      return true;
     } on Object catch (error, stackTrace) {
       final status = error is DioException ? error.response?.statusCode : null;
       if (error is DioException && _isPermanentRejection(status)) {
         // Permanent rejection: surface it and let later drafts still send.
         await _updateDraft(
           draft.draftId,
-          CommentDraftsCompanion(lastError: Value('HTTP $status')),
+          CommentDraftsCompanion(
+            lastError: Value('HTTP $status'),
+            ambiguousSince: const Value(null),
+          ),
         );
         return true;
       }
       if (error is DioException && (status == 408 || status == 429)) {
         await _updateDraft(
           draft.draftId,
-          CommentDraftsCompanion(retryAfter: Value(_retryAfter(error, now))),
+          CommentDraftsCompanion(
+            retryAfter: Value(_retryAfter(error, now)),
+            ambiguousSince: const Value(null),
+          ),
         );
         return false;
       }
       if (error is DioException && hasAmbiguousRequestOutcome(error)) {
+        return false;
+      }
+      if (error is DioException &&
+          (failedBeforeRequestTransmission(error) || error.response != null)) {
         await _updateDraft(
           draft.draftId,
-          CommentDraftsCompanion(ambiguousSince: Value(now)),
+          const CommentDraftsCompanion(ambiguousSince: Value(null)),
         );
         return false;
       }
@@ -198,6 +203,13 @@ class CommentDraftQueue {
       // reconnect.
       return false;
     }
+    await discard(draft.draftId);
+    _sentController.add((
+      projectId: draft.projectId,
+      issueIid: draft.issueIid,
+      note: note,
+    ));
+    return true;
   }
 
   Future<bool?> _reconcile(CommentDraft draft) async {
@@ -242,7 +254,18 @@ class CommentDraftQueue {
   DateTime _retryAfter(DioException error, DateTime now) {
     final value = error.response?.headers.value('retry-after');
     final seconds = value == null ? null : int.tryParse(value);
-    return now.add(seconds == null ? retryBackoff : Duration(seconds: seconds));
+    if (seconds != null && seconds >= 0) {
+      return now.add(Duration(seconds: seconds));
+    }
+    if (value != null) {
+      try {
+        final deadline = HttpDate.parse(value);
+        return deadline.isAfter(now) ? deadline : now;
+      } on HttpException {
+        return now.add(retryBackoff);
+      }
+    }
+    return now.add(retryBackoff);
   }
 
   Future<void> _updateDraft(int draftId, CommentDraftsCompanion companion) =>
