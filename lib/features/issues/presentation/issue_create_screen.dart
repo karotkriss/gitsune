@@ -41,12 +41,13 @@ class _IssueCreateScreenState extends State<IssueCreateScreen> {
       !_submitting && _titleController.text.trim().isNotEmpty;
 
   Future<void> _submit() async {
+    final description = normalizeIssueDraft(_descriptionController.text);
     setState(() => _submitting = true);
     try {
       final issue = await widget.repository.createIssue(
         widget.projectId,
         title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
+        description: description,
       );
       if (!mounted) return;
       Navigator.of(context).pop(issue);
@@ -62,6 +63,7 @@ class _IssueCreateScreenState extends State<IssueCreateScreen> {
   @override
   Widget build(BuildContext context) {
     final gs = Theme.of(context).extension<GsTheme>()!;
+    final description = normalizeIssueDraft(_descriptionController.text);
     return Scaffold(
       backgroundColor: gs.surfaceSubtle,
       appBar: AppBar(
@@ -125,7 +127,7 @@ class _IssueCreateScreenState extends State<IssueCreateScreen> {
             ),
             onChanged: (_) => setState(() {}),
           ),
-          IssueDraftPreview(draft: _descriptionController.text),
+          IssueDraftPreview(draft: description),
           const SizedBox(height: 32),
         ],
       ),

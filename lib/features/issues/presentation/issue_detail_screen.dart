@@ -31,7 +31,8 @@ class IssueDetailScreen extends StatefulWidget {
 class _IssueDetailScreenState extends State<IssueDetailScreen> {
   final _scrollController = ScrollController();
   final _commentController = TextEditingController();
-  final _notes = <IssueNote>[];
+  final _loadedNotes = <IssueNote>[];
+  final _createdNotes = <int, IssueNote>{};
   bool _sendingComment = false;
   Issue? _issue;
   bool _issueLoading = true;
@@ -58,7 +59,10 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         oldWidget.issueIid != widget.issueIid ||
         oldWidget.repository != widget.repository) {
       _issue = widget.initialIssue;
-      _notes.clear();
+      _loadedNotes.clear();
+      _createdNotes.clear();
+      _commentController.clear();
+      _sendingComment = false;
       _notesHaveMore = false;
       _reload();
     }
@@ -74,8 +78,9 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   }
 
   Future<void> _sendComment() async {
-    final body = _commentController.text.trim();
+    final body = normalizeIssueDraft(_commentController.text);
     if (body.isEmpty || _sendingComment) return;
+    final generation = _generation;
     setState(() => _sendingComment = true);
     try {
       final note = await widget.repository.createNote(
@@ -83,14 +88,14 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         widget.issueIid,
         body,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _generation) return;
       setState(() {
-        _notes.add(note);
+        _createdNotes[note.id] = note;
         _sendingComment = false;
         _commentController.clear();
       });
     } on Object {
-      if (!mounted) return;
+      if (!mounted || generation != _generation) return;
       setState(() => _sendingComment = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to post the comment.')),
@@ -152,7 +157,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       );
       if (!mounted || generation != _generation) return;
       setState(() {
-        _notes
+        _loadedNotes
           ..clear()
           ..addAll(page.items);
         _notesHaveMore = page.hasMore;
@@ -202,7 +207,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       );
       if (!mounted || generation != _generation) return;
       setState(() {
-        _notes.addAll(page.items);
+        _loadedNotes.addAll(page.items);
         _notesHaveMore = page.hasMore;
         _notesLoadingMore = false;
       });
@@ -230,10 +235,22 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     });
   }
 
+  List<IssueNote> get _notes {
+    final notesById = <int, IssueNote>{
+      for (final note in _loadedNotes) note.id: note,
+      ..._createdNotes,
+    };
+    return notesById.values.toList(growable: false)..sort((left, right) {
+      final byCreatedAt = left.createdAt.compareTo(right.createdAt);
+      return byCreatedAt != 0 ? byCreatedAt : left.id.compareTo(right.id);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final gs = Theme.of(context).extension<GsTheme>()!;
     final issue = _issue;
+    final notes = _notes;
     final now = widget.now ?? DateTime.now();
     return Scaffold(
       backgroundColor: gs.surfaceSubtle,
@@ -292,7 +309,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                         SliverPadding(
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                           sliver: SliverList.builder(
-                            itemCount: _notes.length + 2,
+                            itemCount: notes.length + 2,
                             itemBuilder: (context, index) {
                               if (index == 0) {
                                 return Padding(
@@ -308,13 +325,14 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                                   ),
                                 );
                               }
-                              if (index <= _notes.length) {
-                                final note = _notes[index - 1];
+                              if (index <= notes.length) {
+                                final note = notes[index - 1];
                                 final timeLabel = formatIssueRelativeTime(
                                   note.createdAt,
                                   now,
                                 );
                                 return Padding(
+                                  key: ValueKey('issue-note-${note.id}'),
                                   padding: const EdgeInsets.only(bottom: 8),
                                   child: note.system
                                       ? IssueSystemEvent(
@@ -330,7 +348,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                                 );
                               }
                               return _NotesFooter(
-                                hasNotes: _notes.isNotEmpty,
+                                hasNotes: notes.isNotEmpty,
                                 loading: _notesLoading || _notesLoadingMore,
                                 firstPageFailed: _notesInitialFailed,
                                 nextPageFailed: _notesNextFailed,
@@ -372,7 +390,8 @@ class _CommentComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gs = Theme.of(context).extension<GsTheme>()!;
-    final canSend = !sending && controller.text.trim().isNotEmpty;
+    final body = normalizeIssueDraft(controller.text);
+    final canSend = !sending && body.isNotEmpty;
     return ColoredBox(
       color: gs.surfaceApp,
       child: SafeArea(
@@ -382,11 +401,11 @@ class _CommentComposer extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (controller.text.trim().isNotEmpty)
+              if (body.isNotEmpty)
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 160),
                   child: SingleChildScrollView(
-                    child: IssueDraftPreview(draft: controller.text),
+                    child: IssueDraftPreview(draft: body),
                   ),
                 ),
               Row(

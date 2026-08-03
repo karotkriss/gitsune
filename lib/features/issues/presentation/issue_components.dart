@@ -5,6 +5,9 @@ import '../../../core/markdown/gs_markdown.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/issue_models.dart';
 
+String normalizeIssueDraft(String draft) =>
+    draft.replaceFirst(RegExp(r'\s+$'), '');
+
 class IssueStateBadge extends StatelessWidget {
   const IssueStateBadge({super.key, required this.state});
 
