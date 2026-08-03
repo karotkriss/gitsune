@@ -23,6 +23,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // flutter_appauth's redirect-capture activity; must match
+        // oauthRedirectUri in lib/core/auth/oauth_config.dart.
+        manifestPlaceholders["appAuthRedirectScheme"] = "dev.gitsune"
     }
 
     buildTypes {
