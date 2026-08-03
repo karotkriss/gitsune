@@ -44,8 +44,8 @@ class FixtureMergeRequestsRepository implements MergeRequestsRepository {
   DiffPosition? lastCreatedPosition;
   List<Map<String, dynamic>>? _rawDiscussions;
 
-  List<Map<String, dynamic>> get _discussions => _rawDiscussions ??=
-      discussionFixtures
+  List<Map<String, dynamic>> get _discussions =>
+      _rawDiscussions ??= discussionFixtures
           .expand((fixture) => Fixtures.json(fixture) as List)
           .map((value) => Map<String, dynamic>.from(value as Map))
           .toList();

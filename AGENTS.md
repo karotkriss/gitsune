@@ -51,8 +51,6 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   The issues scope reuses `Issue`/`IssueAuthor`/`IssueLabel` from `lib/features/issues/data/issue_models.dart`; the merge-requests scope has no canonical model to reuse yet (E7.1 not landed), so `search_models.dart` defines a minimal `SearchMergeRequest` reusing `IssueAuthor`/`IssueLabel` for its author/label shape.
   Fold this into the canonical MR model once E7.1 lands rather than keeping both.
   `buildAppRouter`'s optional `searchRepository` param swaps the Explore tab's placeholder for `SearchScreen`, the same null-until-composition-root-wiring convention as `issuesRepository`/`pipelinesRepository`.
-- Inline diff comments (E7.3) anchor through `GsDiffView`'s generic `DiffLineAnnotation`/`onLineTap` seam so the renderer stays merge-request-agnostic; annotations are fixed-height (`GsDiffView.annotationHeight`) because the list positions rows via `itemExtentBuilder`, so variable-height content (markdown thread bodies, the composer) lives in bottom sheets opened from the anchored row, not inline.
-  Discussion note authors reuse `IssueAuthor` so threads render with the shared `IssueCommentCard`; positioning a new comment needs the MR's `diff_refs`, which `MergeRequestChangesScreen` fetches lazily on first compose to keep normal diff rendering free of the detail call.
 
 ## Maintaining this file
 

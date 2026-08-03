@@ -37,8 +37,7 @@ class Discussion {
   DiffPosition? get position => notes.isEmpty ? null : notes.first.position;
 
   /// True when this discussion is a thread anchored to a diff line.
-  bool get isDiffThread =>
-      !individualNote && position?.positionType == 'text';
+  bool get isDiffThread => !individualNote && position?.positionType == 'text';
 
   bool get resolvable => notes.any((note) => note.resolvable);
 
