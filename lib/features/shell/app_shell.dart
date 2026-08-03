@@ -140,6 +140,9 @@ GoRouter buildAppRouter({
                 'Project $projectId';
             final ref = state.uri.queryParameters['ref'] ?? '';
             final path = state.uri.queryParameters['path'] ?? '';
+            final history = state.extra is _RepositoryTreeRouteHistory
+                ? state.extra! as _RepositoryTreeRouteHistory
+                : const _RepositoryTreeRouteHistory();
             return RepositoryTreeScreen(
               projectId: projectId,
               projectPath: projectPath,
@@ -155,13 +158,30 @@ GoRouter buildAppRouter({
                     'path': entry.path,
                   },
                 ).toString(),
+                extra: _RepositoryTreeRouteHistory(
+                  ancestorLevels: history.ancestorLevels + 1,
+                ),
               ),
               // Each drill-down pushed one route, so jumping to an ancestor
               // pops one route per intervening directory level.
               onAncestorTap: (ancestorPath) {
-                var levels = _treeDepth(path) - _treeDepth(ancestorPath);
-                while (levels-- > 0 && context.canPop()) {
-                  context.pop();
+                final levels = _treeDepth(path) - _treeDepth(ancestorPath);
+                if (levels <= history.ancestorLevels) {
+                  for (var level = 0; level < levels; level++) {
+                    context.pop();
+                  }
+                } else {
+                  context.push(
+                    Uri(
+                      path: '/projects/$projectId/tree',
+                      queryParameters: {
+                        'projectPath': projectPath,
+                        if (ref.isNotEmpty) 'ref': ref,
+                        if (ancestorPath.isNotEmpty) 'path': ancestorPath,
+                      },
+                    ).toString(),
+                    extra: const _RepositoryTreeRouteHistory(),
+                  );
                 }
               },
             );
@@ -252,6 +272,12 @@ GoRouter buildAppRouter({
 }
 
 int _treeDepth(String path) => path.isEmpty ? 0 : path.split('/').length;
+
+class _RepositoryTreeRouteHistory {
+  const _RepositoryTreeRouteHistory({this.ancestorLevels = 0});
+
+  final int ancestorLevels;
+}
 
 /// The app shell: the design direction's four-destination bottom tab bar
 /// (Home, To-Dos/Notifications, Explore/Search, Profile) around the active

@@ -10,6 +10,7 @@ class FixtureRepositoryTreeRepository implements RepositoryTreeRepository {
 
   final Map<String, List<RepositoryTreeEntry>> _directories;
   final refreshedPaths = <String>[];
+  final refreshedRefs = <String>[];
 
   @override
   Stream<List<RepositoryTreeEntry>> watchDirectory(
@@ -27,6 +28,7 @@ class FixtureRepositoryTreeRepository implements RepositoryTreeRepository {
     String path = '',
   }) async {
     refreshedPaths.add(path);
+    refreshedRefs.add(ref);
   }
 }
 

@@ -74,6 +74,36 @@ void main() {
     expect(repository.refreshedPaths, ['']);
   });
 
+  testWidgets('a direct nested route breadcrumb navigates to its ancestor', (
+    tester,
+  ) async {
+    final repository = FixtureRepositoryTreeRepository();
+    final router = buildAppRouter(
+      repositoryTreeRepository: repository,
+      initialLocation:
+          '/projects/7/tree?projectPath=gitsune%2Fapp&ref=main&path=lib%2Fcore',
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      MaterialApp.router(theme: buildAppTheme(), routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('app_theme.dart'), findsOneWidget);
+
+    await tester.tap(find.text('lib'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('main.dart'), findsOneWidget);
+
+    await tester.tap(find.text('app'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('android'), findsOneWidget);
+    expect(repository.refreshedPaths, ['lib/core', 'lib', '']);
+    expect(repository.refreshedRefs, ['main', 'main', 'main']);
+  });
+
   testWidgets('an unknown directory shows the empty state', (tester) async {
     final repository = FixtureRepositoryTreeRepository();
     final router = buildAppRouter(

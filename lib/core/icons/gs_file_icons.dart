@@ -37,6 +37,21 @@ enum GsFileIconGlyph {
     '2.82l-7.99 7.99c-.78.79-2.04.79-2.82 0L2.6 13.41c-.79-.78-.79-2.04 '
     '0-2.82z" fill="#e64a19"></path>',
   ),
+  gitlab(
+    '<path d="M24.507 9.5l-.034-.09L21.082.562a.896.896 0 0 0-1.694.091l-2.29 '
+    '7.01H7.825L5.535.653a.898.898 0 0 0-1.694-.09L.451 9.411.416 '
+    '9.5a6.297 6.297 0 0 0 2.09 7.278l.012.01.03.022 5.16 3.867 2.56 '
+    '1.935 1.554 1.176a1.051 1.051 0 0 0 1.268 0l1.555-1.176 2.56-1.935 '
+    '5.197-3.89.014-.01A6.297 6.297 0 0 0 24.507 9.5z" '
+    'fill="#E24329"></path><path d="M24.507 9.5l-.034-.09a11.44 11.44 0 0 '
+    '0-4.56 2.051l-7.447 5.632 4.742 3.584 5.197-3.89.014-.01A6.297 6.297 '
+    '0 0 0 24.507 9.5z" fill="#FC6D26"></path><path d="M7.707 20.677l2.56 '
+    '1.935 1.555 1.176a1.051 1.051 0 0 0 1.268 0l1.555-1.176 2.56-1.935-4.'
+    '743-3.584-4.755 3.584z" fill="#FCA326"></path><path d="M5.01 11.461a11.43 '
+    '11.43 0 0 0-4.56-2.05L.416 9.5a6.297 6.297 0 0 0 2.09 7.278l.012.01.'
+    '03.022 5.16 3.867 4.745-3.584-7.444-5.632z" fill="#FC6D26"></path>',
+    viewBox: '0 0 25 24',
+  ),
   image(
     '<path d="M12.976 9.072h5.368l-5.368-5.367v5.367M6.144 '
     '2.241h7.808l5.856 5.855v11.711a1.952 1.952 0 0 1-1.952 '
@@ -83,10 +98,13 @@ enum GsFileIconGlyph {
     'fill="#FF5252"></path>',
   );
 
-  const GsFileIconGlyph(this.markup);
+  const GsFileIconGlyph(this.markup, {this.viewBox = '0 0 24 24'});
 
-  /// Inner SVG markup on the sprite's 24x24 grid.
+  /// Inner SVG markup on the sprite's native grid.
   final String markup;
+
+  /// The matching sprite symbol's view box.
+  final String viewBox;
 }
 
 /// Resolves the glyph for a file entry the way GitLab's file tree does:
@@ -95,7 +113,15 @@ enum GsFileIconGlyph {
 GsFileIconGlyph fileIconGlyphFor(String fileName) {
   final name = fileName.toLowerCase();
   if (name == 'readme' || name == 'readme.md') return GsFileIconGlyph.readme;
-  if (name.startsWith('.git')) return GsFileIconGlyph.git;
+  if (name == '.gitlab-ci.yml') return GsFileIconGlyph.gitlab;
+  if (const {
+    '.gitignore',
+    '.gitattributes',
+    '.gitmodules',
+    '.gitkeep',
+  }.contains(name)) {
+    return GsFileIconGlyph.git;
+  }
   final dot = name.lastIndexOf('.');
   final extension = dot < 0 ? '' : name.substring(dot + 1);
   return switch (extension) {
@@ -125,7 +151,7 @@ class GsFileIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SvgPicture.string(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="${glyph.viewBox}">'
       '${glyph.markup}'
       '</svg>',
       width: size,
