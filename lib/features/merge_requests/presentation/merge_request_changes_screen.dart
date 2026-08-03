@@ -60,6 +60,8 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
   String? _webUrl;
   bool _loading = true;
   bool _failed = false;
+  bool _discussionsFailed = false;
+  bool _openingWeb = false;
 
   @override
   void initState() {
@@ -99,37 +101,65 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
       return;
     }
 
-    List<Discussion>? discussions;
+    await _loadDiscussions();
+  }
+
+  Future<void> _loadDiscussions() async {
+    setState(() => _discussionsFailed = false);
     try {
-      discussions = await widget.repository.loadDiscussions(
+      final discussions = await widget.repository.loadDiscussions(
         widget.projectId,
         widget.mergeIid,
       );
+      if (!mounted) return;
+      setState(() {
+        _discussions = _mergeDiscussions(discussions, _discussions);
+      });
     } on Object {
-      discussions = null;
-    }
-    if (!mounted) return;
-    if (discussions != null) {
-      setState(() => _discussions = discussions!);
-    }
-
-    if (_webUrl == null && isOversizedDiff(files)) {
-      try {
-        _webUrl = (await widget.repository.loadMergeRequest(
-          widget.projectId,
-          widget.mergeIid,
-        )).webUrl;
-      } on Object {
-        return;
-      }
+      if (!mounted) return;
+      setState(() => _discussionsFailed = true);
     }
   }
 
+  static List<Discussion> _mergeDiscussions(
+    List<Discussion> loaded,
+    List<Discussion> local,
+  ) {
+    final localById = {
+      for (final discussion in local) discussion.id: discussion,
+    };
+    return [
+      for (final discussion in loaded)
+        localById.remove(discussion.id) ?? discussion,
+      ...localById.values,
+    ];
+  }
+
   Future<void> _openInBrowser() async {
-    final webUrl = _webUrl;
-    if (webUrl == null) return;
-    final open = widget.openWebUrl ?? _launchExternally;
-    await open(Uri.parse('$webUrl/diffs'));
+    if (_openingWeb) return;
+    _openingWeb = true;
+    try {
+      var webUrl = _webUrl;
+      if (webUrl == null) {
+        webUrl = (await widget.repository.loadMergeRequest(
+          widget.projectId,
+          widget.mergeIid,
+        )).webUrl;
+        if (!mounted) return;
+        _webUrl = webUrl;
+      }
+      final open = widget.openWebUrl ?? _launchExternally;
+      await open(Uri.parse('$webUrl/diffs'));
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open these changes in a browser.'),
+        ),
+      );
+    } finally {
+      _openingWeb = false;
+    }
   }
 
   static Future<void> _launchExternally(Uri url) async {
@@ -384,25 +414,71 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
       body: switch (files) {
         null when _loading => const Center(child: CircularProgressIndicator()),
         null => _ChangesFailedState(failed: _failed, onRetry: _load),
-        [] => Center(
-          child: Text(
-            'No changes in this merge request.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: gs.textSubtle),
-          ),
-        ),
         final loaded => SafeArea(
           top: false,
-          child: GsDiffView(
-            files: loaded,
-            controller: _scrollController,
-            onOpenInBrowser: _openInBrowser,
-            annotations: _annotations(),
-            onLineTap: _startThread,
+          child: Column(
+            children: [
+              if (_discussionsFailed)
+                _DiscussionLoadFailure(onRetry: _loadDiscussions),
+              Expanded(
+                child: switch (loaded) {
+                  [] => Center(
+                    child: Text(
+                      'No changes in this merge request.',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: gs.textSubtle),
+                    ),
+                  ),
+                  _ => GsDiffView(
+                    files: loaded,
+                    controller: _scrollController,
+                    onOpenInBrowser: _openInBrowser,
+                    annotations: _annotations(),
+                    onLineTap: _startThread,
+                  ),
+                },
+              ),
+            ],
           ),
         ),
       },
+    );
+  }
+}
+
+class _DiscussionLoadFailure extends StatelessWidget {
+  const _DiscussionLoadFailure({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    return Material(
+      key: const ValueKey('discussion-load-failed'),
+      color: gs.feedbackWarningBg,
+      child: SizedBox(
+        height: 44,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Unable to load comments.',
+                  style: gs.caption.copyWith(color: gs.feedbackWarningText),
+                ),
+              ),
+              TextButton(
+                key: const ValueKey('retry-discussions'),
+                onPressed: onRetry,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

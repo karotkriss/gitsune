@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
@@ -24,16 +26,38 @@ Widget _screen({
 );
 
 class _FailingDetailRepository extends FixtureMergeRequestsRepository {
+  _FailingDetailRepository({super.diffFixtures});
+
+  int detailAttempts = 0;
+
   @override
   Future<MergeRequest> loadMergeRequest(int projectId, int mergeIid) async {
+    detailAttempts++;
     throw StateError('detail unavailable');
   }
 }
 
-class _FailingDiscussionsRepository extends FixtureMergeRequestsRepository {
+class _RetryingDiscussionsRepository extends FixtureMergeRequestsRepository {
+  bool fail = true;
+  int attempts = 0;
+
   @override
   Future<List<Discussion>> loadDiscussions(int projectId, int mergeIid) async {
-    throw StateError('discussions unavailable');
+    attempts++;
+    if (fail) throw StateError('discussions unavailable');
+    return super.loadDiscussions(projectId, mergeIid);
+  }
+}
+
+class _DeferredDiscussionsRepository extends FixtureMergeRequestsRepository {
+  final requested = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<List<Discussion>> loadDiscussions(int projectId, int mergeIid) async {
+    requested.complete();
+    await release.future;
+    return super.loadDiscussions(projectId, mergeIid);
   }
 }
 
@@ -91,6 +115,27 @@ void main() {
     ]);
   });
 
+  testWidgets('oversized fallback reports detail lookup failure', (
+    tester,
+  ) async {
+    final repository = _FailingDetailRepository(
+      diffFixtures: const ['merge_request_142_diffs_oversized'],
+    );
+    await tester.pumpWidget(_screen(repository: repository));
+    await tester.pumpAndSettle();
+
+    expect(repository.detailAttempts, 0);
+
+    await tester.tap(find.text('Open in browser'));
+    await tester.pumpAndSettle();
+
+    expect(repository.detailAttempts, 1);
+    expect(
+      find.text('Unable to open these changes in a browser.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('normal diff renders without loading merge request details', (
     tester,
   ) async {
@@ -102,14 +147,54 @@ void main() {
   });
 
   testWidgets('discussion failure preserves the loaded diff', (tester) async {
-    await tester.pumpWidget(
-      _screen(repository: _FailingDiscussionsRepository()),
-    );
+    final repository = _RetryingDiscussionsRepository();
+    await tester.pumpWidget(_screen(repository: repository));
     await tester.pumpAndSettle();
 
     expect(find.text('lib/src/instance_switcher.dart'), findsOneWidget);
     expect(find.text('Unable to load these changes.'), findsNothing);
+    expect(find.text('Unable to load comments.'), findsOneWidget);
     expect(find.byKey(const ValueKey('unresolved-threads')), findsNothing);
+
+    repository.fail = false;
+    await tester.tap(find.byKey(const ValueKey('retry-discussions')));
+    await tester.pumpAndSettle();
+
+    expect(repository.attempts, 2);
+    expect(find.text('Unable to load comments.'), findsNothing);
+    expect(find.text('1 unresolved thread'), findsOneWidget);
+  });
+
+  testWidgets('late discussion load preserves a newly created thread', (
+    tester,
+  ) async {
+    final repository = _DeferredDiscussionsRepository();
+    await tester.pumpWidget(_screen(repository: repository));
+    await tester.pump();
+    await repository.requested.future;
+
+    await tester.tap(find.textContaining("host = 'gitlab.com'"));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('inline-comment-field')),
+      'Keep this local thread.',
+    );
+    await tester.tap(find.byKey(const ValueKey('inline-comment-submit')));
+    await tester.pumpAndSettle();
+
+    const createdKey = ValueKey(
+      'diff-thread-9b8d5c6e7f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c',
+    );
+    expect(find.byKey(createdKey), findsOneWidget);
+
+    repository.release.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(createdKey), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('diff-thread-$_threadId')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('inline discussions render on their diff lines', (tester) async {
