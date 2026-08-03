@@ -1,18 +1,34 @@
 import '../../../core/ci/ci_status.dart';
 
 class PipelineDetails {
-  PipelineDetails({required this.pipeline, required Iterable<PipelineJob> jobs})
-    : jobs = _latestJobsInStageOrder(jobs);
+  factory PipelineDetails({
+    required Pipeline pipeline,
+    required Iterable<PipelineJob> jobs,
+  }) {
+    final attempts = List<PipelineJob>.unmodifiable(jobs);
+    return PipelineDetails._(
+      pipeline: pipeline,
+      attempts: attempts,
+      jobs: _latestJobsInStageOrder(attempts),
+    );
+  }
+
+  PipelineDetails._({
+    required this.pipeline,
+    required List<PipelineJob> attempts,
+    required this.jobs,
+  }) : _attempts = attempts;
 
   final Pipeline pipeline;
   final List<PipelineJob> jobs;
+  final List<PipelineJob> _attempts;
 
   /// Applies a job action's response, replacing same-id jobs (cancel, play)
   /// or adding a new attempt (retry creates a new job id) then re-deriving
   /// the latest-per-stage-and-name view.
   PipelineDetails withUpdatedJob(PipelineJob updated) => PipelineDetails(
     pipeline: pipeline,
-    jobs: [...jobs.where((job) => job.id != updated.id), updated],
+    jobs: [..._attempts.where((job) => job.id != updated.id), updated],
   );
 }
 

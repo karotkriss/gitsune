@@ -172,6 +172,61 @@ void main() {
     },
   );
 
+  test('repeated retries preserve original job and stage order', () {
+    final pipeline = Pipeline.fromJson(
+      Map<String, dynamic>.from(Fixtures.json('pipeline_88123') as Map),
+    );
+    const firstAttempt = PipelineJob(
+      id: 1,
+      name: 'test:first',
+      stage: 'test',
+      status: CiStatus.failed,
+      allowFailure: false,
+    );
+    const deploy = PipelineJob(
+      id: 2,
+      name: 'deploy',
+      stage: 'deploy',
+      status: CiStatus.success,
+      allowFailure: false,
+    );
+    const secondTestJob = PipelineJob(
+      id: 3,
+      name: 'test:second',
+      stage: 'test',
+      status: CiStatus.success,
+      allowFailure: false,
+    );
+    const previousRetry = PipelineJob(
+      id: 101,
+      name: 'test:first',
+      stage: 'test',
+      status: CiStatus.failed,
+      allowFailure: false,
+    );
+    final details = PipelineDetails(
+      pipeline: pipeline,
+      jobs: const [firstAttempt, deploy, secondTestJob, previousRetry],
+    );
+
+    final retried = details.withUpdatedJob(
+      const PipelineJob(
+        id: 201,
+        name: 'test:first',
+        stage: 'test',
+        status: CiStatus.running,
+        allowFailure: false,
+      ),
+    );
+
+    expect(retried.jobs.map((job) => job.name), [
+      'test:first',
+      'test:second',
+      'deploy',
+    ]);
+    expect(retried.jobs.first.id, 201);
+  });
+
   test('derives warning badges without losing raw execution status', () {
     final pipelineJson =
         Map<String, dynamic>.from(Fixtures.json('pipeline_88123') as Map)
