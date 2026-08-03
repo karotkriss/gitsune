@@ -1,0 +1,44 @@
+[
+  {
+    "id": 5201,
+    "project_id": 7,
+    "iid": 88,
+    "title": "Retry offline queue after reconnect",
+    "state": "opened",
+    "author": {
+      "id": 11,
+      "username": "marin",
+      "name": "Marin Alvarez",
+      "avatar_url": null
+    },
+    "created_at": "2026-07-28T09:00:00Z",
+    "updated_at": "2026-08-01T14:00:00Z",
+    "labels": [
+      {
+        "name": "type::feature",
+        "color": "#428FDC",
+        "text_color": "#FFFFFF"
+      }
+    ],
+    "user_notes_count": 4,
+    "web_url": "https://gitlab.example.com/gitsune/app/-/merge_requests/88"
+  },
+  {
+    "id": 5188,
+    "project_id": 7,
+    "iid": 81,
+    "title": "Document offline sync retry behavior",
+    "state": "merged",
+    "author": {
+      "id": 13,
+      "username": "devon",
+      "name": "Devon Rao",
+      "avatar_url": null
+    },
+    "created_at": "2026-07-20T09:00:00Z",
+    "updated_at": "2026-07-26T11:00:00Z",
+    "labels": [],
+    "user_notes_count": 1,
+    "web_url": "https://gitlab.example.com/gitsune/app/-/merge_requests/81"
+  }
+]

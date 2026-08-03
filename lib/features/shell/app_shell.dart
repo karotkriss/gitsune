@@ -15,6 +15,8 @@ import '../merge_requests/presentation/merge_request_list_screen.dart';
 import '../pipelines/data/pipelines_repository.dart';
 import '../pipelines/presentation/pipeline_detail_screen.dart';
 import '../profile/profile_screen.dart';
+import '../search/data/search_repository.dart';
+import '../search/presentation/search_screen.dart';
 import '../todos/todos_screen.dart';
 
 /// Builds the app router: four tab branches behind [AppShell], each keeping
@@ -27,11 +29,13 @@ import '../todos/todos_screen.dart';
 /// account and project composition root owns a signed-in GitLab client.
 /// Keeping those dependencies optional lets the shell boot before E2's account
 /// wiring lands without hiding the route contracts exposed to project
-/// navigation.
+/// navigation. [searchRepository] likewise swaps the Explore tab's placeholder
+/// for the real [SearchScreen] once it's available.
 GoRouter buildAppRouter({
   IssuesRepository? issuesRepository,
   MergeRequestsRepository? mergeRequestsRepository,
   PipelinesRepository? pipelinesRepository,
+  SearchRepository? searchRepository,
   String initialLocation = '/home',
 }) {
   return GoRouter(
@@ -60,7 +64,9 @@ GoRouter buildAppRouter({
             routes: [
               GoRoute(
                 path: '/explore',
-                builder: (context, state) => const ExploreScreen(),
+                builder: (context, state) => searchRepository != null
+                    ? SearchScreen(repository: searchRepository)
+                    : const ExploreScreen(),
               ),
             ],
           ),
