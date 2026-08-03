@@ -43,6 +43,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   bool _notesNextFailed = false;
   bool _notesHaveMore = false;
   int _generation = 0;
+  int _issueGeneration = 0;
 
   @override
   void initState() {
@@ -58,6 +59,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.issueIid != widget.issueIid ||
         oldWidget.repository != widget.repository) {
+      _issueGeneration++;
       _issue = widget.initialIssue;
       _loadedNotes.clear();
       _createdNotes.clear();
@@ -80,7 +82,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   Future<void> _sendComment() async {
     final body = normalizeIssueDraft(_commentController.text);
     if (body.isEmpty || _sendingComment) return;
-    final generation = _generation;
+    final issueGeneration = _issueGeneration;
     setState(() => _sendingComment = true);
     try {
       final note = await widget.repository.createNote(
@@ -88,14 +90,14 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         widget.issueIid,
         body,
       );
-      if (!mounted || generation != _generation) return;
+      if (!mounted || issueGeneration != _issueGeneration) return;
       setState(() {
         _createdNotes[note.id] = note;
         _sendingComment = false;
         _commentController.clear();
       });
     } on Object {
-      if (!mounted || generation != _generation) return;
+      if (!mounted || issueGeneration != _issueGeneration) return;
       setState(() => _sendingComment = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Unable to post the comment.')),

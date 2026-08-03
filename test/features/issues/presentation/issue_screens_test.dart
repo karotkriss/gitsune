@@ -404,6 +404,44 @@ void main() {
     expect(find.byKey(const ValueKey('issue-note-9101')), findsOneWidget);
   });
 
+  testWidgets('refreshing during a comment send preserves its completion', (
+    tester,
+  ) async {
+    final repository = _DelayedCommentRepository(notesImmediately: true);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'refresh race comment');
+    await tester.pump();
+    await tester.tap(find.byTooltip('Send comment'));
+    await tester.pump();
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 300));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(repository.issueLoads, greaterThanOrEqualTo(2));
+    repository.createdNote.complete(_createdNote());
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('issue-note-9101')), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller?.text,
+      '',
+    );
+  });
+
   testWidgets('changing issue scope clears and isolates the comment request', (
     tester,
   ) async {
@@ -519,6 +557,7 @@ class _DelayedCommentRepository implements IssuesRepository {
   final _delegate = FixtureIssuesRepository();
   final firstNotes = Completer<IssueNotePage>();
   final createdNote = Completer<IssueNote>();
+  int issueLoads = 0;
 
   @override
   Future<IssuePage> loadFirstPage(int projectId) =>
@@ -529,8 +568,10 @@ class _DelayedCommentRepository implements IssuesRepository {
       _delegate.loadNextPage(projectId);
 
   @override
-  Future<Issue> loadIssue(int projectId, int issueIid) =>
-      _delegate.loadIssue(projectId, issueIid);
+  Future<Issue> loadIssue(int projectId, int issueIid) {
+    issueLoads++;
+    return _delegate.loadIssue(projectId, issueIid);
+  }
 
   @override
   Future<IssueNotePage> loadFirstNotesPage(int projectId, int issueIid) =>
