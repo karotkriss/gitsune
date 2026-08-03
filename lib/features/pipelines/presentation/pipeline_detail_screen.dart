@@ -76,7 +76,8 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.pipelineId != widget.pipelineId ||
-        oldWidget.repository != widget.repository) {
+        oldWidget.repository != widget.repository ||
+        oldWidget.recentlyViewedCache != widget.recentlyViewedCache) {
       _screenGeneration++;
       _details = null;
       _pendingJobIds.clear();
@@ -176,9 +177,14 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
         _JobAction.run => await repository.playJob(projectId, job.id),
       };
       if (!mounted || screenGeneration != _screenGeneration) return;
+      final details = _details?.withUpdatedJob(updated);
+      if (details != null) {
+        await _recentPipeline?.writeThrough(details);
+      }
+      if (!mounted || screenGeneration != _screenGeneration) return;
       setState(() {
         _mutationRevision++;
-        _details = _details?.withUpdatedJob(updated);
+        _details = details;
         _pendingJobIds.remove(job.id);
       });
     } on Object {

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gitsune/core/ci/ci_status.dart';
 import 'package:gitsune/core/database/app_database.dart';
 import 'package:gitsune/core/network/account_key.dart';
 import 'package:gitsune/core/network/gitlab_client.dart';
@@ -33,7 +34,10 @@ void main() {
 
   DateTime tick() => clock = clock.add(const Duration(minutes: 1));
 
-  RecentlyViewedCache cacheFor(AccountKey account, {int maxEntriesPerType = 50}) {
+  RecentlyViewedCache cacheFor(
+    AccountKey account, {
+    int maxEntriesPerType = 50,
+  }) {
     return RecentlyViewedCache(
       database: db,
       account: account,
@@ -138,36 +142,42 @@ void main() {
     expect(cached.updatedAt, viewed.updatedAt);
   });
 
-  test('a background refresh updates the cache and the stream re-emits', () async {
-    final server = await FakeGitLabServer.start();
-    addTearDown(server.close);
-    final issueJson = Map<String, dynamic>.from(
-      Fixtures.json('issue_142') as Map,
-    );
-    server.respondJson('GET /api/v4/projects/7/issues', [issueJson]);
-    final repository = issueRepository(cacheFor(account), clientFor(server.baseUri));
+  test(
+    'a background refresh updates the cache and the stream re-emits',
+    () async {
+      final server = await FakeGitLabServer.start();
+      addTearDown(server.close);
+      final issueJson = Map<String, dynamic>.from(
+        Fixtures.json('issue_142') as Map,
+      );
+      server.respondJson('GET /api/v4/projects/7/issues', [issueJson]);
+      final repository = issueRepository(
+        cacheFor(account),
+        clientFor(server.baseUri),
+      );
 
-    await repository.refresh();
+      await repository.refresh();
 
-    final titles = repository.watch().map((issue) => issue?.title);
-    final expectation = expectLater(
-      titles,
-      emitsInOrder([
-        'Keep draft comments after reconnecting',
-        'Keep draft comments after reconnecting (edited)',
-      ]),
-    );
+      final titles = repository.watch().map((issue) => issue?.title);
+      final expectation = expectLater(
+        titles,
+        emitsInOrder([
+          'Keep draft comments after reconnecting',
+          'Keep draft comments after reconnecting (edited)',
+        ]),
+      );
 
-    server.respondJson('GET /api/v4/projects/7/issues', [
-      {
-        ...issueJson,
-        'title': 'Keep draft comments after reconnecting (edited)',
-      },
-    ]);
-    await repository.refresh();
+      server.respondJson('GET /api/v4/projects/7/issues', [
+        {
+          ...issueJson,
+          'title': 'Keep draft comments after reconnecting (edited)',
+        },
+      ]);
+      await repository.refresh();
 
-    await expectation;
-  });
+      await expectation;
+    },
+  );
 
   test('a viewed merge request reads from the cache when offline', () async {
     final server = await FakeGitLabServer.start();
@@ -233,6 +243,43 @@ void main() {
     expect(
       [for (final job in cached.jobs) (job.stage, job.name, job.badgeStatus)],
       [for (final job in viewed.jobs) (job.stage, job.name, job.badgeStatus)],
+    );
+  });
+
+  test('a pipeline mutation writes through for a later offline read', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    server.respondJson(
+      'GET /api/v4/projects/7/pipelines/88123',
+      Fixtures.json('pipeline_88123'),
+    );
+    server.respondJson(
+      'GET /api/v4/projects/7/pipelines/88123/jobs',
+      Fixtures.json('pipeline_88123_jobs'),
+    );
+    final cache = cacheFor(account);
+    final online = pipelineRepository(cache, clientFor(server.baseUri));
+    final viewed = await online.load();
+    final updated = viewed.withUpdatedJob(
+      const PipelineJob(
+        id: 502,
+        name: 'test:flutter',
+        stage: 'test',
+        status: CiStatus.canceled,
+        allowFailure: false,
+      ),
+    );
+
+    await online.writeThrough(updated);
+
+    final offline = pipelineRepository(
+      cache,
+      clientFor(await offlineBaseUri()),
+    );
+    final cached = await offline.readCached();
+    expect(
+      cached!.jobs.firstWhere((job) => job.id == 502).status,
+      CiStatus.canceled,
     );
   });
 

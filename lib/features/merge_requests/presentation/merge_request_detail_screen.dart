@@ -69,10 +69,13 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
   @override
   void didUpdateWidget(covariant MergeRequestDetailScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final cacheChanged =
+        oldWidget.recentlyViewedCache != widget.recentlyViewedCache;
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.mergeIid != widget.mergeIid ||
-        oldWidget.repository != widget.repository) {
-      _mergeRequest = widget.initialMergeRequest;
+        oldWidget.repository != widget.repository ||
+        cacheChanged) {
+      _mergeRequest = cacheChanged ? null : widget.initialMergeRequest;
       _pipelines = null;
       _approvals = null;
       _rebuildRecentMergeRequest();
@@ -118,7 +121,7 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
 
   Future<void> _loadCore(int generation) async {
     final recent = _recentMergeRequest;
-    if (recent != null && _mergeRequest == null) {
+    if (recent != null) {
       // Stale-while-revalidate: serve the cached merge request immediately
       // while the network refresh below continues in the background.
       final cached = await recent.readCached();

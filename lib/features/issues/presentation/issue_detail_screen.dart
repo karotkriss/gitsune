@@ -87,12 +87,15 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   @override
   void didUpdateWidget(covariant IssueDetailScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final cacheChanged =
+        oldWidget.recentlyViewedCache != widget.recentlyViewedCache;
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.issueIid != widget.issueIid ||
-        oldWidget.repository != widget.repository) {
+        oldWidget.repository != widget.repository ||
+        cacheChanged) {
       _issueGeneration++;
       _issueStateRevision++;
-      _issue = widget.initialIssue;
+      _issue = cacheChanged ? null : widget.initialIssue;
       _loadedNotes.clear();
       _createdNotes.clear();
       _localEvents.clear();
@@ -165,7 +168,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   Future<void> _refreshIssue(int generation) async {
     final issueStateRevision = _issueStateRevision;
     final recent = _recentIssue;
-    if (recent != null && _issue == null) {
+    if (recent != null) {
       // Stale-while-revalidate: serve the cached issue immediately while the
       // network refresh below continues in the background.
       final cached = await recent.readCached();
@@ -469,6 +472,8 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         ...before.labels,
         ..._projectLabels,
       ]);
+      await _recentIssue?.writeThrough(folded);
+      if (!mounted || issueGeneration != _issueGeneration) return;
       setState(() {
         _issueStateRevision++;
         _localEvents.addAll(_triageEvents(before, folded));

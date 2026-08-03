@@ -102,10 +102,9 @@ class RecentlyViewedCache {
       ]);
     final rows = await query.get();
     for (final row in rows.skip(maxEntriesPerType)) {
-      await (database.delete(database.recentlyViewedItems)..where(
-            (t) => _itemScope(t, type, row.projectId, row.itemId),
-          ))
-          .go();
+      await (database.delete(
+        database.recentlyViewedItems,
+      )..where((t) => _itemScope(t, type, row.projectId, row.itemId))).go();
     }
   }
 
@@ -173,8 +172,12 @@ class RecentItemRepository<T> implements OfflineFirstRepository<T?> {
   /// failures so an imperative caller can fall back to [readCached].
   Future<T> load() async {
     final item = await _fetch();
-    await cache.put(type, projectId, itemId, jsonEncode(_encode(item)));
+    await writeThrough(item);
     return item;
+  }
+
+  Future<void> writeThrough(T item) {
+    return cache.put(type, projectId, itemId, jsonEncode(_encode(item)));
   }
 
   /// One-shot cached read that also records the view, keeping an item the
