@@ -123,15 +123,27 @@ class TodosPoller {
 
     final items = (response.data as List<dynamic>).cast<Map<String, dynamic>>();
     final fetchedIds = <int>[for (final item in items) item['id'] as int];
+    final createdAtById = <int, DateTime>{
+      for (final item in items)
+        item['id'] as int: DateTime.parse(item['created_at'] as String).toUtc(),
+    };
     final seenIds = state == null
         ? <int>{}
         : (jsonDecode(state.seenTodoIds) as List<dynamic>).cast<int>().toSet();
+    final previousHighWater = state?.createdAtHighWater == null
+        ? null
+        : DateTime.parse(state!.createdAtHighWater!).toUtc();
 
     if (state != null) {
       try {
         for (final item in items) {
           final todoId = item['id'] as int;
           if (seenIds.contains(todoId)) {
+            continue;
+          }
+          if (previousHighWater != null &&
+              !createdAtById[todoId]!.isAfter(previousHighWater)) {
+            seenIds.add(todoId);
             continue;
           }
           final target = item['target'] as Map<String, dynamic>?;
@@ -147,17 +159,32 @@ class TodosPoller {
           seenIds.add(todoId);
         }
       } on Object {
-        await _persistState(etag: state.etag, seenIds: seenIds);
+        await _persistState(
+          etag: state.etag,
+          seenIds: seenIds,
+          createdAtHighWater: previousHighWater,
+        );
         rethrow;
       }
     }
     seenIds.addAll(fetchedIds);
-    await _persistState(etag: response.headers.value('etag'), seenIds: seenIds);
+    var nextHighWater = previousHighWater;
+    for (final createdAt in createdAtById.values) {
+      if (nextHighWater == null || createdAt.isAfter(nextHighWater)) {
+        nextHighWater = createdAt;
+      }
+    }
+    await _persistState(
+      etag: response.headers.value('etag'),
+      seenIds: seenIds,
+      createdAtHighWater: nextHighWater,
+    );
   }
 
   Future<void> _persistState({
     required String? etag,
     required Set<int> seenIds,
+    required DateTime? createdAtHighWater,
   }) async {
     await database
         .into(database.todoPollStates)
@@ -167,6 +194,9 @@ class TodosPoller {
             accountId: account.accountId,
             etag: Value(etag),
             seenTodoIds: jsonEncode(seenIds.toList()),
+            createdAtHighWater: Value(
+              createdAtHighWater?.toUtc().toIso8601String(),
+            ),
             updatedAt: DateTime.now(),
           ),
         );

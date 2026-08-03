@@ -107,6 +107,10 @@ void main() {
       expect(state.accountId, account.accountId);
       expect(state.etag, 'W/"v1"');
       expect(jsonDecode(state.seenTodoIds), [102, 101]);
+      expect(
+        DateTime.parse(state.createdAtHighWater!),
+        DateTime.parse('2026-07-30T13:59:12.849Z'),
+      );
     },
   );
 
@@ -185,6 +189,32 @@ void main() {
     },
   );
 
+  test('an unseen to-do older than the seed marker stays quiet', () async {
+    final poller = createPoller();
+    await poller.poll();
+
+    endpoint.etag = 'W/"v2"';
+    endpoint.todos = [
+      ...endpoint.todos,
+      {
+        'id': 100,
+        'action_name': 'assigned',
+        'body': 'Older unseen backlog to-do',
+        'target': {'title': 'Older target'},
+        'created_at': '2026-07-28T09:00:00.000Z',
+      },
+    ];
+    await poller.poll();
+
+    expect(notifier.shown, isEmpty);
+    final state = await db.select(db.todoPollStates).getSingle();
+    expect(jsonDecode(state.seenTodoIds), contains(100));
+    expect(
+      DateTime.parse(state.createdAtHighWater!),
+      DateTime.parse('2026-07-30T13:59:12.849Z'),
+    );
+  });
+
   test(
     'a partial notification failure retries only undelivered to-dos',
     () async {
@@ -198,12 +228,14 @@ void main() {
           'action_name': 'assigned',
           'body': 'First new to-do',
           'target': {'title': 'First target'},
+          'created_at': '2026-08-02T10:00:00.000Z',
         },
         {
           'id': 103,
           'action_name': 'assigned',
           'body': 'Second new to-do',
           'target': {'title': 'Second target'},
+          'created_at': '2026-08-02T09:00:00.000Z',
         },
         ...endpoint.todos,
       ];
@@ -245,12 +277,12 @@ void main() {
 
     // A new to-do notifies each account exactly once, attributed to it.
     endpoint.etag = 'W/"v2"';
-    endpoint.todos = [
-      ...endpoint.todos,
+    final newTodo = Map<String, dynamic>.from(
       (Fixtures.json('todos_page2') as List<dynamic>)
           .cast<Map<String, dynamic>>()
           .single,
-    ];
+    )..['created_at'] = '2026-08-02T09:00:00.000Z';
+    endpoint.todos = [...endpoint.todos, newTodo];
     await createPoller().poll();
     expect(notifier.shown, hasLength(1));
     expect(notifier.shown.single.account, account);

@@ -4145,6 +4145,17 @@ class $TodoPollStatesTable extends TodoPollStates
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _createdAtHighWaterMeta =
+      const VerificationMeta('createdAtHighWater');
+  @override
+  late final GeneratedColumn<String> createdAtHighWater =
+      GeneratedColumn<String>(
+        'created_at_high_water',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -4162,6 +4173,7 @@ class $TodoPollStatesTable extends TodoPollStates
     accountId,
     etag,
     seenTodoIds,
+    createdAtHighWater,
     updatedAt,
   ];
   @override
@@ -4212,6 +4224,15 @@ class $TodoPollStatesTable extends TodoPollStates
     } else if (isInserting) {
       context.missing(_seenTodoIdsMeta);
     }
+    if (data.containsKey('created_at_high_water')) {
+      context.handle(
+        _createdAtHighWaterMeta,
+        createdAtHighWater.isAcceptableOrUnknown(
+          data['created_at_high_water']!,
+          _createdAtHighWaterMeta,
+        ),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -4245,6 +4266,10 @@ class $TodoPollStatesTable extends TodoPollStates
         DriftSqlType.string,
         data['${effectivePrefix}seen_todo_ids'],
       )!,
+      createdAtHighWater: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_at_high_water'],
+      ),
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -4263,12 +4288,14 @@ class TodoPollState extends DataClass implements Insertable<TodoPollState> {
   final String accountId;
   final String? etag;
   final String seenTodoIds;
+  final String? createdAtHighWater;
   final DateTime updatedAt;
   const TodoPollState({
     required this.instanceHost,
     required this.accountId,
     this.etag,
     required this.seenTodoIds,
+    this.createdAtHighWater,
     required this.updatedAt,
   });
   @override
@@ -4280,6 +4307,9 @@ class TodoPollState extends DataClass implements Insertable<TodoPollState> {
       map['etag'] = Variable<String>(etag);
     }
     map['seen_todo_ids'] = Variable<String>(seenTodoIds);
+    if (!nullToAbsent || createdAtHighWater != null) {
+      map['created_at_high_water'] = Variable<String>(createdAtHighWater);
+    }
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
@@ -4290,6 +4320,9 @@ class TodoPollState extends DataClass implements Insertable<TodoPollState> {
       accountId: Value(accountId),
       etag: etag == null && nullToAbsent ? const Value.absent() : Value(etag),
       seenTodoIds: Value(seenTodoIds),
+      createdAtHighWater: createdAtHighWater == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAtHighWater),
       updatedAt: Value(updatedAt),
     );
   }
@@ -4304,6 +4337,9 @@ class TodoPollState extends DataClass implements Insertable<TodoPollState> {
       accountId: serializer.fromJson<String>(json['accountId']),
       etag: serializer.fromJson<String?>(json['etag']),
       seenTodoIds: serializer.fromJson<String>(json['seenTodoIds']),
+      createdAtHighWater: serializer.fromJson<String?>(
+        json['createdAtHighWater'],
+      ),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -4315,6 +4351,7 @@ class TodoPollState extends DataClass implements Insertable<TodoPollState> {
       'accountId': serializer.toJson<String>(accountId),
       'etag': serializer.toJson<String?>(etag),
       'seenTodoIds': serializer.toJson<String>(seenTodoIds),
+      'createdAtHighWater': serializer.toJson<String?>(createdAtHighWater),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -4324,12 +4361,16 @@ class TodoPollState extends DataClass implements Insertable<TodoPollState> {
     String? accountId,
     Value<String?> etag = const Value.absent(),
     String? seenTodoIds,
+    Value<String?> createdAtHighWater = const Value.absent(),
     DateTime? updatedAt,
   }) => TodoPollState(
     instanceHost: instanceHost ?? this.instanceHost,
     accountId: accountId ?? this.accountId,
     etag: etag.present ? etag.value : this.etag,
     seenTodoIds: seenTodoIds ?? this.seenTodoIds,
+    createdAtHighWater: createdAtHighWater.present
+        ? createdAtHighWater.value
+        : this.createdAtHighWater,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   TodoPollState copyWithCompanion(TodoPollStatesCompanion data) {
@@ -4342,6 +4383,9 @@ class TodoPollState extends DataClass implements Insertable<TodoPollState> {
       seenTodoIds: data.seenTodoIds.present
           ? data.seenTodoIds.value
           : this.seenTodoIds,
+      createdAtHighWater: data.createdAtHighWater.present
+          ? data.createdAtHighWater.value
+          : this.createdAtHighWater,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -4353,14 +4397,21 @@ class TodoPollState extends DataClass implements Insertable<TodoPollState> {
           ..write('accountId: $accountId, ')
           ..write('etag: $etag, ')
           ..write('seenTodoIds: $seenTodoIds, ')
+          ..write('createdAtHighWater: $createdAtHighWater, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(instanceHost, accountId, etag, seenTodoIds, updatedAt);
+  int get hashCode => Object.hash(
+    instanceHost,
+    accountId,
+    etag,
+    seenTodoIds,
+    createdAtHighWater,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4369,6 +4420,7 @@ class TodoPollState extends DataClass implements Insertable<TodoPollState> {
           other.accountId == this.accountId &&
           other.etag == this.etag &&
           other.seenTodoIds == this.seenTodoIds &&
+          other.createdAtHighWater == this.createdAtHighWater &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -4377,6 +4429,7 @@ class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
   final Value<String> accountId;
   final Value<String?> etag;
   final Value<String> seenTodoIds;
+  final Value<String?> createdAtHighWater;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const TodoPollStatesCompanion({
@@ -4384,6 +4437,7 @@ class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
     this.accountId = const Value.absent(),
     this.etag = const Value.absent(),
     this.seenTodoIds = const Value.absent(),
+    this.createdAtHighWater = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -4392,6 +4446,7 @@ class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
     required String accountId,
     this.etag = const Value.absent(),
     required String seenTodoIds,
+    this.createdAtHighWater = const Value.absent(),
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   }) : instanceHost = Value(instanceHost),
@@ -4403,6 +4458,7 @@ class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
     Expression<String>? accountId,
     Expression<String>? etag,
     Expression<String>? seenTodoIds,
+    Expression<String>? createdAtHighWater,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
   }) {
@@ -4411,6 +4467,8 @@ class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
       if (accountId != null) 'account_id': accountId,
       if (etag != null) 'etag': etag,
       if (seenTodoIds != null) 'seen_todo_ids': seenTodoIds,
+      if (createdAtHighWater != null)
+        'created_at_high_water': createdAtHighWater,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -4421,6 +4479,7 @@ class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
     Value<String>? accountId,
     Value<String?>? etag,
     Value<String>? seenTodoIds,
+    Value<String?>? createdAtHighWater,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
@@ -4429,6 +4488,7 @@ class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
       accountId: accountId ?? this.accountId,
       etag: etag ?? this.etag,
       seenTodoIds: seenTodoIds ?? this.seenTodoIds,
+      createdAtHighWater: createdAtHighWater ?? this.createdAtHighWater,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -4449,6 +4509,9 @@ class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
     if (seenTodoIds.present) {
       map['seen_todo_ids'] = Variable<String>(seenTodoIds.value);
     }
+    if (createdAtHighWater.present) {
+      map['created_at_high_water'] = Variable<String>(createdAtHighWater.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -4465,6 +4528,7 @@ class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
           ..write('accountId: $accountId, ')
           ..write('etag: $etag, ')
           ..write('seenTodoIds: $seenTodoIds, ')
+          ..write('createdAtHighWater: $createdAtHighWater, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -6626,6 +6690,7 @@ typedef $$TodoPollStatesTableCreateCompanionBuilder =
       required String accountId,
       Value<String?> etag,
       required String seenTodoIds,
+      Value<String?> createdAtHighWater,
       required DateTime updatedAt,
       Value<int> rowid,
     });
@@ -6635,6 +6700,7 @@ typedef $$TodoPollStatesTableUpdateCompanionBuilder =
       Value<String> accountId,
       Value<String?> etag,
       Value<String> seenTodoIds,
+      Value<String?> createdAtHighWater,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
@@ -6665,6 +6731,11 @@ class $$TodoPollStatesTableFilterComposer
 
   ColumnFilters<String> get seenTodoIds => $composableBuilder(
     column: $table.seenTodoIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdAtHighWater => $composableBuilder(
+    column: $table.createdAtHighWater,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6703,6 +6774,11 @@ class $$TodoPollStatesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get createdAtHighWater => $composableBuilder(
+    column: $table.createdAtHighWater,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -6731,6 +6807,11 @@ class $$TodoPollStatesTableAnnotationComposer
 
   GeneratedColumn<String> get seenTodoIds => $composableBuilder(
     column: $table.seenTodoIds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdAtHighWater => $composableBuilder(
+    column: $table.createdAtHighWater,
     builder: (column) => column,
   );
 
@@ -6775,6 +6856,7 @@ class $$TodoPollStatesTableTableManager
                 Value<String> accountId = const Value.absent(),
                 Value<String?> etag = const Value.absent(),
                 Value<String> seenTodoIds = const Value.absent(),
+                Value<String?> createdAtHighWater = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TodoPollStatesCompanion(
@@ -6782,6 +6864,7 @@ class $$TodoPollStatesTableTableManager
                 accountId: accountId,
                 etag: etag,
                 seenTodoIds: seenTodoIds,
+                createdAtHighWater: createdAtHighWater,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
@@ -6791,6 +6874,7 @@ class $$TodoPollStatesTableTableManager
                 required String accountId,
                 Value<String?> etag = const Value.absent(),
                 required String seenTodoIds,
+                Value<String?> createdAtHighWater = const Value.absent(),
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => TodoPollStatesCompanion.insert(
@@ -6798,6 +6882,7 @@ class $$TodoPollStatesTableTableManager
                 accountId: accountId,
                 etag: etag,
                 seenTodoIds: seenTodoIds,
+                createdAtHighWater: createdAtHighWater,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),

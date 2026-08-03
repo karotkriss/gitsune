@@ -139,13 +139,12 @@ class HomeTileOrders extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId};
 }
 
-/// The baseline background poller's per-account conditional-request state:
-/// the last `ETag` returned by `GET /todos` and the JSON-encoded ids of the
-/// to-dos that response carried, diffed against on the next poll to find
-/// genuinely new ones. See `core/notifications/todos_poller.dart`.
+/// The baseline background poller's per-account conditional-request state.
+/// See `core/notifications/todos_poller.dart`.
 class TodoPollStates extends Table with AccountScoped {
   TextColumn get etag => text().nullable()();
   TextColumn get seenTodoIds => text()();
+  TextColumn get createdAtHighWater => text().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
 
   @override
