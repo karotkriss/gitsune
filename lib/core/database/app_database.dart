@@ -129,6 +129,25 @@ class ReleaseEntries extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId, projectId, tagName};
 }
 
+/// Queued comment drafts awaiting send (the E14.2 offline outbox), scoped
+/// per account. [draftId] is allocated transactionally after the greatest
+/// persisted id and orders the queue.
+/// [lastError] is null while the draft is queued for sending; a permanent
+/// server rejection sets it (e.g. `HTTP 403`), which surfaces the draft as
+/// failed and excludes it from further send attempts. See
+/// `features/issues/data/comment_draft_queue.dart`.
+class CommentDrafts extends Table with AccountScoped {
+  IntColumn get draftId => integer()();
+  IntColumn get projectId => integer()();
+  IntColumn get issueIid => integer()();
+  TextColumn get body => text()();
+  TextColumn get lastError => text().nullable()();
+  DateTimeColumn get retryAfter => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId, draftId};
+}
+
 /// The persisted Home shortcut-tile order, one row per account holding the
 /// comma-separated tile ids. See `features/home/home_tiles.dart`.
 class HomeTileOrders extends Table with AccountScoped {
@@ -162,6 +181,7 @@ class TodoPollStates extends Table with AccountScoped {
     HomeTileOrders,
     ReleaseEntries,
     TodoPollStates,
+    CommentDrafts,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -170,7 +190,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -198,6 +218,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 9) {
         await migrator.createTable(todoPollStates);
+      }
+      if (from < 10) {
+        await migrator.createTable(commentDrafts);
       }
     },
   );

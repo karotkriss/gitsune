@@ -4536,6 +4536,530 @@ class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
   }
 }
 
+class $CommentDraftsTable extends CommentDrafts
+    with TableInfo<$CommentDraftsTable, CommentDraft> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CommentDraftsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _draftIdMeta = const VerificationMeta(
+    'draftId',
+  );
+  @override
+  late final GeneratedColumn<int> draftId = GeneratedColumn<int>(
+    'draft_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
+  @override
+  late final GeneratedColumn<int> projectId = GeneratedColumn<int>(
+    'project_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _issueIidMeta = const VerificationMeta(
+    'issueIid',
+  );
+  @override
+  late final GeneratedColumn<int> issueIid = GeneratedColumn<int>(
+    'issue_iid',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastErrorMeta = const VerificationMeta(
+    'lastError',
+  );
+  @override
+  late final GeneratedColumn<String> lastError = GeneratedColumn<String>(
+    'last_error',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _retryAfterMeta = const VerificationMeta(
+    'retryAfter',
+  );
+  @override
+  late final GeneratedColumn<DateTime> retryAfter = GeneratedColumn<DateTime>(
+    'retry_after',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    draftId,
+    projectId,
+    issueIid,
+    body,
+    lastError,
+    retryAfter,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'comment_drafts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CommentDraft> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('draft_id')) {
+      context.handle(
+        _draftIdMeta,
+        draftId.isAcceptableOrUnknown(data['draft_id']!, _draftIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_draftIdMeta);
+    }
+    if (data.containsKey('project_id')) {
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_projectIdMeta);
+    }
+    if (data.containsKey('issue_iid')) {
+      context.handle(
+        _issueIidMeta,
+        issueIid.isAcceptableOrUnknown(data['issue_iid']!, _issueIidMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_issueIidMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('last_error')) {
+      context.handle(
+        _lastErrorMeta,
+        lastError.isAcceptableOrUnknown(data['last_error']!, _lastErrorMeta),
+      );
+    }
+    if (data.containsKey('retry_after')) {
+      context.handle(
+        _retryAfterMeta,
+        retryAfter.isAcceptableOrUnknown(data['retry_after']!, _retryAfterMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {instanceHost, accountId, draftId};
+  @override
+  CommentDraft map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CommentDraft(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      draftId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}draft_id'],
+      )!,
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}project_id'],
+      )!,
+      issueIid: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}issue_iid'],
+      )!,
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      )!,
+      lastError: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_error'],
+      ),
+      retryAfter: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}retry_after'],
+      ),
+    );
+  }
+
+  @override
+  $CommentDraftsTable createAlias(String alias) {
+    return $CommentDraftsTable(attachedDatabase, alias);
+  }
+}
+
+class CommentDraft extends DataClass implements Insertable<CommentDraft> {
+  final String instanceHost;
+  final String accountId;
+  final int draftId;
+  final int projectId;
+  final int issueIid;
+  final String body;
+  final String? lastError;
+  final DateTime? retryAfter;
+  const CommentDraft({
+    required this.instanceHost,
+    required this.accountId,
+    required this.draftId,
+    required this.projectId,
+    required this.issueIid,
+    required this.body,
+    this.lastError,
+    this.retryAfter,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    map['draft_id'] = Variable<int>(draftId);
+    map['project_id'] = Variable<int>(projectId);
+    map['issue_iid'] = Variable<int>(issueIid);
+    map['body'] = Variable<String>(body);
+    if (!nullToAbsent || lastError != null) {
+      map['last_error'] = Variable<String>(lastError);
+    }
+    if (!nullToAbsent || retryAfter != null) {
+      map['retry_after'] = Variable<DateTime>(retryAfter);
+    }
+    return map;
+  }
+
+  CommentDraftsCompanion toCompanion(bool nullToAbsent) {
+    return CommentDraftsCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      draftId: Value(draftId),
+      projectId: Value(projectId),
+      issueIid: Value(issueIid),
+      body: Value(body),
+      lastError: lastError == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastError),
+      retryAfter: retryAfter == null && nullToAbsent
+          ? const Value.absent()
+          : Value(retryAfter),
+    );
+  }
+
+  factory CommentDraft.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CommentDraft(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      draftId: serializer.fromJson<int>(json['draftId']),
+      projectId: serializer.fromJson<int>(json['projectId']),
+      issueIid: serializer.fromJson<int>(json['issueIid']),
+      body: serializer.fromJson<String>(json['body']),
+      lastError: serializer.fromJson<String?>(json['lastError']),
+      retryAfter: serializer.fromJson<DateTime?>(json['retryAfter']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'draftId': serializer.toJson<int>(draftId),
+      'projectId': serializer.toJson<int>(projectId),
+      'issueIid': serializer.toJson<int>(issueIid),
+      'body': serializer.toJson<String>(body),
+      'lastError': serializer.toJson<String?>(lastError),
+      'retryAfter': serializer.toJson<DateTime?>(retryAfter),
+    };
+  }
+
+  CommentDraft copyWith({
+    String? instanceHost,
+    String? accountId,
+    int? draftId,
+    int? projectId,
+    int? issueIid,
+    String? body,
+    Value<String?> lastError = const Value.absent(),
+    Value<DateTime?> retryAfter = const Value.absent(),
+  }) => CommentDraft(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    draftId: draftId ?? this.draftId,
+    projectId: projectId ?? this.projectId,
+    issueIid: issueIid ?? this.issueIid,
+    body: body ?? this.body,
+    lastError: lastError.present ? lastError.value : this.lastError,
+    retryAfter: retryAfter.present ? retryAfter.value : this.retryAfter,
+  );
+  CommentDraft copyWithCompanion(CommentDraftsCompanion data) {
+    return CommentDraft(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      draftId: data.draftId.present ? data.draftId.value : this.draftId,
+      projectId: data.projectId.present ? data.projectId.value : this.projectId,
+      issueIid: data.issueIid.present ? data.issueIid.value : this.issueIid,
+      body: data.body.present ? data.body.value : this.body,
+      lastError: data.lastError.present ? data.lastError.value : this.lastError,
+      retryAfter: data.retryAfter.present
+          ? data.retryAfter.value
+          : this.retryAfter,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CommentDraft(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('draftId: $draftId, ')
+          ..write('projectId: $projectId, ')
+          ..write('issueIid: $issueIid, ')
+          ..write('body: $body, ')
+          ..write('lastError: $lastError, ')
+          ..write('retryAfter: $retryAfter')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    instanceHost,
+    accountId,
+    draftId,
+    projectId,
+    issueIid,
+    body,
+    lastError,
+    retryAfter,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CommentDraft &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.draftId == this.draftId &&
+          other.projectId == this.projectId &&
+          other.issueIid == this.issueIid &&
+          other.body == this.body &&
+          other.lastError == this.lastError &&
+          other.retryAfter == this.retryAfter);
+}
+
+class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<int> draftId;
+  final Value<int> projectId;
+  final Value<int> issueIid;
+  final Value<String> body;
+  final Value<String?> lastError;
+  final Value<DateTime?> retryAfter;
+  final Value<int> rowid;
+  const CommentDraftsCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.draftId = const Value.absent(),
+    this.projectId = const Value.absent(),
+    this.issueIid = const Value.absent(),
+    this.body = const Value.absent(),
+    this.lastError = const Value.absent(),
+    this.retryAfter = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CommentDraftsCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    required int draftId,
+    required int projectId,
+    required int issueIid,
+    required String body,
+    this.lastError = const Value.absent(),
+    this.retryAfter = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       draftId = Value(draftId),
+       projectId = Value(projectId),
+       issueIid = Value(issueIid),
+       body = Value(body);
+  static Insertable<CommentDraft> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<int>? draftId,
+    Expression<int>? projectId,
+    Expression<int>? issueIid,
+    Expression<String>? body,
+    Expression<String>? lastError,
+    Expression<DateTime>? retryAfter,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (draftId != null) 'draft_id': draftId,
+      if (projectId != null) 'project_id': projectId,
+      if (issueIid != null) 'issue_iid': issueIid,
+      if (body != null) 'body': body,
+      if (lastError != null) 'last_error': lastError,
+      if (retryAfter != null) 'retry_after': retryAfter,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CommentDraftsCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<int>? draftId,
+    Value<int>? projectId,
+    Value<int>? issueIid,
+    Value<String>? body,
+    Value<String?>? lastError,
+    Value<DateTime?>? retryAfter,
+    Value<int>? rowid,
+  }) {
+    return CommentDraftsCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      draftId: draftId ?? this.draftId,
+      projectId: projectId ?? this.projectId,
+      issueIid: issueIid ?? this.issueIid,
+      body: body ?? this.body,
+      lastError: lastError ?? this.lastError,
+      retryAfter: retryAfter ?? this.retryAfter,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (draftId.present) {
+      map['draft_id'] = Variable<int>(draftId.value);
+    }
+    if (projectId.present) {
+      map['project_id'] = Variable<int>(projectId.value);
+    }
+    if (issueIid.present) {
+      map['issue_iid'] = Variable<int>(issueIid.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (lastError.present) {
+      map['last_error'] = Variable<String>(lastError.value);
+    }
+    if (retryAfter.present) {
+      map['retry_after'] = Variable<DateTime>(retryAfter.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CommentDraftsCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('draftId: $draftId, ')
+          ..write('projectId: $projectId, ')
+          ..write('issueIid: $issueIid, ')
+          ..write('body: $body, ')
+          ..write('lastError: $lastError, ')
+          ..write('retryAfter: $retryAfter, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4553,6 +5077,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $HomeTileOrdersTable homeTileOrders = $HomeTileOrdersTable(this);
   late final $ReleaseEntriesTable releaseEntries = $ReleaseEntriesTable(this);
   late final $TodoPollStatesTable todoPollStates = $TodoPollStatesTable(this);
+  late final $CommentDraftsTable commentDrafts = $CommentDraftsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4567,6 +5092,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     homeTileOrders,
     releaseEntries,
     todoPollStates,
+    commentDrafts,
   ];
 }
 
@@ -6911,6 +7437,267 @@ typedef $$TodoPollStatesTableProcessedTableManager =
       TodoPollState,
       PrefetchHooks Function()
     >;
+typedef $$CommentDraftsTableCreateCompanionBuilder =
+    CommentDraftsCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      required int draftId,
+      required int projectId,
+      required int issueIid,
+      required String body,
+      Value<String?> lastError,
+      Value<DateTime?> retryAfter,
+      Value<int> rowid,
+    });
+typedef $$CommentDraftsTableUpdateCompanionBuilder =
+    CommentDraftsCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<int> draftId,
+      Value<int> projectId,
+      Value<int> issueIid,
+      Value<String> body,
+      Value<String?> lastError,
+      Value<DateTime?> retryAfter,
+      Value<int> rowid,
+    });
+
+class $$CommentDraftsTableFilterComposer
+    extends Composer<_$AppDatabase, $CommentDraftsTable> {
+  $$CommentDraftsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get draftId => $composableBuilder(
+    column: $table.draftId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get issueIid => $composableBuilder(
+    column: $table.issueIid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get retryAfter => $composableBuilder(
+    column: $table.retryAfter,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CommentDraftsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CommentDraftsTable> {
+  $$CommentDraftsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get draftId => $composableBuilder(
+    column: $table.draftId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get issueIid => $composableBuilder(
+    column: $table.issueIid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastError => $composableBuilder(
+    column: $table.lastError,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get retryAfter => $composableBuilder(
+    column: $table.retryAfter,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CommentDraftsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CommentDraftsTable> {
+  $$CommentDraftsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<int> get draftId =>
+      $composableBuilder(column: $table.draftId, builder: (column) => column);
+
+  GeneratedColumn<int> get projectId =>
+      $composableBuilder(column: $table.projectId, builder: (column) => column);
+
+  GeneratedColumn<int> get issueIid =>
+      $composableBuilder(column: $table.issueIid, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<String> get lastError =>
+      $composableBuilder(column: $table.lastError, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get retryAfter => $composableBuilder(
+    column: $table.retryAfter,
+    builder: (column) => column,
+  );
+}
+
+class $$CommentDraftsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CommentDraftsTable,
+          CommentDraft,
+          $$CommentDraftsTableFilterComposer,
+          $$CommentDraftsTableOrderingComposer,
+          $$CommentDraftsTableAnnotationComposer,
+          $$CommentDraftsTableCreateCompanionBuilder,
+          $$CommentDraftsTableUpdateCompanionBuilder,
+          (
+            CommentDraft,
+            BaseReferences<_$AppDatabase, $CommentDraftsTable, CommentDraft>,
+          ),
+          CommentDraft,
+          PrefetchHooks Function()
+        > {
+  $$CommentDraftsTableTableManager(_$AppDatabase db, $CommentDraftsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CommentDraftsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CommentDraftsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CommentDraftsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<int> draftId = const Value.absent(),
+                Value<int> projectId = const Value.absent(),
+                Value<int> issueIid = const Value.absent(),
+                Value<String> body = const Value.absent(),
+                Value<String?> lastError = const Value.absent(),
+                Value<DateTime?> retryAfter = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CommentDraftsCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                draftId: draftId,
+                projectId: projectId,
+                issueIid: issueIid,
+                body: body,
+                lastError: lastError,
+                retryAfter: retryAfter,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                required int draftId,
+                required int projectId,
+                required int issueIid,
+                required String body,
+                Value<String?> lastError = const Value.absent(),
+                Value<DateTime?> retryAfter = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CommentDraftsCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                draftId: draftId,
+                projectId: projectId,
+                issueIid: issueIid,
+                body: body,
+                lastError: lastError,
+                retryAfter: retryAfter,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CommentDraftsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CommentDraftsTable,
+      CommentDraft,
+      $$CommentDraftsTableFilterComposer,
+      $$CommentDraftsTableOrderingComposer,
+      $$CommentDraftsTableAnnotationComposer,
+      $$CommentDraftsTableCreateCompanionBuilder,
+      $$CommentDraftsTableUpdateCompanionBuilder,
+      (
+        CommentDraft,
+        BaseReferences<_$AppDatabase, $CommentDraftsTable, CommentDraft>,
+      ),
+      CommentDraft,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6933,4 +7720,6 @@ class $AppDatabaseManager {
       $$ReleaseEntriesTableTableManager(_db, _db.releaseEntries);
   $$TodoPollStatesTableTableManager get todoPollStates =>
       $$TodoPollStatesTableTableManager(_db, _db.todoPollStates);
+  $$CommentDraftsTableTableManager get commentDrafts =>
+      $$CommentDraftsTableTableManager(_db, _db.commentDrafts);
 }

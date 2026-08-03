@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../../../core/database/app_database.dart';
 import '../../../core/icons/gs_icons.dart';
 import '../../../core/repository/recently_viewed_repository.dart';
 import '../../../core/theme/app_theme.dart';
+import '../data/comment_draft_queue.dart';
 import '../data/issue_models.dart';
 import '../data/issues_repository.dart';
 import 'issue_components.dart';
@@ -15,6 +19,7 @@ class IssueDetailScreen extends StatefulWidget {
     required this.issueIid,
     required this.repository,
     this.recentlyViewedCache,
+    this.draftQueue,
     this.initialIssue,
     this.now,
   });
@@ -27,6 +32,10 @@ class IssueDetailScreen extends StatefulWidget {
   /// Serves this issue offline after a previous view; null leaves the screen
   /// network-only until the composition root wires the cache.
   final RecentlyViewedCache? recentlyViewedCache;
+
+  /// Routes comment sends through the E14.2 offline outbox; null keeps the
+  /// direct network send until the composition root wires the queue.
+  final CommentDraftQueue? draftQueue;
   final Issue? initialIssue;
   final DateTime? now;
 
@@ -58,6 +67,9 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   int _issueGeneration = 0;
   int _issueStateRevision = 0;
   RecentItemRepository<Issue>? _recentIssue;
+  List<CommentDraft> _drafts = const [];
+  StreamSubscription<List<CommentDraft>>? _draftsSubscription;
+  StreamSubscription<SentCommentDraft>? _sentSubscription;
 
   @override
   void initState() {
@@ -65,7 +77,30 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     _issue = widget.initialIssue;
     _scrollController.addListener(_handleScroll);
     _rebuildRecentIssue();
+    _subscribeDrafts();
     _reload();
+  }
+
+  void _subscribeDrafts() {
+    final queue = widget.draftQueue;
+    if (queue == null) return;
+    _draftsSubscription = queue
+        .watchDrafts(widget.projectId, widget.issueIid)
+        .listen((drafts) => setState(() => _drafts = drafts));
+    _sentSubscription = queue.sentNotes.listen((sent) {
+      if (sent.projectId != widget.projectId ||
+          sent.issueIid != widget.issueIid) {
+        return;
+      }
+      setState(() => _createdNotes[sent.note.id] = sent.note);
+    });
+  }
+
+  void _unsubscribeDrafts() {
+    _draftsSubscription?.cancel();
+    _sentSubscription?.cancel();
+    _draftsSubscription = null;
+    _sentSubscription = null;
   }
 
   void _rebuildRecentIssue() {
@@ -93,6 +128,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.issueIid != widget.issueIid ||
         oldWidget.repository != widget.repository ||
+        oldWidget.draftQueue != widget.draftQueue ||
         cacheChanged) {
       _issueGeneration++;
       _issueStateRevision++;
@@ -105,13 +141,17 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       _sendingComment = false;
       _triaging = false;
       _notesHaveMore = false;
+      _drafts = const [];
       _rebuildRecentIssue();
+      _unsubscribeDrafts();
+      _subscribeDrafts();
       _reload();
     }
   }
 
   @override
   void dispose() {
+    _unsubscribeDrafts();
     _scrollController
       ..removeListener(_handleScroll)
       ..dispose();
@@ -122,6 +162,26 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   Future<void> _sendComment() async {
     final body = normalizeIssueDraft(_commentController.text);
     if (body.isEmpty || _sendingComment) return;
+    final queue = widget.draftQueue;
+    if (queue != null) {
+      final issueGeneration = _issueGeneration;
+      setState(() => _sendingComment = true);
+      try {
+        await queue.send(widget.projectId, widget.issueIid, body);
+        if (!mounted || issueGeneration != _issueGeneration) return;
+        setState(() {
+          _sendingComment = false;
+          _commentController.clear();
+        });
+      } on Object {
+        if (!mounted || issueGeneration != _issueGeneration) return;
+        setState(() => _sendingComment = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to save the comment.')),
+        );
+      }
+      return;
+    }
     final issueGeneration = _issueGeneration;
     setState(() => _sendingComment = true);
     try {
@@ -538,6 +598,19 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     ];
   }
 
+  /// Moves a rejected draft's body back into the composer for editing,
+  /// removing it from the queue.
+  Future<void> _editFailedDraft(CommentDraft draft) async {
+    await widget.draftQueue?.discard(draft.draftId);
+    if (!mounted) return;
+    setState(() {
+      final existing = _commentController.text;
+      _commentController.text = existing.isEmpty
+          ? draft.body
+          : '$existing\n\n${draft.body}';
+    });
+  }
+
   List<IssueNote> get _notes {
     final notesById = <int, IssueNote>{
       for (final note in _loadedNotes) note.id: note,
@@ -648,7 +721,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                         SliverPadding(
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
                           sliver: SliverList.builder(
-                            itemCount: notes.length + 2,
+                            itemCount: notes.length + _drafts.length + 2,
                             itemBuilder: (context, index) {
                               if (index == 0) {
                                 return Padding(
@@ -686,6 +759,19 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
                                         ),
                                 );
                               }
+                              if (index <= notes.length + _drafts.length) {
+                                final draft = _drafts[index - notes.length - 1];
+                                return Padding(
+                                  key: ValueKey(
+                                    'comment-draft-${draft.draftId}',
+                                  ),
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: _PendingDraftCard(
+                                    draft: draft,
+                                    onEdit: () => _editFailedDraft(draft),
+                                  ),
+                                );
+                              }
                               return _NotesFooter(
                                 hasNotes: notes.isNotEmpty,
                                 loading: _notesLoading || _notesLoadingMore,
@@ -714,6 +800,66 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
 }
 
 enum _TriageAction { labels, assignees, state }
+
+/// A comment waiting in the offline outbox: queued drafts announce they will
+/// send when connectivity returns, and permanently rejected ones surface the
+/// failure with an affordance to pull the body back into the composer.
+class _PendingDraftCard extends StatelessWidget {
+  const _PendingDraftCard({required this.draft, required this.onEdit});
+
+  final CommentDraft draft;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final gs = theme.extension<GsTheme>()!;
+    final failed = draft.lastError != null;
+    return Semantics(
+      container: true,
+      label: failed ? 'Comment failed to send' : 'Comment waiting to send',
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: gs.surfaceCard,
+          border: Border.all(color: failed ? gs.statusDanger : gs.borderSubtle),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(draft.body, style: theme.textTheme.bodyMedium),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  GsIcon(
+                    failed ? GsIconGlyph.cancel : GsIconGlyph.clock,
+                    size: 14,
+                    color: failed ? gs.statusDanger : gs.textSubtle,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      failed
+                          ? 'Couldn\'t send (${draft.lastError})'
+                          : 'Will send when back online',
+                      style: gs.caption.copyWith(
+                        color: failed ? gs.statusDanger : gs.textSubtle,
+                      ),
+                    ),
+                  ),
+                  if (failed)
+                    TextButton(onPressed: onEdit, child: const Text('Edit')),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _CommentComposer extends StatelessWidget {
   const _CommentComposer({

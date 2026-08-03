@@ -167,7 +167,7 @@ Dark mode is satisfied by construction (v1 is dark-only); no light theme or them
 | Task | Acceptance | Depends on |
 | --- | --- | --- |
 | E14.1 Bounded offline read cache for recently viewed issues, MRs, pipelines (drift, scoped, stale-while-revalidate) | recently viewed items read offline, and the cache is bounded and scoped per account | E3.3, E6.1, E7.1, E8.1 |
-| E14.2 Offline comment draft queue with send-on-reconnect | a comment drafted offline queues and flushes when connectivity returns, with an `integration_test` covering the reconnect-and-flush | E14.1 |
+| E14.2 Offline comment draft queue with send-on-reconnect | a comment drafted offline queues and flushes when connectivity returns, with fake-server integration coverage for the reconnect-and-flush round trip | E14.1 |
 
 ## E15: Store launch and signing (Phase 7)
 

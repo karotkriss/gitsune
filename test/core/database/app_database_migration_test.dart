@@ -78,4 +78,49 @@ void main() {
         );
     expect(await database.select(database.todoItems).get(), hasLength(1));
   });
+
+  test('upgrades version 9 database with comment draft queue', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'gitsune-comment-draft-migration-test-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final databaseFile = File('${directory.path}/gitsune.sqlite');
+
+    final database = AppDatabase.forTesting(
+      NativeDatabase(
+        databaseFile,
+        setup: (database) {
+          database.execute('''
+            CREATE TABLE todo_poll_states (
+              instance_host TEXT NOT NULL,
+              account_id TEXT NOT NULL,
+              etag TEXT NULL,
+              seen_todo_ids TEXT NOT NULL,
+              created_at_high_water TEXT NULL,
+              updated_at INTEGER NOT NULL,
+              PRIMARY KEY (instance_host, account_id)
+            )
+          ''');
+          database.userVersion = 9;
+        },
+      ),
+    );
+    addTearDown(database.close);
+
+    await database
+        .into(database.commentDrafts)
+        .insert(
+          CommentDraftsCompanion.insert(
+            instanceHost: 'gitlab.example.com',
+            accountId: '1',
+            draftId: 42,
+            projectId: 7,
+            issueIid: 142,
+            body: 'Still queued',
+          ),
+        );
+    final draft = (await database.select(database.commentDrafts).get()).single;
+    expect(draft.body, 'Still queued');
+    expect(draft.retryAfter, isNull);
+  });
 }
