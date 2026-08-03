@@ -30,5 +30,10 @@
     }
   ],
   "changes_count": "4",
-  "web_url": "https://gitlab.example.com/gitsune/app/-/merge_requests/142"
+  "web_url": "https://gitlab.example.com/gitsune/app/-/merge_requests/142",
+  "diff_refs": {
+    "base_sha": "d5c30fd1e3ee65a4966b8f6f27f65576e9c1bd85",
+    "start_sha": "d5c30fd1e3ee65a4966b8f6f27f65576e9c1bd85",
+    "head_sha": "43cb52c9e1d2b1e4a08b5d3adf1b2c94f0e2a97b"
+  }
 }

@@ -2,14 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/diff/diff_file.dart';
+import '../../../core/diff/diff_hunk_parser.dart';
 import '../../../core/diff/gs_diff_view.dart';
 import '../../../core/icons/gs_icons.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../issues/presentation/issue_components.dart';
+import '../data/merge_request_discussion_models.dart';
+import '../data/merge_request_models.dart';
 import '../data/merge_requests_repository.dart';
 
 /// The merge request changes screen: the full multi-file diff rendered by
-/// [GsDiffView], with a jump-to-file sheet and the oversized-diff web
-/// fallback.
+/// [GsDiffView], with inline comment threads anchored to their diff lines,
+/// a jump-to-file sheet, and the oversized-diff web fallback.
+///
+/// Tapping a diff line opens a composer that starts a new thread on that
+/// line; tapping a thread row opens the thread with its markdown-rendered
+/// notes and, for resolvable threads, a resolve/unresolve action. Both
+/// writes fold the discussion the server returns straight into local state.
 class MergeRequestChangesScreen extends StatefulWidget {
   const MergeRequestChangesScreen({
     super.key,
@@ -19,6 +28,7 @@ class MergeRequestChangesScreen extends StatefulWidget {
     required this.repository,
     this.webUrl,
     this.openWebUrl,
+    this.now,
   });
 
   final int projectId;
@@ -34,6 +44,9 @@ class MergeRequestChangesScreen extends StatefulWidget {
   /// browser via `url_launcher`.
   final Future<void> Function(Uri url)? openWebUrl;
 
+  /// Overrides the reference time for relative note timestamps in tests.
+  final DateTime? now;
+
   @override
   State<MergeRequestChangesScreen> createState() =>
       _MergeRequestChangesScreenState();
@@ -42,6 +55,8 @@ class MergeRequestChangesScreen extends StatefulWidget {
 class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
   final ScrollController _scrollController = ScrollController();
   List<DiffFile>? _files;
+  List<Discussion> _discussions = const [];
+  DiffRefs? _diffRefs;
   String? _webUrl;
   bool _loading = true;
   bool _failed = false;
@@ -69,6 +84,10 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
         widget.projectId,
         widget.mergeIid,
       );
+      final discussions = await widget.repository.loadDiscussions(
+        widget.projectId,
+        widget.mergeIid,
+      );
       if (_webUrl == null && isOversizedDiff(files)) {
         _webUrl = (await widget.repository.loadMergeRequest(
           widget.projectId,
@@ -78,6 +97,7 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
       if (!mounted) return;
       setState(() {
         _files = files;
+        _discussions = discussions;
         _loading = false;
       });
     } on Object {
@@ -131,6 +151,7 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
     final offset = GsDiffView.offsetForFile(
       files,
       index,
+      annotations: _annotations(),
     ).clamp(0.0, _scrollController.position.maxScrollExtent);
     _scrollController.animateTo(
       offset,
@@ -139,10 +160,158 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
     );
   }
 
+  List<DiffLineAnnotation> _annotations() => [
+    for (final discussion in _discussions)
+      if (discussion.isDiffThread)
+        DiffLineAnnotation(
+          path: discussion.position!.newLine != null
+              ? discussion.position!.newPath
+              : discussion.position!.oldPath,
+          oldLine: discussion.position!.oldLine,
+          newLine: discussion.position!.newLine,
+          builder: (context) => _ThreadRow(
+            key: ValueKey('diff-thread-${discussion.id}'),
+            discussion: discussion,
+            onTap: () => _openThread(discussion.id),
+          ),
+        ),
+  ];
+
+  Future<void> _openThread(String discussionId) async {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    final now = widget.now ?? DateTime.now();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: gs.surfaceSheet,
+      builder: (sheetContext) {
+        final discussion = _discussions.firstWhere(
+          (candidate) => candidate.id == discussionId,
+        );
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final note in discussion.notes)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: IssueCommentCard(
+                            author: note.author,
+                            timeLabel: formatIssueRelativeTime(
+                              note.createdAt,
+                              now,
+                            ),
+                            body: note.body,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (discussion.resolvable)
+                  FilledButton(
+                    key: const ValueKey('toggle-resolved'),
+                    onPressed: () => _toggleResolved(sheetContext, discussion),
+                    child: Text(
+                      discussion.resolved
+                          ? 'Unresolve thread'
+                          : 'Resolve thread',
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _toggleResolved(
+    BuildContext sheetContext,
+    Discussion discussion,
+  ) async {
+    try {
+      final updated = await widget.repository.setDiscussionResolved(
+        widget.projectId,
+        widget.mergeIid,
+        discussion.id,
+        resolved: !discussion.resolved,
+      );
+      if (!mounted) return;
+      setState(() {
+        _discussions = [
+          for (final existing in _discussions)
+            if (existing.id == updated.id) updated else existing,
+        ];
+      });
+      if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to update this thread.')),
+      );
+    }
+  }
+
+  Future<void> _startThread(DiffFile file, DiffLine line) async {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: gs.surfaceSheet,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+        ),
+        child: _InlineCommentSheet(
+          lineLabel:
+              '${file.displayPath}:'
+              '${line.newLineNumber ?? line.oldLineNumber}',
+          onSubmit: (body) => _createThread(file, line, body),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createThread(DiffFile file, DiffLine line, String body) async {
+    final diffRefs = _diffRefs ??= (await widget.repository.loadMergeRequest(
+      widget.projectId,
+      widget.mergeIid,
+    )).diffRefs;
+    if (diffRefs == null) {
+      throw StateError('Merge request has no diff refs to position a comment.');
+    }
+    final created = await widget.repository.createDiffDiscussion(
+      widget.projectId,
+      widget.mergeIid,
+      body: body,
+      position: DiffPosition(
+        baseSha: diffRefs.baseSha,
+        startSha: diffRefs.startSha,
+        headSha: diffRefs.headSha,
+        oldPath: file.oldPath,
+        newPath: file.newPath,
+        oldLine: line.oldLineNumber,
+        newLine: line.newLineNumber,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _discussions = [..._discussions, created]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final gs = Theme.of(context).extension<GsTheme>()!;
     final files = _files;
+    final unresolvedCount = _discussions
+        .where((discussion) => discussion.resolvable && !discussion.resolved)
+        .length;
     return Scaffold(
       backgroundColor: gs.surfaceSubtle,
       appBar: AppBar(
@@ -178,6 +347,23 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
               icon: GsIcon(GsIconGlyph.fileTree, size: 20, color: gs.accent),
             ),
         ],
+        bottom: unresolvedCount == 0
+            ? null
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(24),
+                child: Container(
+                  height: 24,
+                  width: double.infinity,
+                  color: gs.feedbackWarningBg,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$unresolvedCount unresolved '
+                    '${unresolvedCount == 1 ? 'thread' : 'threads'}',
+                    key: const ValueKey('unresolved-threads'),
+                    style: gs.caption.copyWith(color: gs.feedbackWarningText),
+                  ),
+                ),
+              ),
       ),
       body: switch (files) {
         null when _loading => const Center(child: CircularProgressIndicator()),
@@ -196,9 +382,160 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
             files: loaded,
             controller: _scrollController,
             onOpenInBrowser: _openInBrowser,
+            annotations: _annotations(),
+            onLineTap: _startThread,
           ),
         ),
       },
+    );
+  }
+}
+
+/// The fixed-height inline row for one comment thread, anchored beneath the
+/// diff line the thread discusses.
+class _ThreadRow extends StatelessWidget {
+  const _ThreadRow({
+    super.key,
+    required this.discussion,
+    required this.onTap,
+  });
+
+  final Discussion discussion;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final gs = theme.extension<GsTheme>()!;
+    final resolved = discussion.resolved;
+    final count = discussion.notes.length;
+    return Material(
+      color: gs.surfaceCard,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              GsIcon(
+                resolved ? GsIconGlyph.checkCircle : GsIconGlyph.comments,
+                size: 16,
+                color: resolved ? gs.textSuccess : gs.accent,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${discussion.notes.first.author.name} · '
+                  '$count ${count == 1 ? 'comment' : 'comments'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: gs.textDefault,
+                  ),
+                ),
+              ),
+              if (resolved)
+                Text(
+                  'Resolved',
+                  style: gs.caption.copyWith(color: gs.textSuccess),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The composer sheet for starting a new thread on a diff line.
+class _InlineCommentSheet extends StatefulWidget {
+  const _InlineCommentSheet({
+    required this.lineLabel,
+    required this.onSubmit,
+  });
+
+  final String lineLabel;
+  final Future<void> Function(String body) onSubmit;
+
+  @override
+  State<_InlineCommentSheet> createState() => _InlineCommentSheetState();
+}
+
+class _InlineCommentSheetState extends State<_InlineCommentSheet> {
+  final TextEditingController _controller = TextEditingController();
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final body = _controller.text.trim();
+    if (body.isEmpty) return;
+    setState(() => _sending = true);
+    try {
+      await widget.onSubmit(body);
+      if (mounted) Navigator.of(context).pop();
+    } on Object {
+      if (!mounted) return;
+      setState(() => _sending = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to post this comment.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Comment on ${widget.lineLabel}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: gs.caption.copyWith(color: gs.textSubtle),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: const ValueKey('inline-comment-field'),
+              controller: _controller,
+              enabled: !_sending,
+              autofocus: true,
+              minLines: 2,
+              maxLines: 6,
+              decoration: const InputDecoration(
+                hintText: 'Write a comment (Markdown supported)',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: _sending
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  key: const ValueKey('inline-comment-submit'),
+                  onPressed: _sending ? null : _submit,
+                  child: const Text('Comment'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

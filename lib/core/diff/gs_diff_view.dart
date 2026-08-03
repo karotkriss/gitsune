@@ -23,12 +23,19 @@ import 'diff_hunk_parser.dart';
 /// Every row has a fixed height, so a file block's extent is a pure function
 /// of its hunk shape ([extentForFile]) and a composing screen can jump to a
 /// file by scrolling [controller] to [offsetForFile].
+///
+/// [annotations] anchor fixed-height widgets (such as comment thread rows)
+/// directly beneath specific diff lines, and [onLineTap] surfaces line taps
+/// so a composing screen can attach line-level actions; both stay generic so
+/// this renderer keeps knowing nothing about merge requests.
 class GsDiffView extends StatefulWidget {
   const GsDiffView({
     super.key,
     required this.files,
     required this.onOpenInBrowser,
     this.controller,
+    this.annotations = const [],
+    this.onLineTap,
   });
 
   final List<DiffFile> files;
@@ -38,26 +45,49 @@ class GsDiffView extends StatefulWidget {
 
   final ScrollController? controller;
 
+  /// Fixed-height widgets anchored beneath specific diff lines.
+  final List<DiffLineAnnotation> annotations;
+
+  /// Invoked when a diff line row is tapped.
+  final void Function(DiffFile file, DiffLine line)? onLineTap;
+
+  /// The fixed height of every [DiffLineAnnotation] row.
+  static const double annotationHeight = 44;
+
   static const double _fileHeaderHeight = 44;
   static const double _hunkHeaderHeight = 24;
   static const double _lineHeight = 20;
   static const double _fileGap = 12;
   static const int _rowsPerChunk = 40;
 
-  /// The fixed vertical extent of [file]'s rendered block.
-  static double extentForFile(DiffFile file) {
+  /// The fixed vertical extent of [file]'s rendered block, including any
+  /// [annotations] anchored to its lines.
+  static double extentForFile(
+    DiffFile file, {
+    List<DiffLineAnnotation> annotations = const [],
+  }) {
     var extent = _fileHeaderHeight + _fileGap;
     for (final hunk in file.hunks) {
       extent += _hunkHeaderHeight + hunk.lines.length * _lineHeight;
+      if (annotations.isEmpty) continue;
+      for (final line in hunk.lines) {
+        extent +=
+            annotations.where((a) => a.matches(file, line)).length *
+            annotationHeight;
+      }
     }
     return extent;
   }
 
   /// The scroll offset at which the file at [index] starts.
-  static double offsetForFile(List<DiffFile> files, int index) {
+  static double offsetForFile(
+    List<DiffFile> files,
+    int index, {
+    List<DiffLineAnnotation> annotations = const [],
+  }) {
     var offset = 0.0;
     for (var i = 0; i < index; i++) {
-      offset += extentForFile(files[i]);
+      offset += extentForFile(files[i], annotations: annotations);
     }
     return offset;
   }
@@ -71,6 +101,8 @@ class GsDiffView extends StatefulWidget {
     TextStyle monoStyle,
     TextDirection textDirection,
     TextScaler textScaler,
+    List<DiffLineAnnotation> annotations,
+    void Function(DiffFile file, DiffLine line)? onLineTap,
   ) {
     final items = <_DiffListItem>[];
     for (var fileIndex = 0; fileIndex < files.length; fileIndex++) {
@@ -106,7 +138,23 @@ class GsDiffView extends StatefulWidget {
         rows.add(_HunkContentRow(hunk));
         for (final line in hunk.lines) {
           if (rows.length >= _rowsPerChunk) flushRows();
-          rows.add(_LineContentRow(line));
+          rows.add(
+            _LineContentRow(
+              line,
+              onLineTap == null ? null : () => onLineTap(file, line),
+            ),
+          );
+          final lineAnnotations = annotations.where(
+            (a) => a.matches(file, line),
+          );
+          if (lineAnnotations.isNotEmpty) {
+            // Annotations render outside the horizontal scroll group so they
+            // stay pinned to the viewport width.
+            flushRows();
+            for (final annotation in lineAnnotations) {
+              items.add(_AnnotationItem(annotation));
+            }
+          }
         }
         if (rows.length >= _rowsPerChunk) flushRows();
       }
@@ -217,6 +265,8 @@ class _GsDiffViewState extends State<GsDiffView> {
       gs.mono,
       Directionality.of(context),
       MediaQuery.textScalerOf(context),
+      widget.annotations,
+      widget.onLineTap,
     );
     return ListView.builder(
       controller: widget.controller,
@@ -225,6 +275,30 @@ class _GsDiffViewState extends State<GsDiffView> {
       itemExtentBuilder: (index, dimensions) => items[index].extent,
       itemBuilder: (context, index) => items[index].build(context, syntaxTheme),
     );
+  }
+}
+
+/// A fixed-height widget anchored directly beneath one diff line, addressed
+/// with GitLab position semantics: the file [path] plus the [newLine] number
+/// (right side) or, when [newLine] is absent, the [oldLine] number (left
+/// side). Its widget must lay out within [GsDiffView.annotationHeight].
+class DiffLineAnnotation {
+  const DiffLineAnnotation({
+    required this.path,
+    this.oldLine,
+    this.newLine,
+    required this.builder,
+  });
+
+  final String path;
+  final int? oldLine;
+  final int? newLine;
+  final WidgetBuilder builder;
+
+  bool matches(DiffFile file, DiffLine line) {
+    if (path != file.newPath && path != file.oldPath) return false;
+    if (newLine != null) return line.newLineNumber == newLine;
+    return oldLine != null && line.oldLineNumber == oldLine;
   }
 }
 
@@ -473,9 +547,10 @@ class _HunkContentRow extends _DiffContentRow {
 }
 
 class _LineContentRow extends _DiffContentRow {
-  const _LineContentRow(this.line);
+  const _LineContentRow(this.line, this.onTap);
 
   final DiffLine line;
+  final VoidCallback? onTap;
 
   @override
   double get extent => GsDiffView._lineHeight;
@@ -489,7 +564,24 @@ class _LineContentRow extends _DiffContentRow {
     line: line,
     languageId: languageId,
     syntaxTheme: syntaxTheme,
+    onTap: onTap,
   );
+}
+
+class _AnnotationItem extends _DiffListItem {
+  const _AnnotationItem(this.annotation);
+
+  final DiffLineAnnotation annotation;
+
+  @override
+  double get extent => GsDiffView.annotationHeight;
+
+  @override
+  Widget build(BuildContext context, Map<String, TextStyle> syntaxTheme) =>
+      SizedBox(
+        height: GsDiffView.annotationHeight,
+        child: annotation.builder(context),
+      );
 }
 
 class _HunkHeaderRow extends StatelessWidget {
@@ -530,11 +622,13 @@ class _DiffLineRow extends StatelessWidget {
     required this.line,
     required this.languageId,
     required this.syntaxTheme,
+    this.onTap,
   });
 
   final DiffLine line;
   final String languageId;
   final Map<String, TextStyle> syntaxTheme;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -573,7 +667,15 @@ class _DiffLineRow extends StatelessWidget {
         ],
       ),
     );
-    return background == null ? row : ColoredBox(color: background, child: row);
+    final colored = background == null
+        ? row
+        : ColoredBox(color: background, child: row);
+    if (onTap == null) return colored;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: colored,
+    );
   }
 }
 

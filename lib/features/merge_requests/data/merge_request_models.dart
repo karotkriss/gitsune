@@ -20,10 +20,12 @@ class MergeRequest {
     required this.labels,
     this.changesCount,
     this.webUrl,
+    this.diffRefs,
   });
 
   factory MergeRequest.fromJson(Map<String, dynamic> json) {
     final rawLabels = json['labels'];
+    final rawDiffRefs = json['diff_refs'];
     return MergeRequest(
       id: json['id'] as int,
       projectId: json['project_id'] as int,
@@ -46,6 +48,9 @@ class MergeRequest {
         final value => value,
       },
       webUrl: json['web_url'] as String?,
+      diffRefs: rawDiffRefs is Map
+          ? DiffRefs.fromJson(Map<String, dynamic>.from(rawDiffRefs))
+          : null,
     );
   }
 
@@ -65,6 +70,7 @@ class MergeRequest {
   final List<String> labels;
   final String? changesCount;
   final String? webUrl;
+  final DiffRefs? diffRefs;
 
   String get reference => '!$iid';
 
@@ -86,6 +92,7 @@ class MergeRequest {
     'labels': labels,
     'changes_count': changesCount,
     'web_url': webUrl,
+    'diff_refs': diffRefs?.toJson(),
   };
 
   String get displayStateLabel => draft ? 'Draft' : state.label;
@@ -116,6 +123,31 @@ enum MergeRequestState {
     MergeRequestState.closed => 'Closed',
     MergeRequestState.merged => 'Merged',
     MergeRequestState.locked => 'Locked',
+  };
+}
+
+/// The merge request's diff refs, needed to position a new diff comment.
+class DiffRefs {
+  const DiffRefs({
+    required this.baseSha,
+    required this.startSha,
+    required this.headSha,
+  });
+
+  factory DiffRefs.fromJson(Map<String, dynamic> json) => DiffRefs(
+    baseSha: json['base_sha'] as String,
+    startSha: json['start_sha'] as String,
+    headSha: json['head_sha'] as String,
+  );
+
+  final String baseSha;
+  final String startSha;
+  final String headSha;
+
+  Map<String, dynamic> toJson() => {
+    'base_sha': baseSha,
+    'start_sha': startSha,
+    'head_sha': headSha,
   };
 }
 
