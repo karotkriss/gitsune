@@ -42,7 +42,7 @@ All open source, all public, all repo-shippable.
 ![Workday One - Search-first "find your employer" - does not fit (no directory of instances exists)](references/workday-one-b9c2f935.png)
 *Workday One: Search-first "find your employer" - does not fit (no directory of instances exists)* - [canonical](https://mobbin.com/screens/b9c2f935-3abf-48ea-ae42-38bc2da21690)
 
-**Recommended shape:** Bluesky's, not Slack's or GitHub's. A "GitLab instance" field shown permanently, pre-filled `gitlab.com`, visibly editable, credentials below. An unreachable or non-GitLab URL gets an inline red Alert, never a silent hang. The locked auth ruling slots in here: one-tap OAuth on gitlab.com, the guided wizard for self-hosted.
+**Recommended shape:** Bluesky's, not Slack's or GitHub's. A "GitLab instance" field shown permanently, pre-filled `gitlab.com`, visibly editable, with one continue action below and no credential fields on the primary screen. An unreachable or non-GitLab URL gets an inline red Alert, never a silent hang. The locked auth ruling slots in here: one-tap OAuth on gitlab.com, the guided wizard for self-hosted, and the PAT fallback behind a secondary affordance.
 
 **Pajamas notes:** neutral-0 surface, GitLab Sans, one blue confirm button, purple reserved for the logo and illustration.
 

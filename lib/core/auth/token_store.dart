@@ -4,7 +4,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../network/account_key.dart';
 
-/// One signed-in session's OAuth tokens as returned by the token endpoint.
+/// One signed-in session's stored access credentials.
+///
+/// OAuth sessions include the refresh token and expiry returned by the token
+/// endpoint. PAT sessions use the PAT as [accessToken] and leave both optional
+/// fields null so they never enter the OAuth refresh flow.
 class OAuthTokens {
   const OAuthTokens({
     required this.accessToken,
