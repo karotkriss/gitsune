@@ -26,6 +26,18 @@ class _OutboxTestRepository extends FixtureIssuesRepository {
   }
 }
 
+class _FailingFlushQueue extends CommentDraftQueue {
+  _FailingFlushQueue({
+    required super.database,
+    required super.account,
+    required super.repository,
+    required super.onReconnect,
+  });
+
+  @override
+  Future<void> flush() => Future.error(StateError('simulated flush failure'));
+}
+
 void main() {
   LiveTestWidgetsFlutterBinding.ensureInitialized();
   final now = DateTime.utc(2026, 8, 2, 10);
@@ -167,6 +179,37 @@ void main() {
     );
     expect(find.text('Unable to save the comment.'), findsOneWidget);
     expect(await queue.watchDrafts(7, 142).first, isEmpty);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
+
+  testWidgets('a flush failure clears the composer after persistence without '
+      'reporting a save error', (tester) async {
+    await queue.dispose();
+    queue = _FailingFlushQueue(
+      database: database,
+      account: account,
+      repository: repository,
+      onReconnect: reconnect.stream,
+    );
+    await tester.pumpWidget(screen());
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Already persisted');
+    await tester.pump();
+    await tester.tap(find.byTooltip('Send comment'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller?.text,
+      isEmpty,
+    );
+    expect(find.text('Unable to save the comment.'), findsNothing);
+    expect(
+      (await queue.watchDrafts(7, 142).first).single.body,
+      'Already persisted',
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));

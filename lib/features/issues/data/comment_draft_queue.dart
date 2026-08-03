@@ -33,7 +33,9 @@ class CommentDraftQueue {
     required this.repository,
     required Stream<void> onReconnect,
   }) {
-    _reconnectSubscription = onReconnect.listen((_) => flush());
+    _reconnectSubscription = onReconnect.listen(
+      (_) => unawaited(_flushBestEffort()),
+    );
   }
 
   final AppDatabase database;
@@ -84,7 +86,7 @@ class CommentDraftQueue {
             ),
           );
     });
-    await flush();
+    await _flushBestEffort();
   }
 
   /// Removes a draft without sending it (e.g. to move a rejected draft's
@@ -161,6 +163,19 @@ class CommentDraftQueue {
       // Offline or transient: stop and keep the rest queued for the next
       // reconnect.
       return false;
+    }
+  }
+
+  Future<void> _flushBestEffort() async {
+    try {
+      await flush();
+    } on Object catch (error, stackTrace) {
+      log(
+        'Unable to flush queued comment drafts',
+        name: 'gitsune.comment_drafts',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
