@@ -73,6 +73,16 @@ void main() {
     );
   });
 
+  test('self-hosted production entry point rejects cleartext HTTP', () {
+    expect(
+      () => GitLabOAuth.selfHosted(
+        baseUrl: Uri.parse('http://gitlab.example.com'),
+        applicationId: 'pasted-application-id',
+      ),
+      throwsArgumentError,
+    );
+  });
+
   test('authorization request targets gitlab.com with the baked-in '
       'public client id, fixed redirect, and blueprint scopes', () {
     final oauth = GitLabOAuth(

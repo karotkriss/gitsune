@@ -127,6 +127,26 @@ void main() {
     );
   });
 
+  testWidgets('an HTTP instance is rejected before probing or sign-in', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signIn: () async => fail('must not sign in'),
+          probeInstance: (_) async => fail('must not probe'),
+          signInSelfHosted: (_) async => fail('must not sign in'),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'http://gitlab.example.com');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign-in requires an HTTPS instance.'), findsOneWidget);
+  });
+
   testWidgets('a reachable self-hosted instance starts self-hosted sign-in '
       'with the parsed base URL, never gitlab.com OAuth', (tester) async {
     Uri? signedInto;

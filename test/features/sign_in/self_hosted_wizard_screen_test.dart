@@ -56,16 +56,33 @@ void main() {
     );
 
     expect(
-      find.text('https://gitlab.example.com/-/user_settings/applications'),
+      find.text('https://gitlab.example.com/-/profile/applications'),
       findsOneWidget,
     );
     expect(find.text('dev.gitsune://oauth-callback'), findsOneWidget);
     expect(find.textContaining('Uncheck "Confidential"'), findsOneWidget);
+    expect(find.textContaining('"api" and "read_user" scopes'), findsOneWidget);
+    expect(find.textContaining('secret'), findsWidgets);
+  });
+
+  testWidgets('an HTTP instance is rejected before OAuth starts', (
+    tester,
+  ) async {
+    await pumpWizard(
+      tester,
+      SelfHostedWizardScreen(
+        base: Uri.parse('http://gitlab.example.com'),
+        signIn: (_, _) async => fail('must not sign in'),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'the-app-id');
+    await scrollToAndTap(tester, find.widgetWithText(FilledButton, 'Sign in'));
+
     expect(
-      find.textContaining('"api" and "read_user" scopes'),
+      find.text('OAuth sign-in requires an HTTPS instance.'),
       findsOneWidget,
     );
-    expect(find.textContaining('secret'), findsWidgets);
   });
 
   testWidgets('a valid Application ID starts self-hosted sign-in with the '
@@ -161,7 +178,10 @@ void main() {
     }) async {
       await pumpWizard(
         tester,
-        SelfHostedWizardScreen(base: base, signIn: (_, _) async => throw thrown),
+        SelfHostedWizardScreen(
+          base: base,
+          signIn: (_, _) async => throw thrown,
+        ),
       );
       await tester.enterText(find.byType(TextField), 'the-app-id');
       await scrollToAndTap(
@@ -187,8 +207,7 @@ void main() {
       await expectFailureMessage(
         tester,
         thrown: tokenEndpointError('oauth_error_invalid_grant'),
-        message:
-            'set Redirect URI to exactly dev.gitsune://oauth-callback',
+        message: 'set Redirect URI to exactly dev.gitsune://oauth-callback',
       );
     });
 
@@ -208,10 +227,7 @@ void main() {
         thrown: tokenEndpointError('oauth_error_invalid_code_challenge_method'),
         message: 'too old for secure app sign-in',
       );
-      expect(
-        find.textContaining('personal access token'),
-        findsWidgets,
-      );
+      expect(find.textContaining('personal access token'), findsWidgets);
     });
 
     testWidgets('anything unrecognized fails plainly and can be retried', (

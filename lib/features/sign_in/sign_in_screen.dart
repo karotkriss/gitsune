@@ -62,6 +62,10 @@ class _SignInScreenState extends State<SignInScreen> {
       setState(() => _error = 'Enter a valid instance URL, like gitlab.com.');
       return;
     }
+    if (base.scheme != 'https') {
+      setState(() => _error = 'Sign-in requires an HTTPS instance.');
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;

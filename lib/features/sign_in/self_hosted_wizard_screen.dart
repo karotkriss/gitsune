@@ -58,6 +58,10 @@ class _SelfHostedWizardScreenState extends State<SelfHostedWizardScreen> {
 
   Future<void> _signIn() async {
     if (_busy) return;
+    if (widget.base.scheme != 'https') {
+      setState(() => _error = 'OAuth sign-in requires an HTTPS instance.');
+      return;
+    }
     final String id;
     try {
       id = normalizeApplicationId(_idController.text);
@@ -160,9 +164,7 @@ class _SelfHostedWizardScreenState extends State<SelfHostedWizardScreen> {
               ),
               const SizedBox(height: 8),
               _CopyableValue(
-                widget.base
-                    .replace(path: '/-/user_settings/applications')
-                    .toString(),
+                widget.base.replace(path: '/-/profile/applications').toString(),
               ),
               const SizedBox(height: 24),
               Text('2. Create the application', style: stepStyle),
@@ -259,12 +261,7 @@ class _CopyableValue extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              value,
-              style: gs.mono.copyWith(fontSize: 13),
-            ),
-          ),
+          Expanded(child: Text(value, style: gs.mono.copyWith(fontSize: 13))),
           IconButton(
             tooltip: 'Copy',
             onPressed: () {

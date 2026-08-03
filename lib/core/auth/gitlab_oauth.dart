@@ -50,13 +50,22 @@ class GitLabOAuth {
   factory GitLabOAuth.selfHosted({
     required Uri baseUrl,
     required String applicationId,
-  }) => GitLabOAuth(
-    config: GitLabOAuthConfig.selfHosted(
-      baseUrl: baseUrl,
-      applicationId: applicationId,
-    ),
-    tokenStore: SecureTokenStore(),
-  );
+  }) {
+    if (baseUrl.scheme != 'https') {
+      throw ArgumentError.value(
+        baseUrl,
+        'baseUrl',
+        'Self-hosted OAuth requires HTTPS',
+      );
+    }
+    return GitLabOAuth(
+      config: GitLabOAuthConfig.selfHosted(
+        baseUrl: baseUrl,
+        applicationId: applicationId,
+      ),
+      tokenStore: SecureTokenStore(),
+    );
+  }
 
   final GitLabOAuthConfig config;
   final TokenStore tokenStore;
