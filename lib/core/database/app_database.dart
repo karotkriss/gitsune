@@ -139,6 +139,19 @@ class HomeTileOrders extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId};
 }
 
+/// The baseline background poller's per-account conditional-request state:
+/// the last `ETag` returned by `GET /todos` and the JSON-encoded ids of the
+/// to-dos that response carried, diffed against on the next poll to find
+/// genuinely new ones. See `core/notifications/todos_poller.dart`.
+class TodoPollStates extends Table with AccountScoped {
+  TextColumn get etag => text().nullable()();
+  TextColumn get seenTodoIds => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId};
+}
+
 @DriftDatabase(
   tables: [
     LocalCacheEntries,
@@ -149,6 +162,7 @@ class HomeTileOrders extends Table with AccountScoped {
     RecentlyViewedItems,
     HomeTileOrders,
     ReleaseEntries,
+    TodoPollStates,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -157,7 +171,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -182,6 +196,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 8) {
         await migrator.createTable(releaseEntries);
+      }
+      if (from < 9) {
+        await migrator.createTable(todoPollStates);
       }
     },
   );

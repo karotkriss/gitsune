@@ -35,11 +35,19 @@ Future<void> signInAgainst(
   );
 }, _RealHttpOverrides());
 
+/// Waits for the real network round-trip to finish by watching the submit
+/// spinner disappear, rather than sleeping a fixed interval that a loaded
+/// machine can overrun.
 Future<void> settleNetwork(WidgetTester tester) async {
   await tester.pump();
-  await tester.runAsync(
-    () => Future<void>.delayed(const Duration(milliseconds: 200)),
-  );
+  final deadline = DateTime.now().add(const Duration(seconds: 10));
+  while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty &&
+      DateTime.now().isBefore(deadline)) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+  }
   await tester.pumpAndSettle();
 }
 

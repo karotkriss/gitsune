@@ -4097,6 +4097,381 @@ class ReleaseEntriesCompanion extends UpdateCompanion<ReleaseEntry> {
   }
 }
 
+class $TodoPollStatesTable extends TodoPollStates
+    with TableInfo<$TodoPollStatesTable, TodoPollState> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TodoPollStatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _etagMeta = const VerificationMeta('etag');
+  @override
+  late final GeneratedColumn<String> etag = GeneratedColumn<String>(
+    'etag',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _seenTodoIdsMeta = const VerificationMeta(
+    'seenTodoIds',
+  );
+  @override
+  late final GeneratedColumn<String> seenTodoIds = GeneratedColumn<String>(
+    'seen_todo_ids',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    etag,
+    seenTodoIds,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'todo_poll_states';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TodoPollState> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('etag')) {
+      context.handle(
+        _etagMeta,
+        etag.isAcceptableOrUnknown(data['etag']!, _etagMeta),
+      );
+    }
+    if (data.containsKey('seen_todo_ids')) {
+      context.handle(
+        _seenTodoIdsMeta,
+        seenTodoIds.isAcceptableOrUnknown(
+          data['seen_todo_ids']!,
+          _seenTodoIdsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_seenTodoIdsMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {instanceHost, accountId};
+  @override
+  TodoPollState map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TodoPollState(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      etag: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}etag'],
+      ),
+      seenTodoIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}seen_todo_ids'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TodoPollStatesTable createAlias(String alias) {
+    return $TodoPollStatesTable(attachedDatabase, alias);
+  }
+}
+
+class TodoPollState extends DataClass implements Insertable<TodoPollState> {
+  final String instanceHost;
+  final String accountId;
+  final String? etag;
+  final String seenTodoIds;
+  final DateTime updatedAt;
+  const TodoPollState({
+    required this.instanceHost,
+    required this.accountId,
+    this.etag,
+    required this.seenTodoIds,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    if (!nullToAbsent || etag != null) {
+      map['etag'] = Variable<String>(etag);
+    }
+    map['seen_todo_ids'] = Variable<String>(seenTodoIds);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  TodoPollStatesCompanion toCompanion(bool nullToAbsent) {
+    return TodoPollStatesCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      etag: etag == null && nullToAbsent ? const Value.absent() : Value(etag),
+      seenTodoIds: Value(seenTodoIds),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory TodoPollState.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TodoPollState(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      etag: serializer.fromJson<String?>(json['etag']),
+      seenTodoIds: serializer.fromJson<String>(json['seenTodoIds']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'etag': serializer.toJson<String?>(etag),
+      'seenTodoIds': serializer.toJson<String>(seenTodoIds),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  TodoPollState copyWith({
+    String? instanceHost,
+    String? accountId,
+    Value<String?> etag = const Value.absent(),
+    String? seenTodoIds,
+    DateTime? updatedAt,
+  }) => TodoPollState(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    etag: etag.present ? etag.value : this.etag,
+    seenTodoIds: seenTodoIds ?? this.seenTodoIds,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  TodoPollState copyWithCompanion(TodoPollStatesCompanion data) {
+    return TodoPollState(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      etag: data.etag.present ? data.etag.value : this.etag,
+      seenTodoIds: data.seenTodoIds.present
+          ? data.seenTodoIds.value
+          : this.seenTodoIds,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TodoPollState(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('etag: $etag, ')
+          ..write('seenTodoIds: $seenTodoIds, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(instanceHost, accountId, etag, seenTodoIds, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TodoPollState &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.etag == this.etag &&
+          other.seenTodoIds == this.seenTodoIds &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TodoPollStatesCompanion extends UpdateCompanion<TodoPollState> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<String?> etag;
+  final Value<String> seenTodoIds;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const TodoPollStatesCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.etag = const Value.absent(),
+    this.seenTodoIds = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TodoPollStatesCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    this.etag = const Value.absent(),
+    required String seenTodoIds,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       seenTodoIds = Value(seenTodoIds),
+       updatedAt = Value(updatedAt);
+  static Insertable<TodoPollState> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<String>? etag,
+    Expression<String>? seenTodoIds,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (etag != null) 'etag': etag,
+      if (seenTodoIds != null) 'seen_todo_ids': seenTodoIds,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TodoPollStatesCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<String?>? etag,
+    Value<String>? seenTodoIds,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return TodoPollStatesCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      etag: etag ?? this.etag,
+      seenTodoIds: seenTodoIds ?? this.seenTodoIds,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (etag.present) {
+      map['etag'] = Variable<String>(etag.value);
+    }
+    if (seenTodoIds.present) {
+      map['seen_todo_ids'] = Variable<String>(seenTodoIds.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TodoPollStatesCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('etag: $etag, ')
+          ..write('seenTodoIds: $seenTodoIds, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4113,6 +4488,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $RecentlyViewedItemsTable(this);
   late final $HomeTileOrdersTable homeTileOrders = $HomeTileOrdersTable(this);
   late final $ReleaseEntriesTable releaseEntries = $ReleaseEntriesTable(this);
+  late final $TodoPollStatesTable todoPollStates = $TodoPollStatesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4126,6 +4502,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     recentlyViewedItems,
     homeTileOrders,
     releaseEntries,
+    todoPollStates,
   ];
 }
 
@@ -6243,6 +6620,212 @@ typedef $$ReleaseEntriesTableProcessedTableManager =
       ReleaseEntry,
       PrefetchHooks Function()
     >;
+typedef $$TodoPollStatesTableCreateCompanionBuilder =
+    TodoPollStatesCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      Value<String?> etag,
+      required String seenTodoIds,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$TodoPollStatesTableUpdateCompanionBuilder =
+    TodoPollStatesCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<String?> etag,
+      Value<String> seenTodoIds,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$TodoPollStatesTableFilterComposer
+    extends Composer<_$AppDatabase, $TodoPollStatesTable> {
+  $$TodoPollStatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get seenTodoIds => $composableBuilder(
+    column: $table.seenTodoIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TodoPollStatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TodoPollStatesTable> {
+  $$TodoPollStatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get seenTodoIds => $composableBuilder(
+    column: $table.seenTodoIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TodoPollStatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TodoPollStatesTable> {
+  $$TodoPollStatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<String> get etag =>
+      $composableBuilder(column: $table.etag, builder: (column) => column);
+
+  GeneratedColumn<String> get seenTodoIds => $composableBuilder(
+    column: $table.seenTodoIds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TodoPollStatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $TodoPollStatesTable,
+          TodoPollState,
+          $$TodoPollStatesTableFilterComposer,
+          $$TodoPollStatesTableOrderingComposer,
+          $$TodoPollStatesTableAnnotationComposer,
+          $$TodoPollStatesTableCreateCompanionBuilder,
+          $$TodoPollStatesTableUpdateCompanionBuilder,
+          (
+            TodoPollState,
+            BaseReferences<_$AppDatabase, $TodoPollStatesTable, TodoPollState>,
+          ),
+          TodoPollState,
+          PrefetchHooks Function()
+        > {
+  $$TodoPollStatesTableTableManager(
+    _$AppDatabase db,
+    $TodoPollStatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TodoPollStatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TodoPollStatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TodoPollStatesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<String?> etag = const Value.absent(),
+                Value<String> seenTodoIds = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TodoPollStatesCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                etag: etag,
+                seenTodoIds: seenTodoIds,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                Value<String?> etag = const Value.absent(),
+                required String seenTodoIds,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => TodoPollStatesCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                etag: etag,
+                seenTodoIds: seenTodoIds,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TodoPollStatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $TodoPollStatesTable,
+      TodoPollState,
+      $$TodoPollStatesTableFilterComposer,
+      $$TodoPollStatesTableOrderingComposer,
+      $$TodoPollStatesTableAnnotationComposer,
+      $$TodoPollStatesTableCreateCompanionBuilder,
+      $$TodoPollStatesTableUpdateCompanionBuilder,
+      (
+        TodoPollState,
+        BaseReferences<_$AppDatabase, $TodoPollStatesTable, TodoPollState>,
+      ),
+      TodoPollState,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6263,4 +6846,6 @@ class $AppDatabaseManager {
       $$HomeTileOrdersTableTableManager(_db, _db.homeTileOrders);
   $$ReleaseEntriesTableTableManager get releaseEntries =>
       $$ReleaseEntriesTableTableManager(_db, _db.releaseEntries);
+  $$TodoPollStatesTableTableManager get todoPollStates =>
+      $$TodoPollStatesTableTableManager(_db, _db.todoPollStates);
 }
