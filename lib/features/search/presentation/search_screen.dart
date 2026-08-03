@@ -1,20 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/icons/gs_icons.dart';
+import '../../../core/syntax/gs_syntax_theme.dart';
+import '../../../core/syntax/language_detection.dart';
+import '../../../core/syntax/syntax_highlighter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../issues/data/issue_models.dart';
 import '../../issues/presentation/issue_components.dart';
 import '../data/search_models.dart';
 import '../data/search_repository.dart';
 
-/// Explore/Search tab: a query field and results grouped by the three
-/// entity types GitLab's search API covers here (projects, issues, merge
-/// requests). Code search is deferred to E10.2.
+/// Explore/Search tab: a query field and results grouped by the entity
+/// types GitLab's search API covers here (projects, issues, merge
+/// requests, and code). Code search needs the instance's Advanced Search;
+/// where the tier lacks it, the code section offers the instance's web
+/// search instead.
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key, required this.repository, this.now});
+  const SearchScreen({
+    super.key,
+    required this.repository,
+    this.now,
+    this.openWebUrl,
+  });
 
   final SearchRepository repository;
   final DateTime? now;
+
+  /// Test seam for the code-search web fallback; the default opens the
+  /// URL in the external browser via `url_launcher`.
+  final Future<void> Function(Uri url)? openWebUrl;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -44,6 +59,8 @@ class _SearchScreenState extends State<SearchScreen> {
   final _projects = _SectionState<SearchProject>();
   final _issues = _SectionState<Issue>();
   final _mergeRequests = _SectionState<SearchMergeRequest>();
+  final _code = _SectionState<SearchBlob>();
+  bool _codeSearchUnsupported = false;
 
   @override
   void dispose() {
@@ -62,17 +79,29 @@ class _SearchScreenState extends State<SearchScreen> {
       _projects.reset();
       _issues.reset();
       _mergeRequests.reset();
+      _code.reset();
+      _codeSearchUnsupported = false;
     });
     try {
-      final results = await Future.wait<Object>([
+      final results = await Future.wait<Object?>([
         widget.repository.loadFirstProjectsPage(term),
         widget.repository.loadFirstIssuesPage(term),
         widget.repository.loadFirstMergeRequestsPage(term),
+        // Null marks the instance as lacking code search, which is a
+        // fallback state for the code section, not a failed search.
+        widget.repository
+            .loadFirstBlobsPage(term)
+            .then<SearchPage<SearchBlob>?>((page) => page)
+            .catchError(
+              (Object _) => null,
+              test: (error) => error is CodeSearchUnsupportedException,
+            ),
       ]);
       if (!mounted || generation != _generation) return;
       final projectPage = results[0] as SearchPage<SearchProject>;
       final issuePage = results[1] as SearchPage<Issue>;
       final mrPage = results[2] as SearchPage<SearchMergeRequest>;
+      final blobPage = results[3] as SearchPage<SearchBlob>?;
       setState(() {
         _projects
           ..items = projectPage.items
@@ -83,6 +112,13 @@ class _SearchScreenState extends State<SearchScreen> {
         _mergeRequests
           ..items = mrPage.items
           ..hasMore = mrPage.hasMore;
+        if (blobPage == null) {
+          _codeSearchUnsupported = true;
+        } else {
+          _code
+            ..items = blobPage.items
+            ..hasMore = blobPage.hasMore;
+        }
         _loading = false;
       });
     } on Object {
@@ -132,10 +168,25 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _loadMoreMergeRequests() =>
       _loadMore(_mergeRequests, widget.repository.loadNextMergeRequestsPage);
 
+  Future<void> _loadMoreCode() =>
+      _loadMore(_code, widget.repository.loadNextBlobsPage);
+
+  Future<void> _openWebCodeSearch() async {
+    final term = _searchedTerm;
+    if (term == null) return;
+    final open = widget.openWebUrl ?? _launchExternally;
+    await open(widget.repository.codeSearchWebUrl(term));
+  }
+
+  static Future<void> _launchExternally(Uri url) async {
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  }
+
   bool get _hasAnyResults =>
       _projects.items.isNotEmpty ||
       _issues.items.isNotEmpty ||
-      _mergeRequests.items.isNotEmpty;
+      _mergeRequests.items.isNotEmpty ||
+      _code.items.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +210,9 @@ class _SearchScreenState extends State<SearchScreen> {
                       textInputAction: TextInputAction.search,
                       onSubmitted: _runSearch,
                       decoration: InputDecoration(
-                        hintText: 'Search projects, issues, and merge requests',
+                        hintText:
+                            'Search projects, issues, merge requests, '
+                            'and code',
                         prefixIcon: Padding(
                           padding: const EdgeInsets.all(12),
                           child: GsIcon(
@@ -180,8 +233,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: _SearchMessage(
                   title: 'Search Gitsune',
                   detail:
-                      'Find projects, issues, and merge requests across '
-                      'your GitLab instance.',
+                      'Find projects, issues, merge requests, and code '
+                      'across your GitLab instance.',
                 ),
               )
             else if (_loading)
@@ -199,7 +252,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   onAction: () => _runSearch(term),
                 ),
               )
-            else if (!_hasAnyResults)
+            else if (!_hasAnyResults && !_codeSearchUnsupported)
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: _SearchMessage(
@@ -242,6 +295,21 @@ class _SearchScreenState extends State<SearchScreen> {
                   loadingMore: _mergeRequests.loadingMore,
                   loadMoreFailed: _mergeRequests.loadMoreFailed,
                   onLoadMore: _loadMoreMergeRequests,
+                ),
+              if (_code.items.isNotEmpty)
+                _ResultSection(
+                  title: 'Code',
+                  itemCount: _code.items.length,
+                  itemBuilder: (context, index) =>
+                      _BlobResultRow(blob: _code.items[index]),
+                  hasMore: _code.hasMore,
+                  loadingMore: _code.loadingMore,
+                  loadMoreFailed: _code.loadMoreFailed,
+                  onLoadMore: _loadMoreCode,
+                ),
+              if (_codeSearchUnsupported)
+                SliverToBoxAdapter(
+                  child: _CodeSearchFallback(onOpenWeb: _openWebCodeSearch),
                 ),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
             ],
@@ -475,6 +543,104 @@ class _MergeRequestResultRow extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _BlobResultRow extends StatelessWidget {
+  const _BlobResultRow({required this.blob});
+
+  final SearchBlob blob;
+
+  @override
+  Widget build(BuildContext context) {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    final languageId = detectLanguageId(blob.path);
+    final base = gs.mono.copyWith(color: gs.textDefault);
+    final syntaxTheme = gsSyntaxTextTheme(gs);
+    final lines = blob.data.trimRight().split('\n');
+    return Semantics(
+      label: 'Code match in ${blob.path}.',
+      child: ExcludeSemantics(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                blob.path,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: gs.mono.copyWith(color: gs.textHeading),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: gs.surfaceStrong,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final line in lines)
+                      Text.rich(
+                        highlightCodeLine(
+                          line,
+                          languageId: languageId,
+                          base: base,
+                          theme: syntaxTheme,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The honest stand-in for the code section on instances whose tier lacks
+/// Advanced Search: says why there are no in-app code results and offers
+/// the instance's web search instead.
+class _CodeSearchFallback extends StatelessWidget {
+  const _CodeSearchFallback({required this.onOpenWeb});
+
+  final VoidCallback onOpenWeb;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final gs = theme.extension<GsTheme>()!;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Code',
+            style: theme.textTheme.titleSmall?.copyWith(color: gs.textHeading),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Code search needs Advanced Search, which this GitLab '
+            'instance does not offer. You can search code on the web '
+            'instead.',
+            style: theme.textTheme.bodySmall?.copyWith(color: gs.textSubtle),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: onOpenWeb,
+            child: const Text('Search code in browser'),
+          ),
+        ],
       ),
     );
   }

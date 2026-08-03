@@ -48,13 +48,31 @@ void main() {
     'user_notes_count': 4,
   });
 
+  final blob = SearchBlob.fromJson(const {
+    'basename': 'offline_first_repository',
+    'data':
+        'abstract class OfflineFirstRepository<T> {\n'
+        '  Future<T> refresh();\n'
+        '}\n',
+    'path': 'lib/core/repository/offline_first_repository.dart',
+    'filename': 'lib/core/repository/offline_first_repository.dart',
+    'ref': 'main',
+    'startline': 14,
+    'project_id': 7,
+  });
+
   Future<void> pumpSearch(
     WidgetTester tester,
-    FixtureSearchRepository repository,
-  ) => tester.pumpWidget(
+    FixtureSearchRepository repository, {
+    Future<void> Function(Uri url)? openWebUrl,
+  }) => tester.pumpWidget(
     MaterialApp(
       theme: buildAppTheme(),
-      home: SearchScreen(repository: repository, now: now),
+      home: SearchScreen(
+        repository: repository,
+        now: now,
+        openWebUrl: openWebUrl,
+      ),
     ),
   );
 
@@ -63,6 +81,7 @@ void main() {
       projects: [project],
       issues: [issue],
       mergeRequests: [mergeRequest],
+      blobs: [blob],
     );
     await pumpSearch(tester, repository);
 
@@ -76,10 +95,68 @@ void main() {
     expect(find.text('Keep draft comments after reconnecting'), findsOneWidget);
     expect(find.text('Merge requests'), findsOneWidget);
     expect(find.text('Retry offline queue after reconnect'), findsOneWidget);
+    expect(find.text('Code'), findsOneWidget);
+    expect(
+      find.text('lib/core/repository/offline_first_repository.dart'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'abstract class OfflineFirstRepository<T> {',
+        findRichText: true,
+      ),
+      findsOneWidget,
+    );
     expect(repository.projectSearches, 1);
     expect(repository.issueSearches, 1);
     expect(repository.mergeRequestSearches, 1);
+    expect(repository.blobSearches, 1);
   });
+
+  testWidgets('missing Advanced Search offers web code search, not an empty '
+      'result', (tester) async {
+    final openedUrls = <Uri>[];
+    final repository = FixtureSearchRepository(codeSearchUnsupported: true);
+    await pumpSearch(
+      tester,
+      repository,
+      openWebUrl: (url) async => openedUrls.add(url),
+    );
+
+    await tester.enterText(find.byType(TextField), 'offline');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+
+    expect(find.text('No results.'), findsNothing);
+    expect(find.text('Code'), findsOneWidget);
+    expect(find.textContaining('Advanced Search'), findsOneWidget);
+
+    await tester.tap(find.text('Search code in browser'));
+    await tester.pumpAndSettle();
+
+    expect(openedUrls, [
+      Uri.parse('https://gitlab.example.com/search?search=offline&scope=blobs'),
+    ]);
+  });
+
+  testWidgets(
+    'missing Advanced Search still shows the other scopes\' results',
+    (tester) async {
+      final repository = FixtureSearchRepository(
+        projects: [project],
+        codeSearchUnsupported: true,
+      );
+      await pumpSearch(tester, repository);
+
+      await tester.enterText(find.byType(TextField), 'offline');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Projects'), findsOneWidget);
+      expect(find.text('gitsune / app'), findsOneWidget);
+      expect(find.text('Search code in browser'), findsOneWidget);
+    },
+  );
 
   testWidgets('no matches renders an empty state', (tester) async {
     final repository = FixtureSearchRepository();

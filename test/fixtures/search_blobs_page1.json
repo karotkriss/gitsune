@@ -1,0 +1,22 @@
+[
+  {
+    "basename": "offline_first_repository",
+    "data": "abstract class OfflineFirstRepository<T> {\n  Future<T> refresh();\n\n  Stream<T> watch();\n}\n",
+    "path": "lib/core/repository/offline_first_repository.dart",
+    "filename": "lib/core/repository/offline_first_repository.dart",
+    "id": null,
+    "ref": "main",
+    "startline": 14,
+    "project_id": 7
+  },
+  {
+    "basename": "roadmap",
+    "data": "## Offline-first repositories\n\nEvery list refresh replaces the cached rows in one transaction.\n",
+    "path": "docs/plan/roadmap.md",
+    "filename": "docs/plan/roadmap.md",
+    "id": null,
+    "ref": "main",
+    "startline": 88,
+    "project_id": 7
+  }
+]
