@@ -11,6 +11,7 @@ import '../code/presentation/repository_tree_screen.dart';
 import '../explore/explore_screen.dart';
 import '../home/home_screen.dart';
 import '../home/home_tiles.dart';
+import '../issues/data/comment_draft_queue.dart';
 import '../issues/data/issue_models.dart';
 import '../issues/data/issues_repository.dart';
 import '../issues/presentation/issue_detail_screen.dart';
@@ -47,10 +48,13 @@ import '../todos/todos_screen.dart';
 /// real [SearchScreen], while [todosRepository] binds the To-Dos tab to its
 /// offline-first cache stream and [homeTileOrderStore] persists the Home
 /// tab's tile order per account. [recentlyViewedCache] lets the issue, merge
-/// request, and pipeline detail screens serve recently viewed items offline.
+/// request, and pipeline detail screens serve recently viewed items offline,
+/// and [commentDraftQueue] routes issue comment sends through the offline
+/// outbox.
 GoRouter buildAppRouter({
   HomeTileOrderStore? homeTileOrderStore,
   IssuesRepository? issuesRepository,
+  CommentDraftQueue? commentDraftQueue,
   MergeRequestsRepository? mergeRequestsRepository,
   PipelinesRepository? pipelinesRepository,
   ReleasesRepository? releasesRepository,
@@ -150,6 +154,7 @@ GoRouter buildAppRouter({
               issueIid: int.parse(state.pathParameters['issueIid']!),
               repository: issuesRepository,
               recentlyViewedCache: recentlyViewedCache,
+              draftQueue: commentDraftQueue,
               initialIssue: state.extra is Issue ? state.extra! as Issue : null,
             );
           },

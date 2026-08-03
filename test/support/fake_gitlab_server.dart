@@ -19,8 +19,10 @@ class FakeGitLabServer {
   final String _scheme;
   final _handlers = <String, Future<void> Function(HttpRequest)>{};
 
-  static Future<FakeGitLabServer> start() async {
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+  /// [port] lets a test bring a server back up at a previously used address
+  /// (e.g. to simulate connectivity returning); the default picks a free one.
+  static Future<FakeGitLabServer> start({int port = 0}) async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, port);
     return FakeGitLabServer._(server, 'http');
   }
 
