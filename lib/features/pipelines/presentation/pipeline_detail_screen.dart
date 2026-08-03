@@ -112,7 +112,6 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
           ? _PipelineInitialState(
               loading: _loading,
               failed: _failed,
-              onRetry: _load,
             )
           : RefreshIndicator(
               onRefresh: _load,
@@ -336,12 +335,10 @@ class _PipelineInitialState extends StatelessWidget {
   const _PipelineInitialState({
     required this.loading,
     required this.failed,
-    required this.onRetry,
   });
 
   final bool loading;
   final bool failed;
-  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -364,12 +361,10 @@ class _PipelineInitialState extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Check your connection, then try again.',
+              'Check your connection.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(color: gs.textSubtle),
             ),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),
       ),

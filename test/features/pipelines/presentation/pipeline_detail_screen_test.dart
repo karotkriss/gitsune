@@ -64,6 +64,25 @@ void main() {
     },
   );
 
+  testWidgets('loading failure remains display-only', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: const PipelineDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          pipelineId: 88123,
+          repository: _FailingPipelineRepository(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load this pipeline.'), findsOneWidget);
+    expect(find.text('Try again'), findsNothing);
+    expect(find.byType(FilledButton), findsNothing);
+  });
+
   testWidgets(
     'router exposes pipeline detail as a pushed project destination',
     (tester) async {
@@ -206,6 +225,15 @@ class _LargePipelineRepository implements PipelinesRepository {
         ),
       ),
     );
+  }
+}
+
+class _FailingPipelineRepository implements PipelinesRepository {
+  const _FailingPipelineRepository();
+
+  @override
+  Future<PipelineDetails> loadPipeline(int projectId, int pipelineId) {
+    throw Exception('fixture failure');
   }
 }
 
