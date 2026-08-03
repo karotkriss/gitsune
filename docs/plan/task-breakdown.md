@@ -88,7 +88,7 @@ Implementation detail: `docs/research/auth-blueprint.md`.
 
 | Task | Acceptance | Depends on |
 | --- | --- | --- |
-| E5.1 Todos data layer (repository and reactive stream) on the Todos API | to-dos load, cache, and expose the reactive stream that the phase-five poller reuses | E3.3 |
+| E5.1 Todos data layer (repository and reactive stream) on the Todos API | to-dos load, cache, and expose a reactive stream to the To-Do List | E3.3 |
 | E5.2 To-Do List UI with swipe triage (done and snooze, with undo) and filter sheet by reason | the list triages by swipe with undo on every destructive swipe, filtering by reason works, and a golden passes | E5.1, E1.3 |
 | E5.3 Open-underlying-item deep-linking with web fallback | opening a to-do routes to its in-app surface where present, otherwise to web | E5.2 |
 | E5.4 Illustrated empty state | an empty To-Do List shows the illustrated empty state and a golden passes | E5.2 |
@@ -146,7 +146,7 @@ The project operates no servers at any layer.
 
 | Task | Acceptance | Depends on |
 | --- | --- | --- |
-| E12.1 Baseline background poller: conditional-request Todos polling (ETag/304) via `workmanager`, surfaced as local notifications | a background poll delivers a local notification for a new to-do within the OS scheduling floor and stays cheap through 304s | E5.1 |
+| E12.1 Baseline poller: account-scoped conditional-request Todos polling (ETag/304), surfaced as local notifications, with a foreground timer behind a scheduler seam | the first poll seeds silently; later polls notify once for each genuinely new to-do, reuse the per-account ETag, stay quiet on 304, and never cross account boundaries | E5.1 |
 | E12.2 Scheduled quiet hours | notifications suppress during configured quiet hours | E12.1 |
 | E12.3 Foreground GraphQL subscriptions (bearer token) for live screen updates | an open screen live-updates and the subscription stops on background or close | E3.1 |
 | E12.4 Android opt-in: foreground-service poll or UnifiedPush via a user-owned webhook-to-ntfy bridge | the opt-in path delivers to the device and the app generates the correct webhook configuration | E12.1 |

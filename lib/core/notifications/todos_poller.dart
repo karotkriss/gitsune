@@ -22,7 +22,7 @@ abstract class TodoNotifier {
 
 /// The seam that owns *when* polls run, so the baseline foreground timer can
 /// be swapped for real background scheduling (Android WorkManager, iOS
-/// background refresh) in E12.3+ without touching the poller.
+/// background refresh) in later platform work without touching the poller.
 abstract class PollScheduler {
   void start(Future<void> Function() poll);
   void stop();
