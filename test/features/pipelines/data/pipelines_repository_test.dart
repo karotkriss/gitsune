@@ -267,5 +267,5 @@ Dio _client(FakeGitLabServer server, AccountKey account) => createGitLabClient(
   account: account,
   baseUrl: server.baseUri.resolve('/api/v4'),
   readToken: (_) async => 'fixture-token',
-  refreshToken: (_) async => fail('refresh should not be called'),
+  refreshToken: (_, _) async => fail('refresh should not be called'),
 );

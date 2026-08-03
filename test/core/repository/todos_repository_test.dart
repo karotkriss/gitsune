@@ -85,7 +85,7 @@ void main() {
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
       readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final repository = TodosRepository(
       database: db,
@@ -109,7 +109,7 @@ void main() {
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
       readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final repository = TodosRepository(
       database: db,
@@ -139,7 +139,7 @@ void main() {
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
       readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final repository = TodosRepository(
       database: db,
@@ -180,7 +180,7 @@ void main() {
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
       readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final repository = TodosRepository(
       database: db,
@@ -221,7 +221,7 @@ void main() {
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
       readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final repository = TodosRepository(
       database: db,
@@ -263,7 +263,7 @@ void main() {
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
       readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final repository = TodosRepository(
       database: db,

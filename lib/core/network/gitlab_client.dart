@@ -7,9 +7,12 @@ import 'account_key.dart';
 typedef TokenReader = Future<String?> Function(AccountKey account);
 
 /// Refreshes [account]'s token and returns the new access token, or `null`
-/// if the refresh failed. Injected by E2.5's refresh logic; this layer only
-/// defines the seam.
-typedef TokenRefresher = Future<String?> Function(AccountKey account);
+/// if the refresh failed. `rejectedAccessToken` is the bearer token the
+/// 401'd request carried, letting the refresher skip the refresh when a
+/// concurrent one already rotated past it (GitLab refresh tokens are
+/// single-use). Implemented by `core/auth/token_refresh.dart`.
+typedef TokenRefresher =
+    Future<String?> Function(AccountKey account, String? rejectedAccessToken);
 
 /// Resolves the REST v4 base URL for an account's own instance.
 ///
@@ -25,6 +28,17 @@ const _authorizationHeader = 'Authorization';
 bool _hasAuthorizationHeader(Map<String, dynamic> headers) => headers.keys.any(
   (header) => header.toLowerCase() == _authorizationHeader.toLowerCase(),
 );
+
+String? _bearerToken(Map<String, dynamic> headers) {
+  for (final entry in headers.entries) {
+    if (entry.key.toLowerCase() == _authorizationHeader.toLowerCase()) {
+      final value = entry.value.toString();
+      const prefix = 'Bearer ';
+      return value.startsWith(prefix) ? value.substring(prefix.length) : null;
+    }
+  }
+  return null;
+}
 
 void _setBearerToken(Map<String, dynamic> headers, String token) {
   headers.removeWhere(
@@ -76,7 +90,10 @@ Dio createGitLabClient({
           return;
         }
 
-        final newToken = await refreshToken(account);
+        final newToken = await refreshToken(
+          account,
+          _bearerToken(requestOptions.headers),
+        );
         if (newToken == null) {
           handler.next(error);
           return;

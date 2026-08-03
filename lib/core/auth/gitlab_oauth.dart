@@ -1,8 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 
+import '../network/account_key.dart';
 import 'oauth_config.dart';
 import 'token_store.dart';
+
+/// A completed sign-in: which account it is, and its tokens.
+typedef SignedInAccount = ({AccountKey account, OAuthTokens tokens});
 
 /// Runs the authorization leg in the system browser (Chrome Custom Tabs on
 /// Android, the web authentication session on iOS; never an embedded web
@@ -55,8 +59,9 @@ class GitLabOAuth {
   );
 
   /// Signs in: system-browser authorization, code-for-token exchange, then
-  /// persists the tokens so the session survives a restart.
-  Future<OAuthTokens> signIn() async {
+  /// persists the tokens under the account's composite key so the session
+  /// survives a restart and coexists with other accounts.
+  Future<SignedInAccount> signIn() async {
     final response = await _authorize(buildAuthorizationRequest());
     final code = response.authorizationCode;
     final verifier = response.codeVerifier;
@@ -64,8 +69,24 @@ class GitLabOAuth {
       throw StateError('Authorization returned no code to exchange');
     }
     final tokens = await exchangeCode(code: code, codeVerifier: verifier);
-    await tokenStore.save(tokens);
-    return tokens;
+    final account = await _resolveAccount(tokens);
+    await tokenStore.save(account, tokens);
+    return (account: account, tokens: tokens);
+  }
+
+  /// Resolves who just signed in (`GET /api/v4/user` with the new token), so
+  /// storage can be namespaced per account rather than a global slot.
+  Future<AccountKey> _resolveAccount(OAuthTokens tokens) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      config.tokenEndpoint.resolve('/api/v4/user').toString(),
+      options: Options(
+        headers: {'Authorization': 'Bearer ${tokens.accessToken}'},
+      ),
+    );
+    return AccountKey(
+      instanceHost: config.tokenEndpoint.authority,
+      accountId: (response.data!['id'] as num).toString(),
+    );
   }
 
   /// Exchanges an authorization [code] and its PKCE [codeVerifier] for
@@ -85,14 +106,6 @@ class GitLabOAuth {
       },
       options: Options(contentType: Headers.formUrlEncodedContentType),
     );
-    final body = response.data!;
-    final expiresIn = body['expires_in'];
-    return OAuthTokens(
-      accessToken: body['access_token'] as String,
-      refreshToken: body['refresh_token'] as String?,
-      expiresAt: expiresIn is int
-          ? DateTime.now().add(Duration(seconds: expiresIn))
-          : null,
-    );
+    return OAuthTokens.fromTokenResponse(response.data!);
   }
 }

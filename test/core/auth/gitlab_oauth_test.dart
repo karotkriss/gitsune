@@ -6,20 +6,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/auth/gitlab_oauth.dart';
 import 'package:gitsune/core/auth/oauth_config.dart';
 import 'package:gitsune/core/auth/token_store.dart';
+import 'package:gitsune/core/network/account_key.dart';
 
 import '../../support/fake_gitlab_server.dart';
 
 class _MemoryTokenStore implements TokenStore {
-  OAuthTokens? tokens;
+  final tokens = <AccountKey, OAuthTokens>{};
 
   @override
-  Future<void> save(OAuthTokens tokens) async => this.tokens = tokens;
+  Future<void> save(AccountKey account, OAuthTokens tokens) async =>
+      this.tokens[account] = tokens;
 
   @override
-  Future<OAuthTokens?> read() async => tokens;
+  Future<OAuthTokens?> read(AccountKey account) async => tokens[account];
 
   @override
-  Future<void> clear() async => tokens = null;
+  Future<void> clear(AccountKey account) async => tokens.remove(account);
 }
 
 const _tokenResponse = {
@@ -108,12 +110,20 @@ void main() {
       );
     });
 
-    test('signIn drives authorize, exchanges its code and verifier, and '
-        'persists the tokens', () async {
+    test('signIn drives authorize, exchanges its code and verifier, '
+        'resolves the account, and persists the tokens under its composite '
+        'key', () async {
       server.respondJson('POST /oauth/token', _tokenResponse);
+      String? userAuthHeader;
+      server.handle('GET /api/v4/user', (request) async {
+        userAuthHeader = request.headers.value('authorization');
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(jsonEncode({'id': 42, 'username': 'alice'}));
+        await request.response.close();
+      });
       final store = _MemoryTokenStore();
       AuthorizationRequest? sentToBrowser;
-      final tokens = await oauth(
+      final session = await oauth(
         tokenStore: store,
         authorizer: (request) async {
           sentToBrowser = request;
@@ -125,9 +135,17 @@ void main() {
       ).signIn();
 
       expect(sentToBrowser?.clientId, 'test-client');
-      expect(tokens.accessToken, 'at-1');
-      expect(store.tokens?.accessToken, 'at-1');
-      expect(store.tokens?.refreshToken, 'rt-1');
+      // Who signed in is resolved with the just-issued token, and storage
+      // is keyed by the composite account key.
+      expect(userAuthHeader, 'Bearer at-1');
+      final account = AccountKey(
+        instanceHost: server.baseUri.authority,
+        accountId: '42',
+      );
+      expect(session.account, account);
+      expect(session.tokens.accessToken, 'at-1');
+      expect(store.tokens[account]?.accessToken, 'at-1');
+      expect(store.tokens[account]?.refreshToken, 'rt-1');
     });
 
     test('signIn refuses an authorize response without a code and '
@@ -139,7 +157,7 @@ void main() {
       ).signIn();
 
       await expectLater(attempt, throwsStateError);
-      expect(store.tokens, isNull);
+      expect(store.tokens, isEmpty);
     });
   });
 }

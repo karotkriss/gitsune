@@ -31,7 +31,7 @@ void main() {
       account: account,
       baseUrl: server.baseUri.resolve('/api/v4'),
       readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     return GitLabRepositoryTreeRepository(
       database: db,
@@ -208,7 +208,7 @@ void main() {
       account: otherAccount,
       baseUrl: server.baseUri.resolve('/api/v4'),
       readToken: (_) async => 'tok',
-      refreshToken: (_) async => fail('refresh should not be called'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
     );
     final otherRepository = GitLabRepositoryTreeRepository(
       database: db,
