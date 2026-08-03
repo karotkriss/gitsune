@@ -125,12 +125,50 @@ List<AnsiLine> parseAnsiLog(String trace) {
             applySgr(trace.substring(i + 2, end).split(';'));
           }
           i = end + 1;
-        } else if (i + 1 < length &&
-            (trace.codeUnitAt(i + 1) == 0x28 /* ( */ ||
-                trace.codeUnitAt(i + 1) == 0x29 /* ) */ )) {
-          i += 3; // Charset designation: ESC, ( or ), one final byte.
         } else {
-          i += 2; // Other non-CSI escape: drop ESC and its single byte.
+          final introducer = i + 1 < length ? trace.codeUnitAt(i + 1) : null;
+          final isOsc = introducer == 0x5d; // ]
+          final isControlString =
+              isOsc ||
+              introducer == 0x50 || // P (DCS)
+              introducer == 0x58 || // X (SOS)
+              introducer == 0x5e || // ^ (PM)
+              introducer == 0x5f; // _ (APC)
+          if (isControlString) {
+            var end = i + 2;
+            while (end < length) {
+              final unit = trace.codeUnitAt(end);
+              if (isOsc && unit == 0x07) {
+                end++;
+                break;
+              }
+              if (unit == 0x1b &&
+                  end + 1 < length &&
+                  trace.codeUnitAt(end + 1) == 0x5c /* \\ */ ) {
+                end += 2;
+                break;
+              }
+              end++;
+            }
+            i = end;
+          } else if (introducer != null &&
+              introducer >= 0x20 &&
+              introducer <= 0x2f) {
+            var end = i + 2;
+            while (end < length &&
+                trace.codeUnitAt(end) >= 0x20 &&
+                trace.codeUnitAt(end) <= 0x2f) {
+              end++;
+            }
+            if (end < length &&
+                trace.codeUnitAt(end) >= 0x30 &&
+                trace.codeUnitAt(end) <= 0x7e) {
+              end++;
+            }
+            i = end;
+          } else {
+            i += introducer == null ? 1 : 2;
+          }
         }
     }
   }

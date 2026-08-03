@@ -114,6 +114,25 @@ void main() {
       expect(parseAnsiLog('a\x1b[2Kb\x1b(Bc\n').single.text, 'abc');
     });
 
+    test('consumes OSC sequences through BEL or ST', () {
+      final lines = parseAnsiLog(
+        'a\x1b]0;secret title\x07b'
+        '\x1b]8;;https://example.com\x1b\\linked'
+        '\x1b]8;;\x1b\\c\n',
+      );
+      expect(lines.single.text, 'ablinkedc');
+    });
+
+    test('consumes control strings through ST', () {
+      final lines = parseAnsiLog(
+        'a\x1bPprivate payload\x1b\\b'
+        '\x1bXstart of string\x1b\\c'
+        '\x1b^privacy message\x1b\\d'
+        '\x1b_application command\x1b\\e\n',
+      );
+      expect(lines.single.text, 'abcde');
+    });
+
     test('survives a truncated escape sequence at end of input', () {
       expect(parseAnsiLog('tail\x1b[31').single.text, 'tail');
       expect(parseAnsiLog('tail\x1b').single.text, 'tail');
