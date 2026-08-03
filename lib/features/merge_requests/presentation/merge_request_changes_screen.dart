@@ -139,17 +139,21 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
     if (_openingWeb) return;
     _openingWeb = true;
     try {
-      var webUrl = _webUrl;
-      if (webUrl == null) {
-        webUrl = (await widget.repository.loadMergeRequest(
+      var diffsUri = _diffsUri(_webUrl);
+      if (diffsUri == null) {
+        final webUrl = (await widget.repository.loadMergeRequest(
           widget.projectId,
           widget.mergeIid,
         )).webUrl;
         if (!mounted) return;
+        diffsUri = _diffsUri(webUrl);
+        if (diffsUri == null) {
+          throw StateError('Merge request has no valid web URL.');
+        }
         _webUrl = webUrl;
       }
       final open = widget.openWebUrl ?? _launchExternally;
-      await open(Uri.parse('$webUrl/diffs'));
+      await open(diffsUri);
     } on Object {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -160,6 +164,21 @@ class _MergeRequestChangesScreenState extends State<MergeRequestChangesScreen> {
     } finally {
       _openingWeb = false;
     }
+  }
+
+  static Uri? _diffsUri(String? webUrl) {
+    final value = webUrl?.trim();
+    if (value == null || value.isEmpty) return null;
+    final base = Uri.tryParse(value);
+    if (base == null ||
+        (base.scheme != 'http' && base.scheme != 'https') ||
+        base.host.isEmpty) {
+      return null;
+    }
+    final directory = base.path.endsWith('/')
+        ? base
+        : base.replace(path: '${base.path}/');
+    return directory.resolve('diffs');
   }
 
   static Future<void> _launchExternally(Uri url) async {

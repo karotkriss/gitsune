@@ -37,6 +37,16 @@ class _FailingDetailRepository extends FixtureMergeRequestsRepository {
   }
 }
 
+class _MissingWebUrlRepository extends FixtureMergeRequestsRepository {
+  _MissingWebUrlRepository({super.diffFixtures});
+
+  @override
+  Future<MergeRequest> loadMergeRequest(int projectId, int mergeIid) async {
+    final mergeRequest = await super.loadMergeRequest(projectId, mergeIid);
+    return MergeRequest.fromJson({...mergeRequest.toJson(), 'web_url': null});
+  }
+}
+
 class _RetryingDiscussionsRepository extends FixtureMergeRequestsRepository {
   bool fail = true;
   int attempts = 0;
@@ -130,6 +140,30 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.detailAttempts, 1);
+    expect(
+      find.text('Unable to open these changes in a browser.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('oversized fallback rejects a missing web URL', (tester) async {
+    final opened = <Uri>[];
+    final repository = _MissingWebUrlRepository(
+      diffFixtures: const ['merge_request_142_diffs_oversized'],
+    );
+    await tester.pumpWidget(
+      _screen(
+        repository: repository,
+        openWebUrl: (url) async => opened.add(url),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Open in browser'));
+    await tester.pumpAndSettle();
+
+    expect(repository.detailLoads, 1);
+    expect(opened, isEmpty);
     expect(
       find.text('Unable to open these changes in a browser.'),
       findsOneWidget,
