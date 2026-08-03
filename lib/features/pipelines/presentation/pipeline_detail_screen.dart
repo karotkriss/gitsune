@@ -1,10 +1,30 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/ci/ci_status.dart';
 import '../../../core/ci/ci_status_badge.dart';
 import '../../../core/icons/gs_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/pipeline_models.dart';
 import '../data/pipelines_repository.dart';
+
+/// A job action affordance driven by the job's current [CiStatus].
+enum _JobAction {
+  retry(GsIconGlyph.retry, 'Retry'),
+  cancel(GsIconGlyph.cancel, 'Cancel'),
+  run(GsIconGlyph.play, 'Run');
+
+  const _JobAction(this.glyph, this.label);
+
+  final GsIconGlyph glyph;
+  final String label;
+
+  static _JobAction? forStatus(CiStatus status) => switch (status) {
+    CiStatus.failed => _JobAction.retry,
+    CiStatus.running => _JobAction.cancel,
+    CiStatus.manual => _JobAction.run,
+    _ => null,
+  };
+}
 
 class PipelineDetailScreen extends StatefulWidget {
   const PipelineDetailScreen({
@@ -28,7 +48,10 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
   PipelineDetails? _details;
   bool _loading = true;
   bool _failed = false;
-  int _generation = 0;
+  int _screenGeneration = 0;
+  int _loadGeneration = 0;
+  int _mutationRevision = 0;
+  final _pendingJobIds = <int>{};
 
   @override
   void initState() {
@@ -42,13 +65,17 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
     if (oldWidget.projectId != widget.projectId ||
         oldWidget.pipelineId != widget.pipelineId ||
         oldWidget.repository != widget.repository) {
+      _screenGeneration++;
       _details = null;
+      _pendingJobIds.clear();
       _load();
     }
   }
 
   Future<void> _load() async {
-    final generation = ++_generation;
+    final screenGeneration = _screenGeneration;
+    final loadGeneration = ++_loadGeneration;
+    final mutationRevision = _mutationRevision;
     setState(() {
       _loading = true;
       _failed = false;
@@ -58,13 +85,25 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
         widget.projectId,
         widget.pipelineId,
       );
-      if (!mounted || generation != _generation) return;
+      if (!mounted ||
+          screenGeneration != _screenGeneration ||
+          loadGeneration != _loadGeneration) {
+        return;
+      }
+      if (mutationRevision != _mutationRevision) {
+        setState(() => _loading = false);
+        return;
+      }
       setState(() {
         _details = details;
         _loading = false;
       });
     } on Object {
-      if (!mounted || generation != _generation) return;
+      if (!mounted ||
+          screenGeneration != _screenGeneration ||
+          loadGeneration != _loadGeneration) {
+        return;
+      }
       setState(() {
         _loading = false;
         _failed = true;
@@ -74,6 +113,34 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
           const SnackBar(content: Text('Unable to refresh this pipeline.')),
         );
       }
+    }
+  }
+
+  Future<void> _performJobAction(PipelineJob job, _JobAction action) async {
+    final screenGeneration = _screenGeneration;
+    final repository = widget.repository;
+    final projectId = widget.projectId;
+    setState(() => _pendingJobIds.add(job.id));
+    try {
+      final updated = switch (action) {
+        _JobAction.retry => await repository.retryJob(projectId, job.id),
+        _JobAction.cancel => await repository.cancelJob(projectId, job.id),
+        _JobAction.run => await repository.playJob(projectId, job.id),
+      };
+      if (!mounted || screenGeneration != _screenGeneration) return;
+      setState(() {
+        _mutationRevision++;
+        _details = _details?.withUpdatedJob(updated);
+        _pendingJobIds.remove(job.id);
+      });
+    } on Object {
+      if (!mounted || screenGeneration != _screenGeneration) return;
+      setState(() => _pendingJobIds.remove(job.id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to ${action.label.toLowerCase()} this job.'),
+        ),
+      );
     }
   }
 
@@ -123,7 +190,12 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
                   SliverToBoxAdapter(
                     child: _PipelineHeader(pipeline: details.pipeline),
                   ),
-                  ..._jobSlivers(context, details.jobs),
+                  ..._jobSlivers(
+                    context,
+                    details.jobs,
+                    pendingJobIds: _pendingJobIds,
+                    onAction: _performJobAction,
+                  ),
                 ],
               ),
             ),
@@ -233,11 +305,15 @@ class _JobRow extends StatelessWidget {
     required this.job,
     required this.isFirst,
     required this.isLast,
+    required this.pending,
+    required this.onAction,
   });
 
   final PipelineJob job;
   final bool isFirst;
   final bool isLast;
+  final bool pending;
+  final void Function(PipelineJob job, _JobAction action) onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -247,42 +323,44 @@ class _JobRow extends StatelessWidget {
         ? 'No duration'
         : formatCiDuration(job.duration);
     final failurePolicy = job.allowFailure ? ', allowed to fail' : '';
+    final action = _JobAction.forStatus(job.status);
     final radius = BorderRadius.vertical(
       top: isFirst ? const Radius.circular(12) : Radius.zero,
       bottom: isLast ? const Radius.circular(12) : Radius.zero,
     );
     return Semantics(
       container: true,
+      explicitChildNodes: true,
       label:
           '${job.name}, ${job.status.label}, ${job.stage} stage, '
           '$duration$failurePolicy.',
-      child: ExcludeSemantics(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: gs.surfaceCard,
-            border: Border(
-              top: isFirst
-                  ? BorderSide(color: gs.borderSubtle)
-                  : BorderSide.none,
-              left: BorderSide(color: gs.borderSubtle),
-              right: BorderSide(color: gs.borderSubtle),
-              bottom: BorderSide(color: gs.borderSubtle),
-            ),
-            borderRadius: radius,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: gs.surfaceCard,
+          border: Border(
+            top: isFirst ? BorderSide(color: gs.borderSubtle) : BorderSide.none,
+            left: BorderSide(color: gs.borderSubtle),
+            right: BorderSide(color: gs.borderSubtle),
+            bottom: BorderSide(color: gs.borderSubtle),
           ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 60),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              child: Row(
-                children: [
-                  CiStatusBadge(
+          borderRadius: radius,
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 60),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            child: Row(
+              children: [
+                ExcludeSemantics(
+                  child: CiStatusBadge(
                     status: job.badgeStatus,
                     size: 20,
                     excludeFromSemantics: true,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ExcludeSemantics(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -307,23 +385,75 @@ class _JobRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 116),
-                    child: Text(
-                      job.status.label,
-                      maxLines: 2,
-                      textAlign: TextAlign.end,
-                      overflow: TextOverflow.ellipsis,
-                      style: gs.caption.copyWith(color: gs.textSubtle),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 116),
+                      child: ExcludeSemantics(
+                        child: Text(
+                          job.status.label,
+                          maxLines: 2,
+                          textAlign: TextAlign.end,
+                          overflow: TextOverflow.ellipsis,
+                          style: gs.caption.copyWith(color: gs.textSubtle),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    if (action != null) ...[
+                      const SizedBox(height: 6),
+                      _JobActionButton(
+                        action: action,
+                        pending: pending,
+                        onPressed: () => onAction(job, action),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _JobActionButton extends StatelessWidget {
+  const _JobActionButton({
+    required this.action,
+    required this.pending,
+    required this.onPressed,
+  });
+
+  final _JobAction action;
+  final bool pending;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    return TextButton.icon(
+      onPressed: pending ? null : onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        minimumSize: const Size(48, 48),
+        foregroundColor: gs.accent,
+      ),
+      icon: pending
+          ? SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: gs.accent,
+              ),
+            )
+          : GsIcon(action.glyph, size: 14, color: gs.accent),
+      label: Text(action.label, style: gs.caption.copyWith(color: gs.accent)),
     );
   }
 }
@@ -374,7 +504,12 @@ Map<String, List<PipelineJob>> _groupJobsByStage(List<PipelineJob> jobs) {
   return stages;
 }
 
-List<Widget> _jobSlivers(BuildContext context, List<PipelineJob> jobs) {
+List<Widget> _jobSlivers(
+  BuildContext context,
+  List<PipelineJob> jobs, {
+  required Set<int> pendingJobIds,
+  required void Function(PipelineJob job, _JobAction action) onAction,
+}) {
   final theme = Theme.of(context);
   final gs = theme.extension<GsTheme>()!;
   if (jobs.isEmpty) {
@@ -441,6 +576,8 @@ List<Widget> _jobSlivers(BuildContext context, List<PipelineJob> jobs) {
             job: stage.value[index],
             isFirst: index == 0,
             isLast: index == stage.value.length - 1,
+            pending: pendingJobIds.contains(stage.value[index].id),
+            onAction: onAction,
           ),
         ),
       ),
