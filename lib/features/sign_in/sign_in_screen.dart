@@ -5,12 +5,13 @@ import '../../core/auth/gitlab_oauth.dart';
 import '../../core/icons/gs_icons.dart';
 import '../../core/theme/app_theme.dart';
 import 'pat_sign_in_screen.dart';
+import 'self_hosted_wizard_screen.dart';
 
 /// The sign-in surface specified by `docs/research/design-direction.md` and
 /// `docs/decisions/0001-auth-posture.md`.
 ///
-/// Production keeps showing an inline limitation for reachable self-hosted
-/// instances until the E2.3 registration wizard wires [signInSelfHosted].
+/// A reachable self-hosted instance opens the E2.3 registration wizard
+/// ([SelfHostedWizardScreen]) unless a test injects [signInSelfHosted].
 class SignInScreen extends StatefulWidget {
   const SignInScreen({
     super.key,
@@ -29,9 +30,9 @@ class SignInScreen extends StatefulWidget {
   final Future<bool> Function(Uri base)? probeInstance;
 
   /// Starts self-hosted OAuth sign-in (E2.2) for a confirmed-reachable
-  /// instance [base]. The E2.3 registration wizard attaches here: it
-  /// supplies and validates the instance's Application ID, then runs
-  /// [GitLabOAuth.selfHosted]. Null keeps the inline not-yet-available note.
+  /// instance [base]. Injectable so tests never navigate; null (production)
+  /// opens the E2.3 registration wizard, which supplies and validates the
+  /// instance's Application ID, then runs [GitLabOAuth.selfHosted].
   final Future<void> Function(Uri base)? signInSelfHosted;
 
   /// Personal Access Token sign-in (E2.4), forwarded to [PatSignInScreen]
@@ -79,10 +80,15 @@ class _SignInScreenState extends State<SignInScreen> {
               'Check the address and try again.';
         } else if (widget.signInSelfHosted case final selfHosted?) {
           await selfHosted(base);
-        } else {
-          error =
-              'Self-hosted sign-in is not available yet. '
-              'Use gitlab.com for now.';
+        } else if (mounted) {
+          await Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => SelfHostedWizardScreen(
+                base: base,
+                signInWithToken: widget.signInWithToken,
+              ),
+            ),
+          );
         }
       }
     } catch (_) {
@@ -171,7 +177,8 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                         helperText:
                             'gitlab.com sign-in opens in your browser. '
-                            'Self-hosted sign-in is coming soon.',
+                            'Self-hosted instances take a quick one-time '
+                            'setup.',
                         helperMaxLines: 2,
                         errorText: _error,
                         errorMaxLines: 3,

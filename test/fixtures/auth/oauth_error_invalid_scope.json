@@ -1,0 +1,4 @@
+{
+  "error": "invalid_scope",
+  "error_description": "The requested scope is invalid, unknown, or malformed."
+}

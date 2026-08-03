@@ -1,0 +1,4 @@
+{
+  "error": "invalid_code_challenge_method",
+  "error_description": "The code challenge method must be plain or S256."
+}
