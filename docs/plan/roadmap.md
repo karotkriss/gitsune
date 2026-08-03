@@ -38,7 +38,8 @@ These hold across every phase and are not restated per task.
   Instance host plus account identifier keys the network client, every database row, and every per-account provider.
   Switching accounts is a single state change that tears down the previous account's client and state.
 - **Offline-first through the repository layer.**
-  The repository layer is the only layer that talks to both the database and the network; the UI reads a reactive database stream and a background refresh updates the database, so the UI updates itself.
+  Feature UI never talks directly to GitLab.
+  Repository interfaces own network access; once a feature gains offline caching, its repository is the only layer that talks to both the database and the network, while the UI reads a reactive database stream that re-emits after a background refresh.
   This seam is independent of the state-management choice.
 - **No project-operated servers, at any layer, ever**, per `docs/decisions/0002-notification-architecture.md`.
 - **Public-project hygiene.**
