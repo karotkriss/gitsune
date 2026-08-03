@@ -71,6 +71,107 @@ void main() {
     expect(details.jobs.map((job) => job.status), contains(CiStatus.scheduled));
   });
 
+  test('retries a job against the fake server', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    server.respondJson('POST /api/v4/projects/7/jobs/503/retry', {
+      'id': 9503,
+      'name': 'test:integration',
+      'stage': 'test',
+      'status': 'pending',
+      'allow_failure': false,
+    });
+
+    final repository = GitLabPipelinesRepository(_client(server, account));
+    final job = await repository.retryJob(7, 503);
+
+    expect(job.id, 9503);
+    expect(job.name, 'test:integration');
+    expect(job.status, CiStatus.pending);
+  });
+
+  test('cancels a job against the fake server', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    server.respondJson('POST /api/v4/projects/7/jobs/502/cancel', {
+      'id': 502,
+      'name': 'test:flutter',
+      'stage': 'test',
+      'status': 'canceled',
+      'allow_failure': false,
+    });
+
+    final repository = GitLabPipelinesRepository(_client(server, account));
+    final job = await repository.cancelJob(7, 502);
+
+    expect(job.id, 502);
+    expect(job.status, CiStatus.canceled);
+  });
+
+  test('runs a manual job against the fake server', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    server.respondJson('POST /api/v4/projects/7/jobs/506/play', {
+      'id': 506,
+      'name': 'deploy:review',
+      'stage': 'deploy',
+      'status': 'running',
+      'allow_failure': true,
+    });
+
+    final repository = GitLabPipelinesRepository(_client(server, account));
+    final job = await repository.playJob(7, 506);
+
+    expect(job.id, 506);
+    expect(job.status, CiStatus.running);
+  });
+
+  test(
+    'withUpdatedJob replaces a same-id job and supersedes a retried one',
+    () async {
+      final pipeline = Pipeline.fromJson(
+        Map<String, dynamic>.from(Fixtures.json('pipeline_88123') as Map),
+      );
+      final jobs = (Fixtures.json('pipeline_88123_jobs') as List<dynamic>)
+          .map(
+            (job) =>
+                PipelineJob.fromJson(Map<String, dynamic>.from(job as Map)),
+          )
+          .toList();
+      final details = PipelineDetails(pipeline: pipeline, jobs: jobs);
+
+      final canceled = details.withUpdatedJob(
+        const PipelineJob(
+          id: 502,
+          name: 'test:flutter',
+          stage: 'test',
+          status: CiStatus.canceled,
+          allowFailure: false,
+        ),
+      );
+      expect(
+        canceled.jobs.firstWhere((job) => job.name == 'test:flutter').status,
+        CiStatus.canceled,
+      );
+
+      final retried = canceled.withUpdatedJob(
+        const PipelineJob(
+          id: 9503,
+          name: 'test:integration',
+          stage: 'test',
+          status: CiStatus.running,
+          allowFailure: false,
+        ),
+      );
+      final integrationJobs = retried.jobs.where(
+        (job) => job.name == 'test:integration',
+      );
+      expect(integrationJobs, hasLength(1));
+      expect(integrationJobs.single.id, 9503);
+      expect(integrationJobs.single.status, CiStatus.running);
+    },
+  );
+
   test('derives warning badges without losing raw execution status', () {
     final pipelineJson =
         Map<String, dynamic>.from(Fixtures.json('pipeline_88123') as Map)

@@ -12,7 +12,7 @@ import '../support/fixture_pipelines_repository.dart';
 
 void main() {
   testWidgets(
-    'renders pipeline and stage-grouped job statuses without actions',
+    'renders pipeline and stage-grouped job statuses with per-status actions',
     (tester) async {
       final semantics = tester.ensureSemantics();
       final repository = FixturePipelinesRepository();
@@ -44,23 +44,107 @@ void main() {
         find.bySemanticsLabel('test:flutter, Running, test stage, 48s.'),
         findsOneWidget,
       );
+      // The failed and running jobs already visible in the TEST stage carry
+      // their retry and cancel actions.
+      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+      expect(find.text('Run'), findsNothing);
       await tester.scrollUntilVisible(
         find.text('DEPLOY'),
         240,
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('DEPLOY'), findsOneWidget);
+      // The manual job in the DEPLOY stage carries the run action.
+      expect(find.text('Run'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.text('CLEANUP'),
         240,
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('CLEANUP'), findsOneWidget);
-      expect(find.text('Retry'), findsNothing);
-      expect(find.text('Cancel'), findsNothing);
-      expect(find.text('Run'), findsNothing);
       expect(repository.loads, 1);
       semantics.dispose();
+    },
+  );
+
+  testWidgets(
+    'tapping retry calls the repository and reflects the returned status',
+    (tester) async {
+      final repository = FixturePipelinesRepository();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: PipelineDetailScreen(
+            projectId: 7,
+            projectPath: 'gitsune/app',
+            pipelineId: 88123,
+            repository: repository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+
+      expect(repository.retriedJobIds, [503]);
+      expect(find.text('Retry'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'tapping cancel calls the repository and reflects the returned status',
+    (tester) async {
+      final repository = FixturePipelinesRepository();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: PipelineDetailScreen(
+            projectId: 7,
+            projectPath: 'gitsune/app',
+            pipelineId: 88123,
+            repository: repository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(repository.canceledJobIds, [502]);
+      expect(find.text('Cancel'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'tapping run calls the repository and reflects the returned status',
+    (tester) async {
+      final repository = FixturePipelinesRepository();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildAppTheme(),
+          home: PipelineDetailScreen(
+            projectId: 7,
+            projectPath: 'gitsune/app',
+            pipelineId: 88123,
+            repository: repository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Run'),
+        240,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      await tester.tap(find.text('Run'));
+      await tester.pumpAndSettle();
+
+      expect(repository.playedJobIds, [506]);
+      expect(find.text('Run'), findsNothing);
     },
   );
 
@@ -226,6 +310,18 @@ class _LargePipelineRepository implements PipelinesRepository {
       ),
     );
   }
+
+  @override
+  Future<PipelineJob> retryJob(int projectId, int jobId) =>
+      _fixture.retryJob(projectId, jobId);
+
+  @override
+  Future<PipelineJob> cancelJob(int projectId, int jobId) =>
+      _fixture.cancelJob(projectId, jobId);
+
+  @override
+  Future<PipelineJob> playJob(int projectId, int jobId) =>
+      _fixture.playJob(projectId, jobId);
 }
 
 class _FailingPipelineRepository implements PipelinesRepository {
@@ -235,6 +331,18 @@ class _FailingPipelineRepository implements PipelinesRepository {
   Future<PipelineDetails> loadPipeline(int projectId, int pipelineId) {
     throw Exception('fixture failure');
   }
+
+  @override
+  Future<PipelineJob> retryJob(int projectId, int jobId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PipelineJob> cancelJob(int projectId, int jobId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PipelineJob> playJob(int projectId, int jobId) =>
+      throw UnimplementedError();
 }
 
 class _AllowedFailureRepository implements PipelinesRepository {
@@ -258,4 +366,16 @@ class _AllowedFailureRepository implements PipelinesRepository {
       ],
     );
   }
+
+  @override
+  Future<PipelineJob> retryJob(int projectId, int jobId) =>
+      _fixture.retryJob(projectId, jobId);
+
+  @override
+  Future<PipelineJob> cancelJob(int projectId, int jobId) =>
+      _fixture.cancelJob(projectId, jobId);
+
+  @override
+  Future<PipelineJob> playJob(int projectId, int jobId) =>
+      _fixture.playJob(projectId, jobId);
 }

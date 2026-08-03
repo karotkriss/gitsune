@@ -1,10 +1,30 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/ci/ci_status.dart';
 import '../../../core/ci/ci_status_badge.dart';
 import '../../../core/icons/gs_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/pipeline_models.dart';
 import '../data/pipelines_repository.dart';
+
+/// A job action affordance driven by the job's current [CiStatus].
+enum _JobAction {
+  retry(GsIconGlyph.retry, 'Retry'),
+  cancel(GsIconGlyph.cancel, 'Cancel'),
+  run(GsIconGlyph.play, 'Run');
+
+  const _JobAction(this.glyph, this.label);
+
+  final GsIconGlyph glyph;
+  final String label;
+
+  static _JobAction? forStatus(CiStatus status) => switch (status) {
+    CiStatus.failed => _JobAction.retry,
+    CiStatus.running => _JobAction.cancel,
+    CiStatus.manual => _JobAction.run,
+    _ => null,
+  };
+}
 
 class PipelineDetailScreen extends StatefulWidget {
   const PipelineDetailScreen({
@@ -29,6 +49,7 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
   bool _loading = true;
   bool _failed = false;
   int _generation = 0;
+  final _pendingJobIds = <int>{};
 
   @override
   void initState() {
@@ -74,6 +95,39 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
           const SnackBar(content: Text('Unable to refresh this pipeline.')),
         );
       }
+    }
+  }
+
+  Future<void> _performJobAction(PipelineJob job, _JobAction action) async {
+    setState(() => _pendingJobIds.add(job.id));
+    try {
+      final updated = switch (action) {
+        _JobAction.retry => await widget.repository.retryJob(
+          widget.projectId,
+          job.id,
+        ),
+        _JobAction.cancel => await widget.repository.cancelJob(
+          widget.projectId,
+          job.id,
+        ),
+        _JobAction.run => await widget.repository.playJob(
+          widget.projectId,
+          job.id,
+        ),
+      };
+      if (!mounted) return;
+      setState(() {
+        _details = _details?.withUpdatedJob(updated);
+        _pendingJobIds.remove(job.id);
+      });
+    } on Object {
+      if (!mounted) return;
+      setState(() => _pendingJobIds.remove(job.id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to ${action.label.toLowerCase()} this job.'),
+        ),
+      );
     }
   }
 
@@ -123,7 +177,12 @@ class _PipelineDetailScreenState extends State<PipelineDetailScreen> {
                   SliverToBoxAdapter(
                     child: _PipelineHeader(pipeline: details.pipeline),
                   ),
-                  ..._jobSlivers(context, details.jobs),
+                  ..._jobSlivers(
+                    context,
+                    details.jobs,
+                    pendingJobIds: _pendingJobIds,
+                    onAction: _performJobAction,
+                  ),
                 ],
               ),
             ),
@@ -233,11 +292,15 @@ class _JobRow extends StatelessWidget {
     required this.job,
     required this.isFirst,
     required this.isLast,
+    required this.pending,
+    required this.onAction,
   });
 
   final PipelineJob job;
   final bool isFirst;
   final bool isLast;
+  final bool pending;
+  final void Function(PipelineJob job, _JobAction action) onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -247,6 +310,7 @@ class _JobRow extends StatelessWidget {
         ? 'No duration'
         : formatCiDuration(job.duration);
     final failurePolicy = job.allowFailure ? ', allowed to fail' : '';
+    final action = _JobAction.forStatus(job.status);
     final radius = BorderRadius.vertical(
       top: isFirst ? const Radius.circular(12) : Radius.zero,
       bottom: isLast ? const Radius.circular(12) : Radius.zero,
@@ -308,21 +372,75 @@ class _JobRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 116),
-                    child: Text(
-                      job.status.label,
-                      maxLines: 2,
-                      textAlign: TextAlign.end,
-                      overflow: TextOverflow.ellipsis,
-                      style: gs.caption.copyWith(color: gs.textSubtle),
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 116),
+                        child: Text(
+                          job.status.label,
+                          maxLines: 2,
+                          textAlign: TextAlign.end,
+                          overflow: TextOverflow.ellipsis,
+                          style: gs.caption.copyWith(color: gs.textSubtle),
+                        ),
+                      ),
+                      if (action != null) ...[
+                        const SizedBox(height: 6),
+                        _JobActionButton(
+                          action: action,
+                          pending: pending,
+                          onPressed: () => onAction(job, action),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _JobActionButton extends StatelessWidget {
+  const _JobActionButton({
+    required this.action,
+    required this.pending,
+    required this.onPressed,
+  });
+
+  final _JobAction action;
+  final bool pending;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final gs = Theme.of(context).extension<GsTheme>()!;
+    return SizedBox(
+      height: 28,
+      child: TextButton.icon(
+        onPressed: pending ? null : onPressed,
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          foregroundColor: gs.accent,
+        ),
+        icon: pending
+            ? SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: gs.accent,
+                ),
+              )
+            : GsIcon(action.glyph, size: 14, color: gs.accent),
+        label: Text(action.label, style: gs.caption.copyWith(color: gs.accent)),
       ),
     );
   }
@@ -374,7 +492,12 @@ Map<String, List<PipelineJob>> _groupJobsByStage(List<PipelineJob> jobs) {
   return stages;
 }
 
-List<Widget> _jobSlivers(BuildContext context, List<PipelineJob> jobs) {
+List<Widget> _jobSlivers(
+  BuildContext context,
+  List<PipelineJob> jobs, {
+  required Set<int> pendingJobIds,
+  required void Function(PipelineJob job, _JobAction action) onAction,
+}) {
   final theme = Theme.of(context);
   final gs = theme.extension<GsTheme>()!;
   if (jobs.isEmpty) {
@@ -441,6 +564,8 @@ List<Widget> _jobSlivers(BuildContext context, List<PipelineJob> jobs) {
             job: stage.value[index],
             isFirst: index == 0,
             isLast: index == stage.value.length - 1,
+            pending: pendingJobIds.contains(stage.value[index].id),
+            onAction: onAction,
           ),
         ),
       ),

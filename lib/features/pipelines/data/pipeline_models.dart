@@ -6,6 +6,14 @@ class PipelineDetails {
 
   final Pipeline pipeline;
   final List<PipelineJob> jobs;
+
+  /// Applies a job action's response, replacing same-id jobs (cancel, play)
+  /// or adding a new attempt (retry creates a new job id) then re-deriving
+  /// the latest-per-stage-and-name view.
+  PipelineDetails withUpdatedJob(PipelineJob updated) => PipelineDetails(
+    pipeline: pipeline,
+    jobs: [...jobs.where((job) => job.id != updated.id), updated],
+  );
 }
 
 List<PipelineJob> _latestJobsInStageOrder(Iterable<PipelineJob> jobs) {
