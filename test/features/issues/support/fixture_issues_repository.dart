@@ -23,6 +23,17 @@ class FixtureIssuesRepository implements IssuesRepository {
   int nextNotesLoads = 0;
   final createdIssues = <({int projectId, String title, String description})>[];
   final createdNotes = <({int projectId, int issueIid, String body})>[];
+  final updateCalls =
+      <({
+        int projectId,
+        int issueIid,
+        List<String>? labels,
+        List<int>? assigneeIds,
+        String? stateEvent,
+      })>[];
+  Map<String, dynamic> _issueJson = Map<String, dynamic>.from(
+    Fixtures.json('issue_142') as Map,
+  );
 
   @override
   Future<IssuePage> loadFirstPage(int projectId) async {
@@ -75,6 +86,68 @@ class FixtureIssuesRepository implements IssuesRepository {
       Map<String, dynamic>.from(Fixtures.json('issue_142_note_created') as Map),
     );
   }
+
+  @override
+  Future<List<IssueLabel>> loadProjectLabels(int projectId) async =>
+      (Fixtures.json('project_7_labels') as List)
+          .map(IssueLabel.fromJson)
+          .toList(growable: false);
+
+  @override
+  Future<List<IssueAuthor>> loadProjectMembers(int projectId) async =>
+      (Fixtures.json('project_7_members') as List)
+          .map(
+            (value) =>
+                IssueAuthor.fromJson(Map<String, dynamic>.from(value as Map)),
+          )
+          .toList(growable: false);
+
+  @override
+  Future<Issue> updateIssue(
+    int projectId,
+    int issueIid, {
+    List<String>? labels,
+    List<int>? assigneeIds,
+    String? stateEvent,
+  }) async {
+    updateCalls.add((
+      projectId: projectId,
+      issueIid: issueIid,
+      labels: labels,
+      assigneeIds: assigneeIds,
+      stateEvent: stateEvent,
+    ));
+    _issueJson = applyIssueUpdateJson(_issueJson, {
+      if (labels != null) 'labels': labels.join(','),
+      'assignee_ids': ?assigneeIds,
+      'state_event': ?stateEvent,
+    });
+    return Issue.fromJson(_issueJson);
+  }
+}
+
+/// Applies a GitLab-shaped issue update body to a raw issue JSON map the way
+/// the real endpoint would, including returning labels as plain names (the
+/// update response carries no label details).
+Map<String, dynamic> applyIssueUpdateJson(
+  Map<String, dynamic> issue,
+  Map<String, dynamic> body,
+) {
+  final updated = Map<String, dynamic>.from(issue);
+  if (body['labels'] case final String labels) {
+    updated['labels'] = labels.isEmpty ? <String>[] : labels.split(',');
+  }
+  if (body['assignee_ids'] case final List<dynamic> assigneeIds) {
+    updated['assignees'] = [
+      for (final member in Fixtures.json('project_7_members') as List)
+        if (assigneeIds.contains((member as Map)['id'])) member,
+    ];
+  }
+  if (body['state_event'] case final String stateEvent) {
+    updated['state'] = stateEvent == 'close' ? 'closed' : 'opened';
+  }
+  updated['updated_at'] = '2026-08-02T10:00:00Z';
+  return updated;
 }
 
 List<Issue> _issuesFrom(String fixture) => (Fixtures.json(fixture) as List)

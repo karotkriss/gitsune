@@ -41,6 +41,22 @@ abstract interface class IssuesRepository {
 
   /// Posts a comment on an issue, returning the created note.
   Future<IssueNote> createNote(int projectId, int issueIid, String body);
+
+  /// Lists the project's labels for the triage label picker.
+  Future<List<IssueLabel>> loadProjectLabels(int projectId);
+
+  /// Lists the project's members for the triage assignee picker.
+  Future<List<IssueAuthor>> loadProjectMembers(int projectId);
+
+  /// Applies a triage change (labels, assignees, or a `close`/`reopen` state
+  /// event), returning the updated issue as the server shaped it.
+  Future<Issue> updateIssue(
+    int projectId,
+    int issueIid, {
+    List<String>? labels,
+    List<int>? assigneeIds,
+    String? stateEvent,
+  });
 }
 
 /// GitLab REST v4 issue reader with Link-header pagination.
@@ -190,6 +206,46 @@ class GitLabIssuesRepository implements IssuesRepository {
       data: {'body': body},
     );
     return IssueNote.fromJson(response.data!);
+  }
+
+  @override
+  Future<List<IssueLabel>> loadProjectLabels(int projectId) async {
+    // ponytail: single page of 100; wire a paginator if a project outgrows it.
+    final response = await _client.getUri<List<dynamic>>(
+      _apiUri('projects/$projectId/labels', {'per_page': '100'}),
+    );
+    return response.data!.map(IssueLabel.fromJson).toList(growable: false);
+  }
+
+  @override
+  Future<List<IssueAuthor>> loadProjectMembers(int projectId) async {
+    // `members/all` includes inherited members, who are assignable too.
+    // ponytail: single page of 100; wire a paginator if a project outgrows it.
+    final response = await _client.getUri<List<dynamic>>(
+      _apiUri('projects/$projectId/members/all', {'per_page': '100'}),
+    );
+    return response.data!
+        .map((value) => IssueAuthor.fromJson(value as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  @override
+  Future<Issue> updateIssue(
+    int projectId,
+    int issueIid, {
+    List<String>? labels,
+    List<int>? assigneeIds,
+    String? stateEvent,
+  }) async {
+    final response = await _client.putUri<Map<String, dynamic>>(
+      _apiUri('projects/$projectId/issues/$issueIid'),
+      data: {
+        if (labels != null) 'labels': labels.join(','),
+        'assignee_ids': ?assigneeIds,
+        'state_event': ?stateEvent,
+      },
+    );
+    return Issue.fromJson(response.data!);
   }
 
   Uri _apiUri(String path, [Map<String, String>? queryParameters]) {

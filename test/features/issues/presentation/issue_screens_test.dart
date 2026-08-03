@@ -241,6 +241,240 @@ void main() {
     );
   });
 
+  testWidgets('triage actions fold into the issue and add inline events', (
+    tester,
+  ) async {
+    final repository = FixtureIssuesRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(repository.issueLoads, 1);
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Close issue'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls.last.stateEvent, 'close');
+    expect(find.text('Closed'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reopen issue'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls.last.stateEvent, 'reopen');
+    expect(find.text('Open'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit labels'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('bug'));
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls.last.labels, [
+      'workflow::in review',
+      'feature',
+      'bug',
+    ]);
+    final bugPill = tester
+        .widgetList<IssueLabelPill>(find.byType(IssueLabelPill))
+        .singleWhere((pill) => pill.label.name == 'bug');
+    expect(bugPill.label.colorHex, '#DD2B0E');
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit assignees'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Noe Fernandez'));
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls.last.assigneeIds, [12, 13]);
+    expect(find.text('Noe Fernandez'), findsOneWidget);
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -800));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('You closed', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('You reopened', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('You added bug label', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('You assigned to @noe', findRichText: true),
+      findsOneWidget,
+    );
+    expect(repository.issueLoads, 1);
+    expect(repository.firstNotesLoads, 1);
+  });
+
+  testWidgets('triage flow uses fixture-backed HTTP end to end', (
+    tester,
+  ) async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    var issueJson = Map<String, dynamic>.from(
+      Fixtures.json('issue_142') as Map,
+    );
+    var issueGets = 0;
+    final initialIssueLoaded = Completer<void>();
+    final notesLoaded = Completer<void>();
+    final labelsLoaded = Completer<void>();
+    final membersLoaded = Completer<void>();
+    final putBodies = <Map<String, dynamic>>[];
+    var putDone = Completer<void>();
+
+    server.handle('GET /api/v4/projects/7/issues', (request) async {
+      issueGets++;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write('[${jsonEncode(issueJson)}]');
+      await request.response.close();
+      if (!initialIssueLoaded.isCompleted) initialIssueLoaded.complete();
+    });
+    server.handle('GET /api/v4/projects/7/issues/142/notes', (request) async {
+      request.response.headers.contentType = ContentType.json;
+      request.response.write('[]');
+      await request.response.close();
+      if (!notesLoaded.isCompleted) notesLoaded.complete();
+    });
+    server.handle('GET /api/v4/projects/7/labels', (request) async {
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(Fixtures.raw('project_7_labels'));
+      await request.response.close();
+      if (!labelsLoaded.isCompleted) labelsLoaded.complete();
+    });
+    server.handle('GET /api/v4/projects/7/members/all', (request) async {
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(Fixtures.raw('project_7_members'));
+      await request.response.close();
+      if (!membersLoaded.isCompleted) membersLoaded.complete();
+    });
+    server.handle('PUT /api/v4/projects/7/issues/142', (request) async {
+      final body =
+          jsonDecode(await utf8.decodeStream(request)) as Map<String, dynamic>;
+      putBodies.add(body);
+      issueJson = applyIssueUpdateJson(issueJson, body);
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode(issueJson));
+      await request.response.close();
+      putDone.complete();
+    });
+
+    const account = AccountKey(
+      instanceHost: 'gitlab.example.com',
+      accountId: 'marin',
+    );
+    final client = createGitLabClient(
+      account: account,
+      baseUrl: server.baseUri.resolve('/api/v4'),
+      readToken: (_) async => const TokenReadResult('fixture-token'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
+    );
+    client.interceptors.clear();
+    client.options.headers['Authorization'] = 'Bearer fixture-token';
+    client.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () => _LoopbackHttpOverrides().createHttpClient(null),
+    );
+    final repository = GitLabIssuesRepository(client);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          now: now,
+        ),
+      ),
+    );
+    await _waitForHttp(
+      tester,
+      Future.wait([initialIssueLoaded.future, notesLoaded.future]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Close issue'));
+    await _waitForHttp(tester, putDone.future);
+    await tester.pumpAndSettle();
+
+    expect(putBodies.last, {'state_event': 'close'});
+    expect(issueJson['state'], 'closed');
+    expect(find.text('Closed'), findsOneWidget);
+
+    putDone = Completer<void>();
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit labels'));
+    await _waitForHttp(tester, labelsLoaded.future);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('bug'));
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await _waitForHttp(tester, putDone.future);
+    await tester.pumpAndSettle();
+
+    expect(putBodies.last, {'labels': 'workflow::in review,feature,bug'});
+    expect(issueJson['labels'], contains('bug'));
+
+    putDone = Completer<void>();
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit assignees'));
+    await _waitForHttp(tester, membersLoaded.future);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Noe Fernandez'));
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await _waitForHttp(tester, putDone.future);
+    await tester.pumpAndSettle();
+
+    expect(putBodies.last, {
+      'assignee_ids': [12, 13],
+    });
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -800));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('You closed', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('You added bug label', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('You assigned to @noe', findRichText: true),
+      findsOneWidget,
+    );
+    expect(issueGets, 1);
+  });
+
   testWidgets('create and comment flow uses fixture-backed HTTP end to end', (
     tester,
   ) async {
@@ -548,6 +782,29 @@ class _DelayedNotesRepository implements IssuesRepository {
   @override
   Future<IssueNote> createNote(int projectId, int issueIid, String body) =>
       _delegate.createNote(projectId, issueIid, body);
+
+  @override
+  Future<List<IssueLabel>> loadProjectLabels(int projectId) =>
+      _delegate.loadProjectLabels(projectId);
+
+  @override
+  Future<List<IssueAuthor>> loadProjectMembers(int projectId) =>
+      _delegate.loadProjectMembers(projectId);
+
+  @override
+  Future<Issue> updateIssue(
+    int projectId,
+    int issueIid, {
+    List<String>? labels,
+    List<int>? assigneeIds,
+    String? stateEvent,
+  }) => _delegate.updateIssue(
+    projectId,
+    issueIid,
+    labels: labels,
+    assigneeIds: assigneeIds,
+    stateEvent: stateEvent,
+  );
 }
 
 class _DelayedCommentRepository implements IssuesRepository {
@@ -594,6 +851,29 @@ class _DelayedCommentRepository implements IssuesRepository {
   @override
   Future<IssueNote> createNote(int projectId, int issueIid, String body) =>
       createdNote.future;
+
+  @override
+  Future<List<IssueLabel>> loadProjectLabels(int projectId) =>
+      _delegate.loadProjectLabels(projectId);
+
+  @override
+  Future<List<IssueAuthor>> loadProjectMembers(int projectId) =>
+      _delegate.loadProjectMembers(projectId);
+
+  @override
+  Future<Issue> updateIssue(
+    int projectId,
+    int issueIid, {
+    List<String>? labels,
+    List<int>? assigneeIds,
+    String? stateEvent,
+  }) => _delegate.updateIssue(
+    projectId,
+    issueIid,
+    labels: labels,
+    assigneeIds: assigneeIds,
+    stateEvent: stateEvent,
+  );
 }
 
 IssueNote _createdNote() => IssueNote.fromJson(

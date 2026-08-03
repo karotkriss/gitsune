@@ -10,6 +10,7 @@ import 'package:gitsune/features/issues/data/issues_repository.dart';
 
 import '../../../support/fake_gitlab_server.dart';
 import '../../../support/fixtures.dart';
+import '../support/fixture_issues_repository.dart';
 
 void main() {
   const account = AccountKey(
@@ -174,6 +175,82 @@ void main() {
     expect(note.id, 9101);
     expect(note.body, 'Confirmed on the **latest** build.');
     expect(note.system, isFalse);
+  });
+
+  test('lists project labels and members for the triage pickers', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    server.handle('GET /api/v4/projects/7/labels', (request) async {
+      expect(request.uri.queryParameters, containsPair('per_page', '100'));
+      request.response.statusCode = HttpStatus.ok;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(Fixtures.raw('project_7_labels'));
+      await request.response.close();
+    });
+    server.handle('GET /api/v4/projects/7/members/all', (request) async {
+      expect(request.uri.queryParameters, containsPair('per_page', '100'));
+      request.response.statusCode = HttpStatus.ok;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(Fixtures.raw('project_7_members'));
+      await request.response.close();
+    });
+
+    final repository = GitLabIssuesRepository(_client(server, account));
+    final labels = await repository.loadProjectLabels(7);
+    final members = await repository.loadProjectMembers(7);
+
+    expect(labels.map((label) => label.name), [
+      'workflow::in review',
+      'feature',
+      'bug',
+    ]);
+    expect(labels.last.colorHex, '#DD2B0E');
+    expect(labels.last.textColorHex, '#FFFFFF');
+    expect(members.map((member) => member.username), ['marin', 'suki', 'noe']);
+  });
+
+  test('updates an issue and decodes each updated payload', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    var issueJson = Map<String, dynamic>.from(
+      Fixtures.json('issue_142') as Map,
+    );
+    final putBodies = <Map<String, dynamic>>[];
+    server.handle('PUT /api/v4/projects/7/issues/142', (request) async {
+      final body =
+          jsonDecode(await utf8.decodeStream(request)) as Map<String, dynamic>;
+      putBodies.add(body);
+      issueJson = applyIssueUpdateJson(issueJson, body);
+      request.response.statusCode = HttpStatus.ok;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode(issueJson));
+      await request.response.close();
+    });
+
+    final repository = GitLabIssuesRepository(_client(server, account));
+
+    final labeled = await repository.updateIssue(
+      7,
+      142,
+      labels: ['feature', 'bug'],
+    );
+    expect(putBodies.last, {'labels': 'feature,bug'});
+    expect(labeled.labels.map((label) => label.name), ['feature', 'bug']);
+    // The update response carries plain label names, no color details.
+    expect(labeled.labels.first.colorHex, isNull);
+
+    final assigned = await repository.updateIssue(7, 142, assigneeIds: [13]);
+    expect(putBodies.last, {
+      'assignee_ids': [13],
+    });
+    expect(assigned.assignees.single.username, 'noe');
+
+    final closed = await repository.updateIssue(7, 142, stateEvent: 'close');
+    expect(putBodies.last, {'state_event': 'close'});
+    expect(closed.state, IssueState.closed);
+    // Earlier changes persist across calls, like the real endpoint.
+    expect(closed.labels.map((label) => label.name), ['feature', 'bug']);
+    expect(closed.assignees.single.username, 'noe');
   });
 }
 

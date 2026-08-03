@@ -29,11 +29,17 @@ class IssueDetailScreen extends StatefulWidget {
 }
 
 class _IssueDetailScreenState extends State<IssueDetailScreen> {
+  static const _localActor = IssueAuthor(id: 0, username: 'you', name: 'You');
+
   final _scrollController = ScrollController();
   final _commentController = TextEditingController();
   final _loadedNotes = <IssueNote>[];
   final _createdNotes = <int, IssueNote>{};
+  final _localEvents = <IssueNote>[];
+  List<IssueLabel> _projectLabels = const [];
+  int _nextLocalEventId = -1000000000;
   bool _sendingComment = false;
+  bool _triaging = false;
   Issue? _issue;
   bool _issueLoading = true;
   bool _issueFailed = false;
@@ -63,8 +69,11 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       _issue = widget.initialIssue;
       _loadedNotes.clear();
       _createdNotes.clear();
+      _localEvents.clear();
+      _projectLabels = const [];
       _commentController.clear();
       _sendingComment = false;
+      _triaging = false;
       _notesHaveMore = false;
       _reload();
     }
@@ -162,6 +171,9 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         _loadedNotes
           ..clear()
           ..addAll(page.items);
+        // A refetched thread carries the server's own system notes for any
+        // triage just performed, so the local stand-ins retire here.
+        _localEvents.clear();
         _notesHaveMore = page.hasMore;
         _notesLoading = false;
       });
@@ -237,10 +249,195 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     });
   }
 
+  Future<void> _editLabels() async {
+    final issue = _issue;
+    if (issue == null) return;
+    final List<IssueLabel> options;
+    try {
+      options = await widget.repository.loadProjectLabels(widget.projectId);
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to load project labels.')),
+      );
+      return;
+    }
+    if (!mounted) return;
+    _projectLabels = options;
+    final selection = await _showTriagePicker<String>(
+      title: 'Labels',
+      options: [for (final label in options) (label.name, label.name)],
+      initial: issue.labels.map((label) => label.name).toSet(),
+    );
+    if (selection == null) return;
+    await _applyTriage(labels: selection);
+  }
+
+  Future<void> _editAssignees() async {
+    final issue = _issue;
+    if (issue == null) return;
+    final List<IssueAuthor> options;
+    try {
+      options = await widget.repository.loadProjectMembers(widget.projectId);
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to load project members.')),
+      );
+      return;
+    }
+    if (!mounted) return;
+    final selection = await _showTriagePicker<int>(
+      title: 'Assignees',
+      options: [for (final member in options) (member.id, member.name)],
+      initial: issue.assignees.map((assignee) => assignee.id).toSet(),
+    );
+    if (selection == null) return;
+    await _applyTriage(assigneeIds: selection);
+  }
+
+  Future<List<T>?> _showTriagePicker<T>({
+    required String title,
+    required List<(T, String)> options,
+    required Set<T> initial,
+  }) {
+    final selected = {...initial};
+    return showModalBottomSheet<List<T>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Text(
+                  title,
+                  style: Theme.of(sheetContext).textTheme.titleSmall,
+                ),
+              ),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final (value, label) in options)
+                      CheckboxListTile(
+                        value: selected.contains(value),
+                        title: Text(label),
+                        onChanged: (checked) => setSheetState(() {
+                          checked ?? false
+                              ? selected.add(value)
+                              : selected.remove(value);
+                        }),
+                      ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: FilledButton(
+                  onPressed: () => Navigator.of(sheetContext).pop([
+                    for (final (value, _) in options)
+                      if (selected.contains(value)) value,
+                  ]),
+                  child: const Text('Apply'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _applyTriage({
+    List<String>? labels,
+    List<int>? assigneeIds,
+    String? stateEvent,
+  }) async {
+    final before = _issue;
+    if (before == null || _triaging) return;
+    final issueGeneration = _issueGeneration;
+    setState(() => _triaging = true);
+    try {
+      final updated = await widget.repository.updateIssue(
+        widget.projectId,
+        widget.issueIid,
+        labels: labels,
+        assigneeIds: assigneeIds,
+        stateEvent: stateEvent,
+      );
+      if (!mounted || issueGeneration != _issueGeneration) return;
+      final folded = updated.withLabelDetailsFrom([
+        ...before.labels,
+        ..._projectLabels,
+      ]);
+      setState(() {
+        _localEvents.addAll(_triageEvents(before, folded));
+        _issue = folded;
+        _triaging = false;
+      });
+    } on Object {
+      if (!mounted || issueGeneration != _issueGeneration) return;
+      setState(() => _triaging = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to update the issue.')),
+      );
+    }
+  }
+
+  /// Local stand-ins for the system notes GitLab records server-side, so the
+  /// thread reflects a triage change without a refetch.
+  List<IssueNote> _triageEvents(Issue before, Issue after) {
+    final bodies = <String>[];
+    final beforeLabels = before.labels.map((label) => label.name).toSet();
+    final afterLabels = after.labels.map((label) => label.name).toSet();
+    for (final name in afterLabels.difference(beforeLabels)) {
+      bodies.add('added $name label');
+    }
+    for (final name in beforeLabels.difference(afterLabels)) {
+      bodies.add('removed $name label');
+    }
+    final beforeAssignees = {
+      for (final assignee in before.assignees) assignee.id: assignee,
+    };
+    final afterAssignees = {
+      for (final assignee in after.assignees) assignee.id: assignee,
+    };
+    for (final assignee in afterAssignees.values) {
+      if (!beforeAssignees.containsKey(assignee.id)) {
+        bodies.add('assigned to @${assignee.username}');
+      }
+    }
+    for (final assignee in beforeAssignees.values) {
+      if (!afterAssignees.containsKey(assignee.id)) {
+        bodies.add('unassigned @${assignee.username}');
+      }
+    }
+    if (before.state != after.state) {
+      bodies.add(after.state == IssueState.closed ? 'closed' : 'reopened');
+    }
+    final createdAt = widget.now ?? DateTime.now();
+    return [
+      for (final body in bodies)
+        IssueNote(
+          id: _nextLocalEventId++,
+          body: body,
+          author: _localActor,
+          createdAt: createdAt,
+          system: true,
+          internal: false,
+        ),
+    ];
+  }
+
   List<IssueNote> get _notes {
     final notesById = <int, IssueNote>{
       for (final note in _loadedNotes) note.id: note,
       ..._createdNotes,
+      for (final event in _localEvents) event.id: event,
     };
     return notesById.values.toList(growable: false)..sort((left, right) {
       final byCreatedAt = left.createdAt.compareTo(right.createdAt);
@@ -280,6 +477,41 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          if (issue != null)
+            PopupMenuButton<_TriageAction>(
+              tooltip: 'Issue actions',
+              enabled: !_triaging,
+              icon: GsIcon(GsIconGlyph.pencil, size: 20, color: gs.accent),
+              onSelected: (action) => switch (action) {
+                _TriageAction.labels => _editLabels(),
+                _TriageAction.assignees => _editAssignees(),
+                _TriageAction.state => _applyTriage(
+                  stateEvent: issue.state == IssueState.opened
+                      ? 'close'
+                      : 'reopen',
+                ),
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: _TriageAction.labels,
+                  child: Text('Edit labels'),
+                ),
+                const PopupMenuItem(
+                  value: _TriageAction.assignees,
+                  child: Text('Edit assignees'),
+                ),
+                PopupMenuItem(
+                  value: _TriageAction.state,
+                  child: Text(
+                    issue.state == IssueState.opened
+                        ? 'Close issue'
+                        : 'Reopen issue',
+                  ),
+                ),
+              ],
+            ),
+        ],
       ),
       body: issue == null
           ? _DetailInitialState(
@@ -375,6 +607,8 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     );
   }
 }
+
+enum _TriageAction { labels, assignees, state }
 
 class _CommentComposer extends StatelessWidget {
   const _CommentComposer({
