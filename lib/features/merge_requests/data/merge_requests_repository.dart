@@ -20,8 +20,8 @@ class MergeRequestPipelinePage {
 
 /// Read seam consumed by the merge request list and detail shell.
 ///
-/// This E7.1 implementation is intentionally network-backed. E14.1 adds the
-/// bounded offline cache for recently viewed merge requests.
+/// This repository remains network-backed. The merge request detail screen
+/// composes it with the E14.1 recently-viewed cache for offline reads.
 abstract interface class MergeRequestsRepository {
   Future<MergeRequestPage> loadFirstPage(int projectId);
 

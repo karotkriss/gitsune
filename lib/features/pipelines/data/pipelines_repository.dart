@@ -5,8 +5,8 @@ import 'pipeline_models.dart';
 
 /// Data seam consumed by the pipeline detail surface.
 ///
-/// This E8.1 implementation is intentionally network-backed. E14.1 adds the
-/// bounded offline cache for recently viewed pipelines.
+/// This repository remains network-backed. The pipeline detail screen
+/// composes it with the E14.1 recently-viewed cache for offline reads.
 abstract interface class PipelinesRepository {
   Future<PipelineDetails> loadPipeline(int projectId, int pipelineId);
 
