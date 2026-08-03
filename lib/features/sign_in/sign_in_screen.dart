@@ -4,6 +4,7 @@ import '../../core/auth/gitlab_instance.dart';
 import '../../core/auth/gitlab_oauth.dart';
 import '../../core/icons/gs_icons.dart';
 import '../../core/theme/app_theme.dart';
+import 'pat_sign_in_screen.dart';
 
 /// The sign-in surface specified by `docs/research/design-direction.md` and
 /// `docs/decisions/0001-auth-posture.md`.
@@ -16,6 +17,7 @@ class SignInScreen extends StatefulWidget {
     this.signIn,
     this.probeInstance,
     this.signInSelfHosted,
+    this.signInWithToken,
   });
 
   /// Starts the gitlab.com OAuth sign-in (E2.1). Injectable so tests never
@@ -31,6 +33,11 @@ class SignInScreen extends StatefulWidget {
   /// supplies and validates the instance's Application ID, then runs
   /// [GitLabOAuth.selfHosted]. Null keeps the inline not-yet-available note.
   final Future<void> Function(Uri base)? signInSelfHosted;
+
+  /// Personal Access Token sign-in (E2.4), forwarded to [PatSignInScreen]
+  /// behind the secondary "Having trouble signing in?" affordance. Injectable
+  /// so tests never touch the network; null keeps that screen's default.
+  final Future<void> Function(Uri base, String token)? signInWithToken;
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -184,9 +191,23 @@ class _SignInScreenState extends State<SignInScreen> {
                             )
                           : const Text('Continue'),
                     ),
-                    // The E2.4 "Having trouble signing in?" affordance (the
-                    // Personal Access Token fallback) attaches here, below
-                    // the primary action.
+                    const SizedBox(height: 12),
+                    // The Personal Access Token fallback (E2.4) lives only
+                    // behind this secondary affordance; the primary screen
+                    // stays OAuth-only with no credential fields.
+                    TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => PatSignInScreen(
+                                  initialInstance: _instanceController.text,
+                                  signIn: widget.signInWithToken,
+                                ),
+                              ),
+                            ),
+                      child: const Text('Having trouble signing in?'),
+                    ),
                   ],
                 ),
               ),

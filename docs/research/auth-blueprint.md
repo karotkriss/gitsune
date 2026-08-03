@@ -136,6 +136,8 @@ The E2.6 session model will mark only that one account as needing re-authenticat
 **The Personal Access Token fallback stays deliberately minimal.**
 It exists specifically for the one structural case where OAuth-first cannot work: an instance that forbids user-level OAuth application creation, where the signed-in user is not an administrator either.
 It is never presented as an equal alternative to OAuth on the primary sign-in screen; it lives behind a secondary "having trouble signing in" affordance.
+The fallback asks for a PAT with the `api` scope, validates it through `GET /api/v4/user` using the same `Authorization: Bearer` form used for subsequent API requests, and uses the returned account ID with the instance host as the token's composite storage key.
+Once validated, the PAT is stored as an access token in the platform secure credential store with no refresh token and no expiry.
 Personal Access Tokens do not refresh, so a failed request on a token-based account goes straight to "re-enter your token" rather than attempting a refresh.
 
 ## Edge cases
