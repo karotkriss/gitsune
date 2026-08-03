@@ -212,6 +212,7 @@ void main() {
       var polls = 0;
       final scheduler = TimerPollScheduler(
         interval: const Duration(minutes: 5),
+        onError: (error, stackTrace) => fail('poll should not fail'),
       );
 
       scheduler.start(() async => polls++);
@@ -227,9 +228,12 @@ void main() {
   test('TimerPollScheduler serializes polls and recovers from errors', () {
     fakeAsync((async) {
       final firstPoll = Completer<void>();
+      final reportedErrors = <({Object error, StackTrace stackTrace})>[];
       var polls = 0;
       final scheduler = TimerPollScheduler(
         interval: const Duration(minutes: 5),
+        onError: (error, stackTrace) =>
+            reportedErrors.add((error: error, stackTrace: stackTrace)),
       );
 
       scheduler.start(() {
@@ -250,6 +254,8 @@ void main() {
       expect(polls, 2);
 
       async.flushMicrotasks();
+      expect(reportedErrors.single.error, isA<StateError>());
+      expect(reportedErrors.single.stackTrace.toString(), isNotEmpty);
       async.elapse(const Duration(minutes: 5));
       expect(polls, 3);
       scheduler.stop();

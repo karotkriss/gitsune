@@ -30,9 +30,13 @@ abstract class PollScheduler {
 
 /// The baseline scheduler: a periodic foreground timer.
 class TimerPollScheduler implements PollScheduler {
-  TimerPollScheduler({this.interval = const Duration(minutes: 5)});
+  TimerPollScheduler({
+    required this.onError,
+    this.interval = const Duration(minutes: 5),
+  });
 
   final Duration interval;
+  final void Function(Object error, StackTrace stackTrace) onError;
   Timer? _timer;
   bool _pollInProgress = false;
 
@@ -57,8 +61,8 @@ class TimerPollScheduler implements PollScheduler {
   Future<void> _runPoll(Future<void> Function() poll) async {
     try {
       await poll();
-    } on Object {
-      return;
+    } on Object catch (error, stackTrace) {
+      onError(error, stackTrace);
     } finally {
       _pollInProgress = false;
     }
