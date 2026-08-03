@@ -52,10 +52,7 @@ class _ReleaseDetailScreenState extends State<ReleaseDetailScreen> {
   }
 
   void _bindRepository() {
-    _release = widget.repository.watchRelease(
-      widget.projectId,
-      widget.tagName,
-    );
+    _release = widget.repository.watchRelease(widget.projectId, widget.tagName);
     unawaited(widget.repository.refreshReleases(widget.projectId));
   }
 
@@ -176,7 +173,10 @@ class _ReleaseDetailBody extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           for (final link in assetLinks)
-            _AssetLinkRow(link: link, onTap: () => onLinkTap(Uri.parse(link.url))),
+            _AssetLinkRow(
+              link: link,
+              onTap: () => onLinkTap(Uri.parse(link.url)),
+            ),
         ],
       ],
     );

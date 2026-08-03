@@ -170,7 +170,5 @@ List<ReleaseAssetLink> releaseAssetLinks(ReleaseEntry release) {
           url: source['url'] as String? ?? '',
         ),
   ];
-  return links
-      .where((link) => link.url.isNotEmpty)
-      .toList(growable: false);
+  return links.where((link) => link.url.isNotEmpty).toList(growable: false);
 }

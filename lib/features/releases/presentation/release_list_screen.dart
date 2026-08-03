@@ -226,9 +226,7 @@ class _ReleaseRow extends StatelessWidget {
                                   ),
                                   const TextSpan(text: ' · '),
                                   TextSpan(
-                                    text: formatReleaseDate(
-                                      release.releasedAt,
-                                    ),
+                                    text: formatReleaseDate(release.releasedAt),
                                   ),
                                 ],
                               ),
