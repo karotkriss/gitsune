@@ -5,11 +5,16 @@ import '../../../core/database/app_database.dart';
 import '../../../core/network/account_key.dart';
 import '../../../core/network/keyset_paginator.dart';
 
-/// Read seam consumed by the repository tree screen: one directory level at
-/// a time, offline-first per the E3.3 seam. [watchDirectory] is the reactive
-/// database read of one directory's cached entries; [refreshDirectory]
-/// fetches that directory from the network and writes through, swallowing
-/// network failures so the stream keeps serving the cache.
+/// Read seam consumed by the code browsing screens (tree and file view):
+/// one directory level at a time, offline-first per the E3.3 seam.
+/// [watchDirectory] is the reactive database read of one directory's cached
+/// entries; [refreshDirectory] fetches that directory from the network and
+/// writes through, swallowing network failures so the stream keeps serving
+/// the cache. [loadFileContent] fetches one blob's raw text for the file
+/// view, network-only like the job log: a blob is read on demand and never
+/// diffed, so caching whole file bodies would cost more than refetching.
+/// [fileWebUrl] resolves the blob's page on the account's GitLab instance
+/// for the oversized-file browser fallback.
 abstract interface class RepositoryTreeRepository {
   Stream<List<RepositoryTreeEntry>> watchDirectory(
     int projectId, {
@@ -21,6 +26,18 @@ abstract interface class RepositoryTreeRepository {
     int projectId, {
     String ref = '',
     String path = '',
+  });
+
+  Future<String> loadFileContent(
+    int projectId, {
+    required String path,
+    String ref = '',
+  });
+
+  Uri fileWebUrl({
+    required String projectPath,
+    required String path,
+    String ref = '',
   });
 }
 
@@ -125,19 +142,51 @@ class GitLabRepositoryTreeRepository implements RepositoryTreeRepository {
     });
   }
 
-  Uri _treeUri(int projectId, {required String ref, required String path}) {
+  @override
+  Future<String> loadFileContent(
+    int projectId, {
+    required String path,
+    String ref = '',
+  }) async {
+    var uri = _apiUri(
+      'projects/$projectId/repository/files/'
+      '${Uri.encodeComponent(path)}/raw',
+    );
+    if (ref.isNotEmpty) uri = uri.replace(queryParameters: {'ref': ref});
+    final response = await client.getUri<String>(
+      uri,
+      options: Options(responseType: ResponseType.plain),
+    );
+    return response.data ?? '';
+  }
+
+  @override
+  Uri fileWebUrl({
+    required String projectPath,
+    required String path,
+    String ref = '',
+  }) {
+    // GitLab resolves `HEAD` to the project's default branch, matching what
+    // an empty ref means against the API.
+    final webRef = ref.isEmpty ? 'HEAD' : ref;
+    return Uri.https(account.instanceHost, '$projectPath/-/blob/$webRef/$path');
+  }
+
+  Uri _apiUri(String pathAndQuery) {
     final base = client.options.baseUrl.endsWith('/')
         ? client.options.baseUrl
         : '${client.options.baseUrl}/';
-    return Uri.parse(base)
-        .resolve('projects/$projectId/repository/tree')
-        .replace(
-          queryParameters: {
-            if (path.isNotEmpty) 'path': path,
-            if (ref.isNotEmpty) 'ref': ref,
-            'pagination': 'keyset',
-            'per_page': '100',
-          },
-        );
+    return Uri.parse(base).resolve(pathAndQuery);
+  }
+
+  Uri _treeUri(int projectId, {required String ref, required String path}) {
+    return _apiUri('projects/$projectId/repository/tree').replace(
+      queryParameters: {
+        if (path.isNotEmpty) 'path': path,
+        if (ref.isNotEmpty) 'ref': ref,
+        'pagination': 'keyset',
+        'per_page': '100',
+      },
+    );
   }
 }

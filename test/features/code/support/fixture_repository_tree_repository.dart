@@ -6,11 +6,15 @@ import 'package:gitsune/features/code/data/repository_tree_repository.dart';
 class FixtureRepositoryTreeRepository implements RepositoryTreeRepository {
   FixtureRepositoryTreeRepository([
     Map<String, List<RepositoryTreeEntry>>? directories,
-  ]) : _directories = directories ?? fixtureTree();
+    Map<String, String>? files,
+  ]) : _directories = directories ?? fixtureTree(),
+       _files = files ?? fixtureFiles();
 
   final Map<String, List<RepositoryTreeEntry>> _directories;
+  final Map<String, String> _files;
   final refreshedPaths = <String>[];
   final refreshedRefs = <String>[];
+  final loadedFilePaths = <String>[];
 
   @override
   Stream<List<RepositoryTreeEntry>> watchDirectory(
@@ -30,6 +34,28 @@ class FixtureRepositoryTreeRepository implements RepositoryTreeRepository {
     refreshedPaths.add(path);
     refreshedRefs.add(ref);
   }
+
+  @override
+  Future<String> loadFileContent(
+    int projectId, {
+    required String path,
+    String ref = '',
+  }) async {
+    loadedFilePaths.add(path);
+    final content = _files[path];
+    if (content == null) throw StateError('no fixture file at $path');
+    return content;
+  }
+
+  @override
+  Uri fileWebUrl({
+    required String projectPath,
+    required String path,
+    String ref = '',
+  }) => Uri.https(
+    'gitlab.example.com',
+    '$projectPath/-/blob/${ref.isEmpty ? 'HEAD' : ref}/$path',
+  );
 }
 
 /// A three-level fixture tree: root -> `lib` -> `lib/core`.
@@ -59,6 +85,25 @@ Map<String, List<RepositoryTreeEntry>> fixtureTree() => {
     fixtureTreeEntry(name: 'app_theme.dart', path: 'lib/core/app_theme.dart'),
     fixtureTreeEntry(name: 'tokens.json', path: 'lib/core/tokens.json'),
   ],
+};
+
+/// Blob contents served by [FixtureRepositoryTreeRepository.loadFileContent],
+/// keyed by repository path. The Dart file exercises every mapped syntax
+/// token (keyword, string, comment, number, function name) plus one line
+/// long enough to overflow a phone-width viewport.
+Map<String, String> fixtureFiles() => {
+  'lib/core/app_theme.dart': '''
+class Greeter {
+  // A deliberately long comment line that overflows a phone-width viewport so the wrap toggle has something real to wrap.
+  final String name;
+  const Greeter(this.name);
+
+  String greet() => 'Hello, \$name!';
+}
+
+const answer = 42;
+''',
+  'README.md': '# gitsune\n\nA GitLab companion app.\n',
 };
 
 RepositoryTreeEntry fixtureTreeEntry({

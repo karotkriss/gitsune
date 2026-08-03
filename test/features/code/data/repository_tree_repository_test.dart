@@ -247,6 +247,71 @@ void main() {
     },
   );
 
+  test('loadFileContent fetches the raw blob with an encoded path', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    server.handle(
+      'GET /api/v4/projects/$projectId/repository/files/lib%2Fmain.dart/raw',
+      (request) async {
+        expect(request.uri.queryParameters['ref'], 'v1.0');
+        request.response.headers.contentType = ContentType.text;
+        request.response.write('void main() {}\n');
+        await request.response.close();
+      },
+    );
+
+    final repository = repositoryFor(server);
+    final content = await repository.loadFileContent(
+      projectId,
+      path: 'lib/main.dart',
+      ref: 'v1.0',
+    );
+    expect(content, 'void main() {}\n');
+  });
+
+  test('loadFileContent omits ref for the default branch', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    server.handle(
+      'GET /api/v4/projects/$projectId/repository/files/README.md/raw',
+      (request) async {
+        expect(request.uri.queryParameters.containsKey('ref'), isFalse);
+        request.response.headers.contentType = ContentType.text;
+        request.response.write('# hello');
+        await request.response.close();
+      },
+    );
+
+    final repository = repositoryFor(server);
+    expect(
+      await repository.loadFileContent(projectId, path: 'README.md'),
+      '# hello',
+    );
+  });
+
+  test('fileWebUrl points at the blob on the account instance', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    final repository = repositoryFor(server);
+
+    expect(
+      repository.fileWebUrl(
+        projectPath: 'gitsune/app',
+        path: 'lib/main.dart',
+        ref: 'v1.0',
+      ),
+      Uri.parse(
+        'https://gitlab.example.com/gitsune/app/-/blob/v1.0/lib/main.dart',
+      ),
+    );
+    // An empty ref means the default branch; GitLab's web UI spells that
+    // `HEAD`.
+    expect(
+      repository.fileWebUrl(projectPath: 'gitsune/app', path: 'README.md'),
+      Uri.parse('https://gitlab.example.com/gitsune/app/-/blob/HEAD/README.md'),
+    );
+  });
+
   test('the composite key covers account, project, ref, and directory', () {
     expect(db.repositoryTreeEntries.primaryKey, {
       db.repositoryTreeEntries.instanceHost,
