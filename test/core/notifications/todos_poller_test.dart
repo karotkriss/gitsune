@@ -160,6 +160,27 @@ void main() {
     },
   );
 
+  test(
+    'a previously seen backlog to-do re-entering page one stays quiet',
+    () async {
+      final poller = createPoller();
+      final originalTodos = endpoint.todos;
+      await poller.poll();
+
+      endpoint.etag = 'W/"v2"';
+      endpoint.todos = [originalTodos.first];
+      await poller.poll();
+
+      endpoint.etag = 'W/"v3"';
+      endpoint.todos = originalTodos;
+      await poller.poll();
+
+      expect(notifier.shown, isEmpty);
+      final state = await db.select(db.todoPollStates).getSingle();
+      expect(jsonDecode(state.seenTodoIds), containsAll([102, 101]));
+    },
+  );
+
   test('poll state is account-scoped: one account never notifies for or '
       'consumes another\'s state', () async {
     await createPoller().poll();

@@ -123,11 +123,11 @@ class TodosPoller {
 
     final items = (response.data as List<dynamic>).cast<Map<String, dynamic>>();
     final fetchedIds = <int>[for (final item in items) item['id'] as int];
+    final seenIds = state == null
+        ? <int>{}
+        : (jsonDecode(state.seenTodoIds) as List<dynamic>).cast<int>().toSet();
 
     if (state != null) {
-      final seenIds = (jsonDecode(state.seenTodoIds) as List<dynamic>)
-          .cast<int>()
-          .toSet();
       for (final item in items) {
         if (seenIds.contains(item['id'] as int)) {
           continue;
@@ -144,6 +144,7 @@ class TodosPoller {
         );
       }
     }
+    seenIds.addAll(fetchedIds);
 
     await database
         .into(database.todoPollStates)
@@ -152,7 +153,7 @@ class TodosPoller {
             instanceHost: account.instanceHost,
             accountId: account.accountId,
             etag: Value(response.headers.value('etag')),
-            seenTodoIds: jsonEncode(fetchedIds),
+            seenTodoIds: jsonEncode(seenIds.toList()),
             updatedAt: DateTime.now(),
           ),
         );
