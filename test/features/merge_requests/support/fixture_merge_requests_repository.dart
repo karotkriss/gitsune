@@ -1,11 +1,16 @@
+import 'package:gitsune/core/diff/diff_file.dart';
 import 'package:gitsune/features/merge_requests/data/merge_request_models.dart';
 import 'package:gitsune/features/merge_requests/data/merge_requests_repository.dart';
 
 import '../../../support/fixtures.dart';
 
 class FixtureMergeRequestsRepository implements MergeRequestsRepository {
-  FixtureMergeRequestsRepository()
-    : _firstPage = _mergeRequestsFrom('merge_requests_page1'),
+  FixtureMergeRequestsRepository({
+    this.diffFixtures = const [
+      'merge_request_142_diffs_page1',
+      'merge_request_142_diffs_page2',
+    ],
+  }) : _firstPage = _mergeRequestsFrom('merge_requests_page1'),
       _secondPage = _mergeRequestsFrom('merge_requests_page2'),
       _mergeRequest = _mergeRequestFrom('merge_request_142'),
       _pipelines = _pipelinesFrom([
@@ -18,6 +23,7 @@ class FixtureMergeRequestsRepository implements MergeRequestsRepository {
         ),
       );
 
+  final List<String> diffFixtures;
   final List<MergeRequest> _firstPage;
   final List<MergeRequest> _secondPage;
   final MergeRequest _mergeRequest;
@@ -64,6 +70,15 @@ class FixtureMergeRequestsRepository implements MergeRequestsRepository {
   ) async {
     return _approvals;
   }
+
+  @override
+  Future<List<DiffFile>> loadDiffs(int projectId, int mergeIid) async =>
+      diffFixtures
+          .expand((fixture) => Fixtures.json(fixture) as List)
+          .map(
+            (value) => DiffFile.fromJson(Map<String, dynamic>.from(value as Map)),
+          )
+          .toList(growable: false);
 }
 
 List<MergeRequest> _mergeRequestsFrom(String fixture) =>

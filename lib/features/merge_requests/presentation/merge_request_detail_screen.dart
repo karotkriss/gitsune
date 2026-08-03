@@ -16,6 +16,7 @@ class MergeRequestDetailScreen extends StatefulWidget {
     required this.mergeIid,
     required this.repository,
     this.initialMergeRequest,
+    this.onShowChanges,
     this.now,
   });
 
@@ -24,6 +25,10 @@ class MergeRequestDetailScreen extends StatefulWidget {
   final int mergeIid;
   final MergeRequestsRepository repository;
   final MergeRequest? initialMergeRequest;
+
+  /// Opens the changes (diff) screen for the merge request; the card stays
+  /// non-tappable when null.
+  final void Function(MergeRequest mergeRequest)? onShowChanges;
   final DateTime? now;
 
   @override
@@ -235,7 +240,12 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
                         children: [
                           _DescriptionCard(mergeRequest: mergeRequest),
                           const SizedBox(height: 12),
-                          _ChangedFilesCard(mergeRequest: mergeRequest),
+                          _ChangedFilesCard(
+                            mergeRequest: mergeRequest,
+                            onTap: widget.onShowChanges == null
+                                ? null
+                                : () => widget.onShowChanges!(mergeRequest),
+                          ),
                           const SizedBox(height: 12),
                           _PipelineSectionState(
                             pipelines: _pipelines,
@@ -362,9 +372,10 @@ class _DescriptionCard extends StatelessWidget {
 }
 
 class _ChangedFilesCard extends StatelessWidget {
-  const _ChangedFilesCard({required this.mergeRequest});
+  const _ChangedFilesCard({required this.mergeRequest, this.onTap});
 
   final MergeRequest mergeRequest;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -372,30 +383,48 @@ class _ChangedFilesCard extends StatelessWidget {
     final gs = theme.extension<GsTheme>()!;
     return Semantics(
       container: true,
+      button: onTap != null,
+      onTap: onTap,
       label: mergeRequest.changedFilesLabel,
       child: ExcludeSemantics(
         child: _Card(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 52),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                children: [
-                  GsIcon(
-                    GsIconGlyph.mergeRequestOpen,
-                    size: 18,
-                    color: gs.textSubtle,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: const ValueKey('changed-files-card'),
+              onTap: onTap,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 52),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      mergeRequest.changedFilesLabel,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: gs.textDefault,
+                  child: Row(
+                    children: [
+                      GsIcon(
+                        GsIconGlyph.mergeRequestOpen,
+                        size: 18,
+                        color: gs.textSubtle,
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          mergeRequest.changedFilesLabel,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: gs.textDefault,
+                          ),
+                        ),
+                      ),
+                      if (onTap != null)
+                        GsIcon(
+                          GsIconGlyph.chevronRight,
+                          size: 16,
+                          color: gs.textSubtle,
+                        ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

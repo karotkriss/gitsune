@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 
+import '../../../core/diff/diff_file.dart';
 import '../../../core/network/keyset_paginator.dart';
 import 'merge_request_models.dart';
 
@@ -39,6 +40,10 @@ abstract interface class MergeRequestsRepository {
   );
 
   Future<MergeRequestApprovals> loadApprovals(int projectId, int mergeIid);
+
+  /// Loads the merge request's full multi-file diff, following every
+  /// pagination link, in the order GitLab returns the files.
+  Future<List<DiffFile>> loadDiffs(int projectId, int mergeIid);
 }
 
 /// GitLab REST v4 merge request reader with Link-header pagination.
@@ -173,6 +178,24 @@ class GitLabMergeRequestsRepository implements MergeRequestsRepository {
       _apiUri('projects/$projectId/merge_requests/$mergeIid/approvals'),
     );
     return MergeRequestApprovals.fromJson(response.data!);
+  }
+
+  @override
+  Future<List<DiffFile>> loadDiffs(int projectId, int mergeIid) async {
+    final paginator = KeysetPaginator<DiffFile>(
+      dio: _client,
+      initialUri: _apiUri(
+        'projects/$projectId/merge_requests/$mergeIid/diffs',
+        {'per_page': '50'},
+      ),
+      decode: DiffFile.fromJson,
+    );
+    final files = <DiffFile>[];
+    while (paginator.hasMore) {
+      final page = await paginator.loadNext();
+      files.addAll(page.items);
+    }
+    return files;
   }
 
   Uri _apiUri(String path, [Map<String, String>? queryParameters]) {

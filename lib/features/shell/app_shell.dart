@@ -14,6 +14,7 @@ import '../issues/presentation/issue_detail_screen.dart';
 import '../issues/presentation/issue_list_screen.dart';
 import '../merge_requests/data/merge_request_models.dart';
 import '../merge_requests/data/merge_requests_repository.dart';
+import '../merge_requests/presentation/merge_request_changes_screen.dart';
 import '../merge_requests/presentation/merge_request_detail_screen.dart';
 import '../merge_requests/presentation/merge_request_list_screen.dart';
 import '../pipelines/data/pipeline_models.dart';
@@ -267,6 +268,32 @@ GoRouter buildAppRouter({
               repository: mergeRequestsRepository,
               initialMergeRequest: state.extra is MergeRequest
                   ? state.extra! as MergeRequest
+                  : null,
+              onShowChanges: (mergeRequest) => context.push(
+                Uri(
+                  path:
+                      '/projects/$projectId/merge_requests/'
+                      '${mergeRequest.iid}/changes',
+                  queryParameters: {'projectPath': projectPath},
+                ).toString(),
+                extra: mergeRequest,
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/projects/:projectId/merge_requests/:mergeIid/changes',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            return MergeRequestChangesScreen(
+              projectId: projectId,
+              projectPath:
+                  state.uri.queryParameters['projectPath'] ??
+                  'Project $projectId',
+              mergeIid: int.parse(state.pathParameters['mergeIid']!),
+              repository: mergeRequestsRepository,
+              webUrl: state.extra is MergeRequest
+                  ? (state.extra! as MergeRequest).webUrl
                   : null,
             );
           },

@@ -125,6 +125,43 @@ void main() {
     expect(pipelineRequestCount, 2);
   });
 
+  test('loads the full diff by following every pagination link', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    var requestCount = 0;
+    server.handle('GET /api/v4/projects/7/merge_requests/142/diffs', (
+      request,
+    ) async {
+      requestCount++;
+      request.response.statusCode = HttpStatus.ok;
+      request.response.headers.contentType = ContentType.json;
+      if (request.uri.queryParameters['cursor'] == null) {
+        expect(request.uri.queryParameters, containsPair('per_page', '50'));
+        final nextUri = server.baseUri.resolve(
+          '/api/v4/projects/7/merge_requests/142/diffs?cursor=page2',
+        );
+        request.response.headers.set('Link', '<$nextUri>; rel="next"');
+        request.response.write(Fixtures.raw('merge_request_142_diffs_page1'));
+      } else {
+        request.response.write(Fixtures.raw('merge_request_142_diffs_page2'));
+      }
+      await request.response.close();
+    });
+
+    final repository = GitLabMergeRequestsRepository(_client(server, account));
+    final files = await repository.loadDiffs(7, 142);
+
+    expect(requestCount, 2);
+    expect(files.map((file) => file.newPath), [
+      'lib/src/instance_switcher.dart',
+      'README.md',
+      'lib/src/switcher_state.dart',
+      'lib/src/legacy_switcher.dart',
+    ]);
+    expect(files.first.hunks, hasLength(2));
+    expect(files.last.deletedFile, isTrue);
+  });
+
   test('accepts the documented basic pipeline shape', () {
     final pipeline = MergeRequestPipeline.fromJson({
       'id': 88123,
