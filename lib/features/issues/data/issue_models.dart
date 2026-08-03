@@ -64,6 +64,33 @@ class Issue {
   final String? webUrl;
 
   String get reference => '#$iid';
+
+  /// The issue update endpoint returns labels as plain names, so a caller
+  /// folding its response can restore the detailed colors it already knows.
+  Issue withLabelDetailsFrom(Iterable<IssueLabel> known) {
+    final byName = {for (final label in known) label.name: label};
+    return Issue(
+      id: id,
+      projectId: projectId,
+      iid: iid,
+      title: title,
+      description: description,
+      state: state,
+      author: author,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      labels: labels
+          .map(
+            (label) =>
+                label.colorHex != null ? label : (byName[label.name] ?? label),
+          )
+          .toList(growable: false),
+      assignees: assignees,
+      userNotesCount: userNotesCount,
+      milestoneTitle: milestoneTitle,
+      webUrl: webUrl,
+    );
+  }
 }
 
 enum IssueState {

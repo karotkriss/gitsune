@@ -241,6 +241,459 @@ void main() {
     );
   });
 
+  testWidgets('triage actions fold into the issue and add inline events', (
+    tester,
+  ) async {
+    final repository = FixtureIssuesRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(repository.issueLoads, 1);
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Close issue'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls.last.stateEvent, 'close');
+    expect(find.text('Closed'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reopen issue'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls.last.stateEvent, 'reopen');
+    expect(find.text('Open'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit labels'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('bug'));
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls.last.labels, [
+      'workflow::in review',
+      'feature',
+      'bug',
+    ]);
+    final bugPill = tester
+        .widgetList<IssueLabelPill>(find.byType(IssueLabelPill))
+        .singleWhere((pill) => pill.label.name == 'bug');
+    expect(bugPill.label.colorHex, '#DD2B0E');
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit assignees'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Noe Fernandez'));
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls.last.assigneeIds, [12, 13]);
+    expect(find.text('Noe Fernandez'), findsOneWidget);
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -800));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('You closed', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('You reopened', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('You added bug label', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('You assigned to @noe', findRichText: true),
+      findsOneWidget,
+    );
+    expect(repository.issueLoads, 1);
+    expect(repository.firstNotesLoads, 1);
+  });
+
+  testWidgets('triage pickers preserve selections outside the loaded page', (
+    tester,
+  ) async {
+    final repository = _TriageRegressionRepository(
+      projectLabels: _fixtureLabels()
+          .where((label) => label.name == 'bug')
+          .toList(),
+      projectMembers: _fixtureMembers()
+          .where((member) => member.username == 'noe')
+          .toList(),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          now: now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit labels'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(CheckboxListTile),
+        matching: find.text('workflow::in review'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(CheckboxListTile),
+        matching: find.text('feature'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('bug'));
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls.last.labels?.toSet(), {
+      'workflow::in review',
+      'feature',
+      'bug',
+    });
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit assignees'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(CheckboxListTile),
+        matching: find.text('Suki Kim'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Noe Fernandez'));
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+
+    expect(repository.updateCalls.last.assigneeIds?.toSet(), {12, 13});
+  });
+
+  testWidgets('a stale issue refresh cannot overwrite committed triage', (
+    tester,
+  ) async {
+    final staleIssue = Completer<Issue>();
+    final repository = _TriageRegressionRepository(delayedIssue: staleIssue);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          initialIssue: _fixtureIssue(),
+          now: now,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Close issue'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Closed'), findsOneWidget);
+
+    staleIssue.complete(_fixtureIssue());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Closed'), findsOneWidget);
+  });
+
+  testWidgets('a pending notes refresh preserves later triage events', (
+    tester,
+  ) async {
+    final staleNotes = Completer<IssueNotePage>();
+    final repository = _TriageRegressionRepository(delayedNotes: staleNotes);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          initialIssue: _fixtureIssue(),
+          now: now,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Close issue'));
+    await tester.pump();
+    await tester.pump();
+
+    staleNotes.complete(const IssueNotePage(items: [], hasMore: false));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -800));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('You closed', findRichText: true),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('picker options are discarded after issue scope changes', (
+    tester,
+  ) async {
+    final staleLabels = Completer<List<IssueLabel>>();
+    final repository = _TriageRegressionRepository(delayedLabels: staleLabels);
+    Widget screen(int issueIid) => MaterialApp(
+      theme: buildAppTheme(),
+      home: IssueDetailScreen(
+        projectId: 7,
+        projectPath: 'gitsune/app',
+        issueIid: issueIid,
+        repository: repository,
+        initialIssue: _fixtureIssue(),
+        now: now,
+      ),
+    );
+
+    await tester.pumpWidget(screen(142));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit labels'));
+    await tester.pump();
+
+    await tester.pumpWidget(screen(141));
+    await tester.pumpAndSettle();
+    staleLabels.complete(_fixtureLabels());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Labels'), findsNothing);
+    expect(repository.updateCalls, isEmpty);
+  });
+
+  testWidgets('picker selection is discarded after issue state refreshes', (
+    tester,
+  ) async {
+    final refreshedIssue = Completer<Issue>();
+    final repository = _TriageRegressionRepository(
+      delayedIssue: refreshedIssue,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          initialIssue: _fixtureIssue(),
+          now: now,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Edit labels'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Labels'), findsOneWidget);
+    refreshedIssue.complete(_fixtureIssueWithLabels(['bug']));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(repository.updateCalls, isEmpty);
+    expect(find.text('bug'), findsOneWidget);
+  });
+
+  testWidgets('triage flow uses fixture-backed HTTP end to end', (
+    tester,
+  ) async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    var issueJson = Map<String, dynamic>.from(
+      Fixtures.json('issue_142') as Map,
+    );
+    var issueGets = 0;
+    final initialIssueLoaded = Completer<void>();
+    final notesLoaded = Completer<void>();
+    final labelsLoaded = Completer<void>();
+    final membersLoaded = Completer<void>();
+    final putBodies = <Map<String, dynamic>>[];
+    var putDone = Completer<void>();
+
+    server.handle('GET /api/v4/projects/7/issues', (request) async {
+      issueGets++;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write('[${jsonEncode(issueJson)}]');
+      await request.response.close();
+      if (!initialIssueLoaded.isCompleted) initialIssueLoaded.complete();
+    });
+    server.handle('GET /api/v4/projects/7/issues/142/notes', (request) async {
+      request.response.headers.contentType = ContentType.json;
+      request.response.write('[]');
+      await request.response.close();
+      if (!notesLoaded.isCompleted) notesLoaded.complete();
+    });
+    server.handle('GET /api/v4/projects/7/labels', (request) async {
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(Fixtures.raw('project_7_labels'));
+      await request.response.close();
+      if (!labelsLoaded.isCompleted) labelsLoaded.complete();
+    });
+    server.handle('GET /api/v4/projects/7/members/all', (request) async {
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(Fixtures.raw('project_7_members'));
+      await request.response.close();
+      if (!membersLoaded.isCompleted) membersLoaded.complete();
+    });
+    server.handle('PUT /api/v4/projects/7/issues/142', (request) async {
+      final body =
+          jsonDecode(await utf8.decodeStream(request)) as Map<String, dynamic>;
+      putBodies.add(body);
+      issueJson = applyIssueUpdateJson(issueJson, body);
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode(issueJson));
+      await request.response.close();
+      putDone.complete();
+    });
+
+    const account = AccountKey(
+      instanceHost: 'gitlab.example.com',
+      accountId: 'marin',
+    );
+    final client = createGitLabClient(
+      account: account,
+      baseUrl: server.baseUri.resolve('/api/v4'),
+      readToken: (_) async => const TokenReadResult('fixture-token'),
+      refreshToken: (_, _) async => fail('refresh should not be called'),
+    );
+    client.interceptors.clear();
+    client.options.headers['Authorization'] = 'Bearer fixture-token';
+    client.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () => _LoopbackHttpOverrides().createHttpClient(null),
+    );
+    final repository = GitLabIssuesRepository(client);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository,
+          now: now,
+        ),
+      ),
+    );
+    await _waitForHttp(
+      tester,
+      Future.wait([initialIssueLoaded.future, notesLoaded.future]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Close issue'));
+    await _waitForHttp(tester, putDone.future);
+    await tester.pumpAndSettle();
+
+    expect(putBodies.last, {'state_event': 'close'});
+    expect(issueJson['state'], 'closed');
+    expect(find.text('Closed'), findsOneWidget);
+
+    putDone = Completer<void>();
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit labels'));
+    await _waitForHttp(tester, labelsLoaded.future);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('bug'));
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await _waitForHttp(tester, putDone.future);
+    await tester.pumpAndSettle();
+
+    expect(putBodies.last, {'labels': 'workflow::in review,feature,bug'});
+    expect(issueJson['labels'], contains('bug'));
+
+    putDone = Completer<void>();
+    await tester.tap(find.byTooltip('Issue actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit assignees'));
+    await _waitForHttp(tester, membersLoaded.future);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Noe Fernandez'));
+    await tester.pump();
+    await tester.tap(find.text('Apply'));
+    await _waitForHttp(tester, putDone.future);
+    await tester.pumpAndSettle();
+
+    expect(putBodies.last, {
+      'assignee_ids': [12, 13],
+    });
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -800));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('You closed', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('You added bug label', findRichText: true),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('You assigned to @noe', findRichText: true),
+      findsOneWidget,
+    );
+    expect(issueGets, 1);
+  });
+
   testWidgets('create and comment flow uses fixture-backed HTTP end to end', (
     tester,
   ) async {
@@ -548,6 +1001,76 @@ class _DelayedNotesRepository implements IssuesRepository {
   @override
   Future<IssueNote> createNote(int projectId, int issueIid, String body) =>
       _delegate.createNote(projectId, issueIid, body);
+
+  @override
+  Future<List<IssueLabel>> loadProjectLabels(int projectId) =>
+      _delegate.loadProjectLabels(projectId);
+
+  @override
+  Future<List<IssueAuthor>> loadProjectMembers(int projectId) =>
+      _delegate.loadProjectMembers(projectId);
+
+  @override
+  Future<Issue> updateIssue(
+    int projectId,
+    int issueIid, {
+    List<String>? labels,
+    List<int>? assigneeIds,
+    String? stateEvent,
+  }) => _delegate.updateIssue(
+    projectId,
+    issueIid,
+    labels: labels,
+    assigneeIds: assigneeIds,
+    stateEvent: stateEvent,
+  );
+}
+
+class _TriageRegressionRepository extends FixtureIssuesRepository {
+  _TriageRegressionRepository({
+    this.delayedIssue,
+    this.delayedNotes,
+    this.delayedLabels,
+    this.projectLabels,
+    this.projectMembers,
+  });
+
+  final Completer<Issue>? delayedIssue;
+  final Completer<IssueNotePage>? delayedNotes;
+  final Completer<List<IssueLabel>>? delayedLabels;
+  final List<IssueLabel>? projectLabels;
+  final List<IssueAuthor>? projectMembers;
+
+  @override
+  Future<Issue> loadIssue(int projectId, int issueIid) {
+    if (delayedIssue case final delayed?) {
+      issueLoads++;
+      return delayed.future;
+    }
+    return super.loadIssue(projectId, issueIid);
+  }
+
+  @override
+  Future<IssueNotePage> loadFirstNotesPage(int projectId, int issueIid) {
+    if (delayedNotes case final delayed?) {
+      firstNotesLoads++;
+      return delayed.future;
+    }
+    return super.loadFirstNotesPage(projectId, issueIid);
+  }
+
+  @override
+  Future<List<IssueLabel>> loadProjectLabels(int projectId) {
+    if (delayedLabels case final delayed?) return delayed.future;
+    if (projectLabels case final labels?) return Future.value(labels);
+    return super.loadProjectLabels(projectId);
+  }
+
+  @override
+  Future<List<IssueAuthor>> loadProjectMembers(int projectId) {
+    if (projectMembers case final members?) return Future.value(members);
+    return super.loadProjectMembers(projectId);
+  }
 }
 
 class _DelayedCommentRepository implements IssuesRepository {
@@ -594,11 +1117,56 @@ class _DelayedCommentRepository implements IssuesRepository {
   @override
   Future<IssueNote> createNote(int projectId, int issueIid, String body) =>
       createdNote.future;
+
+  @override
+  Future<List<IssueLabel>> loadProjectLabels(int projectId) =>
+      _delegate.loadProjectLabels(projectId);
+
+  @override
+  Future<List<IssueAuthor>> loadProjectMembers(int projectId) =>
+      _delegate.loadProjectMembers(projectId);
+
+  @override
+  Future<Issue> updateIssue(
+    int projectId,
+    int issueIid, {
+    List<String>? labels,
+    List<int>? assigneeIds,
+    String? stateEvent,
+  }) => _delegate.updateIssue(
+    projectId,
+    issueIid,
+    labels: labels,
+    assigneeIds: assigneeIds,
+    stateEvent: stateEvent,
+  );
 }
 
 IssueNote _createdNote() => IssueNote.fromJson(
   Map<String, dynamic>.from(Fixtures.json('issue_142_note_created') as Map),
 );
+
+Issue _fixtureIssue() => Issue.fromJson(
+  Map<String, dynamic>.from(Fixtures.json('issue_142') as Map),
+);
+
+Issue _fixtureIssueWithLabels(List<String> labels) {
+  final json = Map<String, dynamic>.from(Fixtures.json('issue_142') as Map);
+  json['labels'] = labels;
+  return Issue.fromJson(json);
+}
+
+List<IssueLabel> _fixtureLabels() => (Fixtures.json('project_7_labels') as List)
+    .map(IssueLabel.fromJson)
+    .toList(growable: false);
+
+List<IssueAuthor> _fixtureMembers() =>
+    (Fixtures.json('project_7_members') as List)
+        .map(
+          (value) =>
+              IssueAuthor.fromJson(Map<String, dynamic>.from(value as Map)),
+        )
+        .toList(growable: false);
 
 Future<void> _waitForHttp<T>(WidgetTester tester, Future<T> future) async {
   var completed = false;

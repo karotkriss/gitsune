@@ -1,0 +1,23 @@
+[
+  {
+    "id": 71,
+    "name": "workflow::in review",
+    "color": "#7B58CF",
+    "text_color": "#FFFFFF",
+    "description": null
+  },
+  {
+    "id": 72,
+    "name": "feature",
+    "color": "#1F75CB",
+    "text_color": "#FFFFFF",
+    "description": null
+  },
+  {
+    "id": 73,
+    "name": "bug",
+    "color": "#DD2B0E",
+    "text_color": "#FFFFFF",
+    "description": "Something is broken"
+  }
+]
