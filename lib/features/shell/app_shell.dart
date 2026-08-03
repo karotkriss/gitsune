@@ -23,6 +23,7 @@ import '../pipelines/presentation/pipeline_detail_screen.dart';
 import '../profile/profile_screen.dart';
 import '../search/data/search_repository.dart';
 import '../search/presentation/search_screen.dart';
+import '../sign_in/sign_in_screen.dart';
 import '../todos/todos_screen.dart';
 
 /// Builds the app router: four tab branches behind [AppShell], each keeping
@@ -90,6 +91,10 @@ GoRouter buildAppRouter({
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/signin',
+        builder: (context, state) => const SignInScreen(),
       ),
       if (issuesRepository != null) ...[
         GoRoute(
