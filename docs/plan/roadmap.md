@@ -129,14 +129,14 @@ Both consume patterns worth building once.
 - The shared read/write spine: entity list and detail patterns, pull-to-refresh, error and empty states, the reactive database-backed repository pattern, and keyset/cursor pagination that persists a resume token.
 - The markdown renderer: `flutter_markdown_plus` plus the custom GitLab-flavored extensions (`#123`, `!456`, `@user`, `~label`, and the math and Mermaid gaps the base package leaves).
 - **Notifications inbox (item 2):** the To-Do List built on the Todos API, with swipe triage (full swipe to done, swipe to snooze, undo on every destructive swipe), a filter sheet by to-do reason, and opening the underlying item.
-  The Todos data layer built here is reused by phase five's background poller.
+  Phase five's notification poller stays separate because it reads one conditional page and owns per-account ETag and last-seen state instead of refreshing the full To-Do List cache.
 - **Issues (item 5):** view, create, comment, label, assign, and triage, with the thread anatomy from `docs/research/design-direction.md` (state badge, breadcrumb, markdown body, inline state-change events, pinned bottom comment entry, scoped-label pills).
 
 **Exit criteria:**
 
 - The To-Do List lists, filters, and triages real fixture data, and opening an item deep-links to the relevant surface (or to web where that surface does not exist yet).
 - Issues can be viewed, created, commented on, labeled, assigned, and triaged, with markdown and GitLab references rendering correctly.
-- The list/detail/comment spine, markdown renderer, and pagination are covered by unit and golden tests, and the Todos data layer exposes the reactive stream the poller will consume.
+- The list/detail/comment spine, markdown renderer, and pagination are covered by unit and golden tests, and the Todos data layer exposes the reactive stream consumed by the To-Do List.
 
 ---
 
@@ -185,7 +185,8 @@ Deliver v1 scope items 6, 7, and 8, which round out parity and reuse the renderi
 Deliver v1 scope item 9 (the baseline layer) and stand up the rest of the layered architecture from `docs/decisions/0002-notification-architecture.md`, including the seam for GitLab's emerging native push.
 The project operates no servers at any layer.
 
-- **Baseline, on by default, every instance (item 9):** conditional-request polling of the Todos API using stored ETags for cheap 304s, scheduled through `workmanager` within the OS background limits, surfaced as local notifications through `flutter_local_notifications`, with scheduled quiet hours.
+- **Baseline, on by default, every instance (item 9):** conditional-request polling of the Todos API using stored per-account ETags for cheap 304s, surfaced as local notifications through `flutter_local_notifications`, with scheduled quiet hours.
+  E12.1 provides a foreground timer behind the scheduler seam; later platform scheduling work swaps in Android WorkManager and iOS background refresh without changing the poller.
   Presented to users as near-real-time, not instant.
 - **Foreground live updates:** GraphQL subscriptions over GitLab's real-time channel, authenticated with the user's own token, live only while a screen is open.
   This supplements the baseline; it does not run in the background.

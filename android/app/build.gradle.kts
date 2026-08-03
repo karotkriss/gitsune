@@ -12,6 +12,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications uses java.time and needs desugaring.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -59,6 +61,7 @@ kotlin {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // Proprietary push (e.g. Firebase Cloud Messaging, added under E12.x) is scoped to the
     // `play` flavor only, e.g.: playImplementation("com.google.firebase:firebase-messaging:...")
 }

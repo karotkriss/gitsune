@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13+ runtime permission for the local to-do notifications
+         fired by core/notifications/local_todo_notifier.dart. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="gitsune"
         android:name="${applicationName}"

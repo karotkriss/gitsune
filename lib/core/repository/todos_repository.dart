@@ -10,11 +10,10 @@ import 'offline_first_repository.dart';
 /// account-scoped and paginated across the whole collection on every [refresh]
 /// by reusing the E3.4 paginator's `Link` header traversal.
 ///
-/// [watch] is the reactive stream that phase five's background poller
-/// (E12.1) will also read from to decide what's new since its last poll;
-/// this repository only establishes that stream and its [refresh] entry
-/// point for reuse, the poller itself (scheduling, conditional requests,
-/// notifications) is out of scope here.
+/// [watch] is the reactive stream consumed by the To-Do List. Notification
+/// polling is intentionally separate because it reads one conditional page
+/// and persists its own per-account ETag and last-seen state; see
+/// `core/notifications/todos_poller.dart`.
 class TodosRepository implements OfflineFirstRepository<List<TodoItem>> {
   TodosRepository({
     required this.database,
