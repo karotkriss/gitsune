@@ -31,6 +31,8 @@ void main() {
         SignInScreen(
           signIn: () async => signIns++,
           probeInstance: (_) async => fail('gitlab.com must not be probed'),
+          signInSelfHosted: (_) async =>
+              fail('gitlab.com must use the baked-in config'),
         ),
       ),
     );
@@ -124,9 +126,29 @@ void main() {
     );
   });
 
-  testWidgets('a reachable self-hosted instance shows the honest inline note', (
-    tester,
-  ) async {
+  testWidgets('a reachable self-hosted instance starts self-hosted sign-in '
+      'with the parsed base URL, never gitlab.com OAuth', (tester) async {
+    Uri? signedInto;
+    await tester.pumpWidget(
+      app(
+        SignInScreen(
+          signIn: () async => fail('must not start gitlab.com OAuth'),
+          probeInstance: (_) async => true,
+          signInSelfHosted: (base) async => signedInto = base,
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'gitlab.example.com');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    expect(signedInto, Uri.parse('https://gitlab.example.com'));
+    expect(find.textContaining('not available yet'), findsNothing);
+  });
+
+  testWidgets('a reachable self-hosted instance shows the honest inline note '
+      'while no self-hosted sign-in is wired', (tester) async {
     await tester.pumpWidget(
       app(
         SignInScreen(
