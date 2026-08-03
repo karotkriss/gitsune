@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/database/app_database.dart';
 import '../../core/icons/gs_icons.dart';
 import '../../core/repository/offline_first_repository.dart';
+import '../code/data/repository_tree_repository.dart';
+import '../code/presentation/repository_tree_screen.dart';
 import '../explore/explore_screen.dart';
 import '../home/home_screen.dart';
 import '../issues/data/issue_models.dart';
@@ -40,6 +42,7 @@ GoRouter buildAppRouter({
   IssuesRepository? issuesRepository,
   MergeRequestsRepository? mergeRequestsRepository,
   PipelinesRepository? pipelinesRepository,
+  RepositoryTreeRepository? repositoryTreeRepository,
   SearchRepository? searchRepository,
   OfflineFirstRepository<List<TodoItem>>? todosRepository,
   String initialLocation = '/home',
@@ -127,6 +130,63 @@ GoRouter buildAppRouter({
           },
         ),
       ],
+      if (repositoryTreeRepository != null)
+        GoRoute(
+          path: '/projects/:projectId/tree',
+          builder: (context, state) {
+            final projectId = int.parse(state.pathParameters['projectId']!);
+            final projectPath =
+                state.uri.queryParameters['projectPath'] ??
+                'Project $projectId';
+            final ref = state.uri.queryParameters['ref'] ?? '';
+            final path = state.uri.queryParameters['path'] ?? '';
+            final history = state.extra is _RepositoryTreeRouteHistory
+                ? state.extra! as _RepositoryTreeRouteHistory
+                : const _RepositoryTreeRouteHistory();
+            return RepositoryTreeScreen(
+              projectId: projectId,
+              projectPath: projectPath,
+              ref: ref,
+              path: path,
+              repository: repositoryTreeRepository,
+              onDirectoryTap: (entry) => context.push(
+                Uri(
+                  path: '/projects/$projectId/tree',
+                  queryParameters: {
+                    'projectPath': projectPath,
+                    if (ref.isNotEmpty) 'ref': ref,
+                    'path': entry.path,
+                  },
+                ).toString(),
+                extra: _RepositoryTreeRouteHistory(
+                  ancestorLevels: history.ancestorLevels + 1,
+                ),
+              ),
+              // Each drill-down pushed one route, so jumping to an ancestor
+              // pops one route per intervening directory level.
+              onAncestorTap: (ancestorPath) {
+                final levels = _treeDepth(path) - _treeDepth(ancestorPath);
+                if (levels <= history.ancestorLevels) {
+                  for (var level = 0; level < levels; level++) {
+                    context.pop();
+                  }
+                } else {
+                  context.push(
+                    Uri(
+                      path: '/projects/$projectId/tree',
+                      queryParameters: {
+                        'projectPath': projectPath,
+                        if (ref.isNotEmpty) 'ref': ref,
+                        if (ancestorPath.isNotEmpty) 'path': ancestorPath,
+                      },
+                    ).toString(),
+                    extra: const _RepositoryTreeRouteHistory(),
+                  );
+                }
+              },
+            );
+          },
+        ),
       if (pipelinesRepository != null) ...[
         GoRoute(
           path: '/projects/:projectId/pipelines/:pipelineId',
@@ -209,6 +269,14 @@ GoRouter buildAppRouter({
       ],
     ],
   );
+}
+
+int _treeDepth(String path) => path.isEmpty ? 0 : path.split('/').length;
+
+class _RepositoryTreeRouteHistory {
+  const _RepositoryTreeRouteHistory({this.ancestorLevels = 0});
+
+  final int ancestorLevels;
 }
 
 /// The app shell: the design direction's four-destination bottom tab bar

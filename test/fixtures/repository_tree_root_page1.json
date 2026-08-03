@@ -1,0 +1,30 @@
+[
+  {
+    "id": "a1e8f8d745cc87e3a9248358d9352bb7f9a0aeba",
+    "name": "android",
+    "type": "tree",
+    "path": "android",
+    "mode": "040000"
+  },
+  {
+    "id": "b2f9d13c2f0a4dbb84e57cf9a2a5b1a6a3c1d4e5",
+    "name": "ios",
+    "type": "tree",
+    "path": "ios",
+    "mode": "040000"
+  },
+  {
+    "id": "c3a0e24d3a1b5ecc95f68daab3b6c2b7b4d2e5f6",
+    "name": "lib",
+    "type": "tree",
+    "path": "lib",
+    "mode": "040000"
+  },
+  {
+    "id": "d4b1f35e4b2c6fdda6a79ebbc4c7d3c8c5e3f6a7",
+    "name": "test",
+    "type": "tree",
+    "path": "test",
+    "mode": "040000"
+  }
+]
