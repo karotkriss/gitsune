@@ -5060,6 +5060,443 @@ class CommentDraftsCompanion extends UpdateCompanion<CommentDraft> {
   }
 }
 
+class $QuietHoursSettingsTable extends QuietHoursSettings
+    with TableInfo<$QuietHoursSettingsTable, QuietHoursSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $QuietHoursSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _startMinutesMeta = const VerificationMeta(
+    'startMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> startMinutes = GeneratedColumn<int>(
+    'start_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endMinutesMeta = const VerificationMeta(
+    'endMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> endMinutes = GeneratedColumn<int>(
+    'end_minutes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    enabled,
+    startMinutes,
+    endMinutes,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'quiet_hours_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<QuietHoursSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_enabledMeta);
+    }
+    if (data.containsKey('start_minutes')) {
+      context.handle(
+        _startMinutesMeta,
+        startMinutes.isAcceptableOrUnknown(
+          data['start_minutes']!,
+          _startMinutesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_startMinutesMeta);
+    }
+    if (data.containsKey('end_minutes')) {
+      context.handle(
+        _endMinutesMeta,
+        endMinutes.isAcceptableOrUnknown(data['end_minutes']!, _endMinutesMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endMinutesMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {instanceHost, accountId};
+  @override
+  QuietHoursSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return QuietHoursSetting(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      startMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_minutes'],
+      )!,
+      endMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_minutes'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $QuietHoursSettingsTable createAlias(String alias) {
+    return $QuietHoursSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class QuietHoursSetting extends DataClass
+    implements Insertable<QuietHoursSetting> {
+  final String instanceHost;
+  final String accountId;
+  final bool enabled;
+  final int startMinutes;
+  final int endMinutes;
+  final DateTime updatedAt;
+  const QuietHoursSetting({
+    required this.instanceHost,
+    required this.accountId,
+    required this.enabled,
+    required this.startMinutes,
+    required this.endMinutes,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    map['enabled'] = Variable<bool>(enabled);
+    map['start_minutes'] = Variable<int>(startMinutes);
+    map['end_minutes'] = Variable<int>(endMinutes);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  QuietHoursSettingsCompanion toCompanion(bool nullToAbsent) {
+    return QuietHoursSettingsCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      enabled: Value(enabled),
+      startMinutes: Value(startMinutes),
+      endMinutes: Value(endMinutes),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory QuietHoursSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return QuietHoursSetting(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      startMinutes: serializer.fromJson<int>(json['startMinutes']),
+      endMinutes: serializer.fromJson<int>(json['endMinutes']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'enabled': serializer.toJson<bool>(enabled),
+      'startMinutes': serializer.toJson<int>(startMinutes),
+      'endMinutes': serializer.toJson<int>(endMinutes),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  QuietHoursSetting copyWith({
+    String? instanceHost,
+    String? accountId,
+    bool? enabled,
+    int? startMinutes,
+    int? endMinutes,
+    DateTime? updatedAt,
+  }) => QuietHoursSetting(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    enabled: enabled ?? this.enabled,
+    startMinutes: startMinutes ?? this.startMinutes,
+    endMinutes: endMinutes ?? this.endMinutes,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  QuietHoursSetting copyWithCompanion(QuietHoursSettingsCompanion data) {
+    return QuietHoursSetting(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      startMinutes: data.startMinutes.present
+          ? data.startMinutes.value
+          : this.startMinutes,
+      endMinutes: data.endMinutes.present
+          ? data.endMinutes.value
+          : this.endMinutes,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QuietHoursSetting(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('enabled: $enabled, ')
+          ..write('startMinutes: $startMinutes, ')
+          ..write('endMinutes: $endMinutes, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    instanceHost,
+    accountId,
+    enabled,
+    startMinutes,
+    endMinutes,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is QuietHoursSetting &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.enabled == this.enabled &&
+          other.startMinutes == this.startMinutes &&
+          other.endMinutes == this.endMinutes &&
+          other.updatedAt == this.updatedAt);
+}
+
+class QuietHoursSettingsCompanion extends UpdateCompanion<QuietHoursSetting> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<bool> enabled;
+  final Value<int> startMinutes;
+  final Value<int> endMinutes;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const QuietHoursSettingsCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.startMinutes = const Value.absent(),
+    this.endMinutes = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  QuietHoursSettingsCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    required bool enabled,
+    required int startMinutes,
+    required int endMinutes,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       enabled = Value(enabled),
+       startMinutes = Value(startMinutes),
+       endMinutes = Value(endMinutes),
+       updatedAt = Value(updatedAt);
+  static Insertable<QuietHoursSetting> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<bool>? enabled,
+    Expression<int>? startMinutes,
+    Expression<int>? endMinutes,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (enabled != null) 'enabled': enabled,
+      if (startMinutes != null) 'start_minutes': startMinutes,
+      if (endMinutes != null) 'end_minutes': endMinutes,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  QuietHoursSettingsCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<bool>? enabled,
+    Value<int>? startMinutes,
+    Value<int>? endMinutes,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return QuietHoursSettingsCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      enabled: enabled ?? this.enabled,
+      startMinutes: startMinutes ?? this.startMinutes,
+      endMinutes: endMinutes ?? this.endMinutes,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (startMinutes.present) {
+      map['start_minutes'] = Variable<int>(startMinutes.value);
+    }
+    if (endMinutes.present) {
+      map['end_minutes'] = Variable<int>(endMinutes.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QuietHoursSettingsCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('enabled: $enabled, ')
+          ..write('startMinutes: $startMinutes, ')
+          ..write('endMinutes: $endMinutes, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5078,6 +5515,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReleaseEntriesTable releaseEntries = $ReleaseEntriesTable(this);
   late final $TodoPollStatesTable todoPollStates = $TodoPollStatesTable(this);
   late final $CommentDraftsTable commentDrafts = $CommentDraftsTable(this);
+  late final $QuietHoursSettingsTable quietHoursSettings =
+      $QuietHoursSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5093,6 +5532,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     releaseEntries,
     todoPollStates,
     commentDrafts,
+    quietHoursSettings,
   ];
 }
 
@@ -7698,6 +8138,244 @@ typedef $$CommentDraftsTableProcessedTableManager =
       CommentDraft,
       PrefetchHooks Function()
     >;
+typedef $$QuietHoursSettingsTableCreateCompanionBuilder =
+    QuietHoursSettingsCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      required bool enabled,
+      required int startMinutes,
+      required int endMinutes,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$QuietHoursSettingsTableUpdateCompanionBuilder =
+    QuietHoursSettingsCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<bool> enabled,
+      Value<int> startMinutes,
+      Value<int> endMinutes,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$QuietHoursSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $QuietHoursSettingsTable> {
+  $$QuietHoursSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startMinutes => $composableBuilder(
+    column: $table.startMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get endMinutes => $composableBuilder(
+    column: $table.endMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$QuietHoursSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $QuietHoursSettingsTable> {
+  $$QuietHoursSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startMinutes => $composableBuilder(
+    column: $table.startMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get endMinutes => $composableBuilder(
+    column: $table.endMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$QuietHoursSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $QuietHoursSettingsTable> {
+  $$QuietHoursSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<int> get startMinutes => $composableBuilder(
+    column: $table.startMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get endMinutes => $composableBuilder(
+    column: $table.endMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$QuietHoursSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $QuietHoursSettingsTable,
+          QuietHoursSetting,
+          $$QuietHoursSettingsTableFilterComposer,
+          $$QuietHoursSettingsTableOrderingComposer,
+          $$QuietHoursSettingsTableAnnotationComposer,
+          $$QuietHoursSettingsTableCreateCompanionBuilder,
+          $$QuietHoursSettingsTableUpdateCompanionBuilder,
+          (
+            QuietHoursSetting,
+            BaseReferences<
+              _$AppDatabase,
+              $QuietHoursSettingsTable,
+              QuietHoursSetting
+            >,
+          ),
+          QuietHoursSetting,
+          PrefetchHooks Function()
+        > {
+  $$QuietHoursSettingsTableTableManager(
+    _$AppDatabase db,
+    $QuietHoursSettingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$QuietHoursSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$QuietHoursSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$QuietHoursSettingsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<int> startMinutes = const Value.absent(),
+                Value<int> endMinutes = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => QuietHoursSettingsCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                enabled: enabled,
+                startMinutes: startMinutes,
+                endMinutes: endMinutes,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                required bool enabled,
+                required int startMinutes,
+                required int endMinutes,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => QuietHoursSettingsCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                enabled: enabled,
+                startMinutes: startMinutes,
+                endMinutes: endMinutes,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$QuietHoursSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $QuietHoursSettingsTable,
+      QuietHoursSetting,
+      $$QuietHoursSettingsTableFilterComposer,
+      $$QuietHoursSettingsTableOrderingComposer,
+      $$QuietHoursSettingsTableAnnotationComposer,
+      $$QuietHoursSettingsTableCreateCompanionBuilder,
+      $$QuietHoursSettingsTableUpdateCompanionBuilder,
+      (
+        QuietHoursSetting,
+        BaseReferences<
+          _$AppDatabase,
+          $QuietHoursSettingsTable,
+          QuietHoursSetting
+        >,
+      ),
+      QuietHoursSetting,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7722,4 +8400,6 @@ class $AppDatabaseManager {
       $$TodoPollStatesTableTableManager(_db, _db.todoPollStates);
   $$CommentDraftsTableTableManager get commentDrafts =>
       $$CommentDraftsTableTableManager(_db, _db.commentDrafts);
+  $$QuietHoursSettingsTableTableManager get quietHoursSettings =>
+      $$QuietHoursSettingsTableTableManager(_db, _db.quietHoursSettings);
 }

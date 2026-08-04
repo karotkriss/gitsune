@@ -170,6 +170,21 @@ class TodoPollStates extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId};
 }
 
+/// One account's scheduled quiet hours (E12.2): while enabled and the local
+/// time is inside the window, new-to-do notifications are suppressed. Bounds
+/// are minutes since local midnight, and a start later than the end wraps
+/// past midnight (e.g. 22:00-07:00). See
+/// `core/notifications/quiet_hours.dart`.
+class QuietHoursSettings extends Table with AccountScoped {
+  BoolColumn get enabled => boolean()();
+  IntColumn get startMinutes => integer()();
+  IntColumn get endMinutes => integer()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId};
+}
+
 @DriftDatabase(
   tables: [
     LocalCacheEntries,
@@ -182,6 +197,7 @@ class TodoPollStates extends Table with AccountScoped {
     ReleaseEntries,
     TodoPollStates,
     CommentDrafts,
+    QuietHoursSettings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -190,7 +206,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -221,6 +237,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 10) {
         await migrator.createTable(commentDrafts);
+      }
+      if (from < 11) {
+        await migrator.createTable(quietHoursSettings);
       }
     },
   );
