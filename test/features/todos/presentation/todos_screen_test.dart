@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gitsune/core/lock/app_lock.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/todos/todos_screen.dart';
 import 'package:gitsune/main.dart';
 
+import '../../../support/fake_biometric_authenticator.dart';
+import '../../../support/memory_secure_storage.dart';
 import '../support/fixture_todos_repository.dart';
 
 void main() {
@@ -49,7 +52,16 @@ void main() {
   testWidgets('the shell To-Dos tab uses the supplied repository', (
     tester,
   ) async {
-    await tester.pumpWidget(GitsuneApp(todosRepository: repository));
+    final appLock = AppLockController(
+      authenticator: FakeBiometricAuthenticator(),
+      storage: MemorySecureStorage(),
+    );
+    addTearDown(appLock.dispose);
+    await appLock.load();
+
+    await tester.pumpWidget(
+      GitsuneApp(appLockController: appLock, todosRepository: repository),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(

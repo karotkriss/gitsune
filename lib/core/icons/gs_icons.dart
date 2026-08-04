@@ -248,6 +248,11 @@ enum GsIconGlyph {
     'M4 9.5H2.5v-7h7V4H11V2a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2V9'
     '.5zm9.5 4h-7v-7h7v7zM5 6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6'
     'a1 1 0 0 1-1-1V6z',
+  ),
+  lock(
+    'M4 5a4 4 0 1 1 8 0v1h1a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a'
+    '1 1 0 0 1 1-1h1V5zm6.5 0v1h-5V5a2.5 2.5 0 0 1 5 0zm-7 2.5v6h9v-6h-9zM9 1'
+    '2V9H7v3h2z',
   );
 
   const GsIconGlyph(this.path);

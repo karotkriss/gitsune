@@ -3,6 +3,8 @@
     <!-- Android 13+ runtime permission for the local to-do notifications
          fired by core/notifications/local_todo_notifier.dart. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- E13.1 biometric app lock (local_auth). -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <application
         android:label="gitsune"
         android:name="${applicationName}"
