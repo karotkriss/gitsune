@@ -21,6 +21,9 @@ class MergeRequest {
     this.changesCount,
     this.webUrl,
     this.diffRefs,
+    this.mergeStatus,
+    this.detailedMergeStatus,
+    this.blockingDiscussionsResolved = true,
   });
 
   factory MergeRequest.fromJson(Map<String, dynamic> json) {
@@ -51,6 +54,10 @@ class MergeRequest {
       diffRefs: rawDiffRefs is Map
           ? DiffRefs.fromJson(Map<String, dynamic>.from(rawDiffRefs))
           : null,
+      mergeStatus: json['merge_status'] as String?,
+      detailedMergeStatus: json['detailed_merge_status'] as String?,
+      blockingDiscussionsResolved:
+          json['blocking_discussions_resolved'] as bool? ?? true,
     );
   }
 
@@ -71,8 +78,17 @@ class MergeRequest {
   final String? changesCount;
   final String? webUrl;
   final DiffRefs? diffRefs;
+  final String? mergeStatus;
+  final String? detailedMergeStatus;
+  final bool blockingDiscussionsResolved;
 
   String get reference => '!$iid';
+
+  /// Whether GitLab reports the merge request as mergeable, preferring the
+  /// modern `detailed_merge_status` over the legacy `merge_status`.
+  bool get mergeable => detailedMergeStatus != null
+      ? detailedMergeStatus == 'mergeable'
+      : mergeStatus == 'can_be_merged';
 
   /// The API-shaped JSON [fromJson] reads, for the recently-viewed cache.
   Map<String, dynamic> toJson() => {
@@ -93,6 +109,9 @@ class MergeRequest {
     'changes_count': changesCount,
     'web_url': webUrl,
     'diff_refs': diffRefs?.toJson(),
+    'merge_status': mergeStatus,
+    'detailed_merge_status': detailedMergeStatus,
+    'blocking_discussions_resolved': blockingDiscussionsResolved,
   };
 
   String get displayStateLabel => draft ? 'Draft' : state.label;
@@ -226,6 +245,8 @@ class MergeRequestApprovals {
     required this.approvalsRequired,
     required this.approvalsLeft,
     required this.approvedBy,
+    this.userHasApproved = false,
+    this.userCanApprove = false,
   });
 
   factory MergeRequestApprovals.fromJson(Map<String, dynamic> json) {
@@ -239,12 +260,16 @@ class MergeRequestApprovals {
                 .map((value) => MergeRequestAuthor.fromJson(_jsonMap(value)))
                 .toList(growable: false)
           : const [],
+      userHasApproved: json['user_has_approved'] as bool? ?? false,
+      userCanApprove: json['user_can_approve'] as bool? ?? false,
     );
   }
 
   final int approvalsRequired;
   final int approvalsLeft;
   final List<MergeRequestAuthor> approvedBy;
+  final bool userHasApproved;
+  final bool userCanApprove;
 
   int get approvedCount {
     if (approvalsRequired == 0) return approvedBy.length;

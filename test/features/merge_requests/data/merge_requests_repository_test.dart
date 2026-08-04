@@ -290,6 +290,74 @@ void main() {
     expect(updated.resolved, isTrue);
   });
 
+  test(
+    'approves and unapproves, decoding the updated approval state',
+    () async {
+      final server = await FakeGitLabServer.start();
+      addTearDown(server.close);
+      server.respondJson(
+        'POST /api/v4/projects/7/merge_requests/142/approve',
+        Fixtures.json('merge_request_142_approved'),
+        statusCode: HttpStatus.created,
+      );
+      server.respondJson(
+        'POST /api/v4/projects/7/merge_requests/142/unapprove',
+        Fixtures.json('merge_request_142_unapproved'),
+        statusCode: HttpStatus.created,
+      );
+
+      final repository = GitLabMergeRequestsRepository(
+        _client(server, account),
+      );
+      final approved = await repository.approve(7, 142);
+      final unapproved = await repository.unapprove(7, 142);
+
+      expect(approved.complete, isTrue);
+      expect(approved.userHasApproved, isTrue);
+      expect(approved.approvedBy.map((user) => user.username), [
+        'priya',
+        'marin',
+      ]);
+      expect(unapproved.complete, isFalse);
+      expect(unapproved.userHasApproved, isFalse);
+      expect(unapproved.approvedBy.single.username, 'priya');
+    },
+  );
+
+  test('merges and decodes the merged merge request', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    server.respondJson(
+      'PUT /api/v4/projects/7/merge_requests/142/merge',
+      Fixtures.json('merge_request_142_merged'),
+    );
+
+    final repository = GitLabMergeRequestsRepository(_client(server, account));
+    final merged = await repository.merge(7, 142);
+
+    expect(merged.state, MergeRequestState.merged);
+    expect(merged.mergeable, isFalse);
+  });
+
+  test('reads mergeability and blocking discussions from the payload', () {
+    final mergeRequest = MergeRequest.fromJson(
+      Map<String, dynamic>.from(Fixtures.json('merge_request_142') as Map),
+    );
+
+    expect(mergeRequest.mergeable, isTrue);
+    expect(mergeRequest.blockingDiscussionsResolved, isFalse);
+    expect(
+      MergeRequest.fromJson(mergeRequest.toJson()).mergeable,
+      isTrue,
+      reason: 'mergeability must survive the recently-viewed round trip',
+    );
+
+    final legacy = mergeRequest.toJson()
+      ..remove('detailed_merge_status')
+      ..['merge_status'] = 'cannot_be_merged';
+    expect(MergeRequest.fromJson(legacy).mergeable, isFalse);
+  });
+
   test('accepts the documented basic pipeline shape', () {
     final pipeline = MergeRequestPipeline.fromJson({
       'id': 88123,
