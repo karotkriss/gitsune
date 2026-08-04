@@ -45,17 +45,15 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
     ),
     defaultValue: const Constant(false),
   );
-  static const VerificationMeta _addedAtMeta = const VerificationMeta(
-    'addedAt',
-  );
   @override
-  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
-    'added_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
+  late final GeneratedColumnWithTypeConverter<DateTime, int> addedAt =
+      GeneratedColumn<int>(
+        'added_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<DateTime>($AccountsTable.$converteraddedAt);
   @override
   List<GeneratedColumn> get $columns => [
     instanceHost,
@@ -103,14 +101,6 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         ),
       );
     }
-    if (data.containsKey('added_at')) {
-      context.handle(
-        _addedAtMeta,
-        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_addedAtMeta);
-    }
     return context;
   }
 
@@ -132,10 +122,12 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
         DriftSqlType.bool,
         data['${effectivePrefix}needs_reauth'],
       )!,
-      addedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}added_at'],
-      )!,
+      addedAt: $AccountsTable.$converteraddedAt.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}added_at'],
+        )!,
+      ),
     );
   }
 
@@ -143,6 +135,9 @@ class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
   $AccountsTable createAlias(String alias) {
     return $AccountsTable(attachedDatabase, alias);
   }
+
+  static TypeConverter<DateTime, int> $converteraddedAt =
+      const MicrosecondDateTimeConverter();
 }
 
 class Account extends DataClass implements Insertable<Account> {
@@ -162,7 +157,11 @@ class Account extends DataClass implements Insertable<Account> {
     map['instance_host'] = Variable<String>(instanceHost);
     map['account_id'] = Variable<String>(accountId);
     map['needs_reauth'] = Variable<bool>(needsReauth);
-    map['added_at'] = Variable<DateTime>(addedAt);
+    {
+      map['added_at'] = Variable<int>(
+        $AccountsTable.$converteraddedAt.toSql(addedAt),
+      );
+    }
     return map;
   }
 
@@ -272,7 +271,7 @@ class AccountsCompanion extends UpdateCompanion<Account> {
     Expression<String>? instanceHost,
     Expression<String>? accountId,
     Expression<bool>? needsReauth,
-    Expression<DateTime>? addedAt,
+    Expression<int>? addedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -313,7 +312,9 @@ class AccountsCompanion extends UpdateCompanion<Account> {
       map['needs_reauth'] = Variable<bool>(needsReauth.value);
     }
     if (addedAt.present) {
-      map['added_at'] = Variable<DateTime>(addedAt.value);
+      map['added_at'] = Variable<int>(
+        $AccountsTable.$converteraddedAt.toSql(addedAt.value),
+      );
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -5910,10 +5911,11 @@ class $$AccountsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<DateTime> get addedAt => $composableBuilder(
-    column: $table.addedAt,
-    builder: (column) => ColumnFilters(column),
-  );
+  ColumnWithTypeConverterFilters<DateTime, DateTime, int> get addedAt =>
+      $composableBuilder(
+        column: $table.addedAt,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 }
 
 class $$AccountsTableOrderingComposer
@@ -5940,7 +5942,7 @@ class $$AccountsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+  ColumnOrderings<int> get addedAt => $composableBuilder(
     column: $table.addedAt,
     builder: (column) => ColumnOrderings(column),
   );
@@ -5968,7 +5970,7 @@ class $$AccountsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<DateTime> get addedAt =>
+  GeneratedColumnWithTypeConverter<DateTime, int> get addedAt =>
       $composableBuilder(column: $table.addedAt, builder: (column) => column);
 }
 

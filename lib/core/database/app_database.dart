@@ -5,6 +5,16 @@ import 'account_scope.dart';
 
 part 'app_database.g.dart';
 
+class MicrosecondDateTimeConverter extends TypeConverter<DateTime, int> {
+  const MicrosecondDateTimeConverter();
+
+  @override
+  DateTime fromSql(int fromDb) => DateTime.fromMicrosecondsSinceEpoch(fromDb);
+
+  @override
+  int toSql(DateTime value) => value.microsecondsSinceEpoch;
+}
+
 /// The signed-in account registry (E2.6): one row per session, keyed by the
 /// composite key, so accounts across instances coexist. [needsReauth] marks
 /// a session whose token refresh the instance rejected; the row stays
@@ -12,7 +22,8 @@ part 'app_database.g.dart';
 /// scoped to just that account. See `core/auth/account_sessions.dart`.
 class Accounts extends Table with AccountScoped {
   BoolColumn get needsReauth => boolean().withDefault(const Constant(false))();
-  DateTimeColumn get addedAt => dateTime()();
+  IntColumn get addedAt =>
+      integer().map(const MicrosecondDateTimeConverter())();
 
   @override
   Set<Column> get primaryKey => {instanceHost, accountId};

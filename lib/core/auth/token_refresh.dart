@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../network/account_key.dart';
@@ -112,7 +114,7 @@ class TokenRefreshCoordinator {
       // is a permanent auth failure for this account alone: mark it for
       // re-auth before the failure surfaces. Never reached the server means
       // offline, which is transient and marks nothing.
-      if (!isConnectivityError(error)) {
+      if (!isConnectivityError(error) && _isAuthenticationRejection(error)) {
         await onReauthRequired?.call(account);
       }
       return null;
@@ -149,5 +151,29 @@ class TokenRefreshCoordinator {
       refreshToken: refreshToken,
       expiresAt: DateTime.now().add(Duration(seconds: expiresIn)),
     );
+  }
+
+  bool _isAuthenticationRejection(DioException error) {
+    final response = error.response;
+    if (response == null ||
+        (response.statusCode != 400 && response.statusCode != 401)) {
+      return false;
+    }
+    Object? data = response.data;
+    if (data is String) {
+      try {
+        data = jsonDecode(data);
+      } on FormatException {
+        return false;
+      }
+    }
+    if (data is! Map) {
+      return false;
+    }
+    return const {
+      'invalid_client',
+      'invalid_grant',
+      'unauthorized_client',
+    }.contains(data['error']);
   }
 }

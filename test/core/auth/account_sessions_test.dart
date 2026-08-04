@@ -36,14 +36,37 @@ void main() {
   AccountKey keyOf(Account row) =>
       AccountKey(instanceHost: row.instanceHost, accountId: row.accountId);
 
-  test('accounts across instances coexist, keyed by the composite key', () async {
-    await sessions.signedIn(alice);
-    await sessions.signedIn(bob);
+  test(
+    'accounts across instances coexist, keyed by the composite key',
+    () async {
+      await sessions.signedIn(alice);
+      await sessions.signedIn(bob);
+      await sessions.signedIn(selfHostedAlice);
+
+      final accounts = await sessions.watchAll().first;
+      expect(accounts.map(keyOf), [alice, bob, selfHostedAlice]);
+      expect(accounts.map((row) => row.needsReauth), everyElement(isFalse));
+    },
+  );
+
+  test('same-second sign-ins keep insertion order', () async {
+    final sameInstant = DateTime.utc(2026, 8, 4, 12);
+    sessions = AccountSessions(database, now: () => sameInstant);
+
     await sessions.signedIn(selfHostedAlice);
+    await sessions.signedIn(bob);
+    await sessions.signedIn(alice);
 
     final accounts = await sessions.watchAll().first;
-    expect(accounts.map(keyOf), [alice, bob, selfHostedAlice]);
-    expect(accounts.map((row) => row.needsReauth), everyElement(isFalse));
+    expect(accounts.map(keyOf), [selfHostedAlice, bob, alice]);
+    expect(
+      accounts.map((row) => row.addedAt.microsecondsSinceEpoch),
+      orderedEquals([
+        sameInstant.microsecondsSinceEpoch,
+        sameInstant.microsecondsSinceEpoch + 1,
+        sameInstant.microsecondsSinceEpoch + 2,
+      ]),
+    );
   });
 
   test('signing in an already-registered account is idempotent and keeps '

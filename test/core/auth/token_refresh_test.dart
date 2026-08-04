@@ -316,6 +316,47 @@ void main() {
     expect((await store.read(account))?.refreshToken, 'rt-1');
   });
 
+  for (final statusCode in [429, 500]) {
+    test('a $statusCode token endpoint response does not mark the account '
+        'for re-auth', () async {
+      server.handle('POST /oauth/token', (request) async {
+        request.response.statusCode = statusCode;
+        request.response.write(jsonEncode({'error': 'server_error'}));
+        await request.response.close();
+      });
+      await store.save(account, seedTokens(expired: true));
+
+      expect(await coordinator.refreshToken(account, 'at-1'), isNull);
+      expect(reauthRequired, isEmpty);
+      expect((await store.read(account))?.refreshToken, 'rt-1');
+    });
+  }
+
+  test('a receive timeout does not mark the account for re-auth', () async {
+    final timeoutDio = Dio()
+      ..interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) => handler.reject(
+            DioException(
+              requestOptions: options,
+              type: DioExceptionType.receiveTimeout,
+            ),
+          ),
+        ),
+      );
+    final timeoutCoordinator = TokenRefreshCoordinator(
+      tokenStore: store,
+      configFor: coordinator.configFor,
+      dio: timeoutDio,
+      onReauthRequired: (account) async => reauthRequired.add(account),
+    );
+    await store.save(account, seedTokens(expired: true));
+
+    expect(await timeoutCoordinator.refreshToken(account, 'at-1'), isNull);
+    expect(reauthRequired, isEmpty);
+    expect((await store.read(account))?.refreshToken, 'rt-1');
+  });
+
   test(
     'malformed refresh responses fail without changing stored tokens',
     () async {

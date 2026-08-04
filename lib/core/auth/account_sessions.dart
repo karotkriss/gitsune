@@ -13,25 +13,39 @@ import '../network/account_key.dart';
 /// registry owns which sessions exist and whether each needs
 /// re-authentication.
 class AccountSessions {
-  AccountSessions(this._database);
+  AccountSessions(this._database, {DateTime Function()? now})
+    : _now = now ?? DateTime.now;
 
   final AppDatabase _database;
+  final DateTime Function() _now;
 
   /// Registers a completed sign-in. Signing in an already-registered account
   /// (re-auth) clears its [Account.needsReauth] mark and keeps its original
   /// [Account.addedAt] switcher position.
-  Future<void> signedIn(AccountKey account) => _database
-      .into(_database.accounts)
-      .insert(
-        AccountsCompanion.insert(
-          instanceHost: account.instanceHost,
-          accountId: account.accountId,
-          addedAt: DateTime.now(),
-        ),
-        onConflict: DoUpdate(
-          (_) => const AccountsCompanion(needsReauth: Value(false)),
-        ),
-      );
+  Future<void> signedIn(AccountKey account) => _database.transaction(() async {
+    final latest =
+        await (_database.select(_database.accounts)
+              ..orderBy([(row) => OrderingTerm.desc(row.addedAt)])
+              ..limit(1))
+            .getSingleOrNull();
+    final now = _now();
+    final addedAt = latest == null || now.isAfter(latest.addedAt)
+        ? now
+        : latest.addedAt.add(const Duration(microseconds: 1));
+
+    await _database
+        .into(_database.accounts)
+        .insert(
+          AccountsCompanion.insert(
+            instanceHost: account.instanceHost,
+            accountId: account.accountId,
+            addedAt: addedAt,
+          ),
+          onConflict: DoUpdate(
+            (_) => const AccountsCompanion(needsReauth: Value(false)),
+          ),
+        );
+  });
 
   /// Marks only [account] as needing re-authentication after its instance
   /// rejected a token refresh. The row stays registered - the switcher keeps
