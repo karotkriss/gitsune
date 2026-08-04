@@ -135,9 +135,12 @@ subscription issuableTitleUpdated($issuableId: IssuableID!) {
         (data['issuableTitleUpdated'] as Map<String, dynamic>?)?['title'];
     final issue = _issue;
     if (title is! String || issue == null || title == issue.title) return;
-    setState(
-      () => _issue = Issue.fromJson({...issue.toJson(), 'title': title}),
-    );
+    setState(() {
+      _issueStateRevision++;
+      _issue = Issue.fromJson({...issue.toJson(), 'title': title});
+      _issueLoading = false;
+      _issueFailed = false;
+    });
   }
 
   void _subscribeDrafts() {

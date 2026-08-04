@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -31,6 +32,18 @@ void main() {
     expect(
       resolveCableUri(account),
       Uri.parse('wss://gitlab.example.com/-/cable'),
+    );
+  });
+
+  test('preserves a self-hosted instance port in the cable endpoint', () {
+    expect(
+      resolveCableUri(
+        const AccountKey(
+          instanceHost: 'gitlab.example.com:8443',
+          accountId: '7',
+        ),
+      ),
+      Uri.parse('wss://gitlab.example.com:8443/-/cable'),
     );
   });
 
@@ -69,6 +82,55 @@ void main() {
 
     await subscription.cancel();
     await waitUntil(() => server.connections.single.closed);
+  });
+
+  test('cancelling while token loading prevents a connection', () async {
+    final token = Completer<TokenReadResult>();
+    final pending = GraphQlSubscriptions(
+      account: account,
+      readToken: (_) => token.future,
+      cableUri: server.uri,
+    ).subscribe('subscription { x }').listen((_) {});
+
+    await pending.cancel();
+    token.complete(const TokenReadResult('token-123'));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(server.connections, isEmpty);
+  });
+
+  test('a rejected subscription closes the stream and socket', () async {
+    Object? error;
+    var done = false;
+    subscriptions()
+        .subscribe('subscription { x }')
+        .listen(
+          (_) {},
+          onError: (Object value) => error = value,
+          onDone: () => done = true,
+        );
+    await waitUntil(() => server.connections.any((c) => c.identifier != null));
+
+    server.connections.single.rejectSubscription();
+    await waitUntil(() => done && server.connections.single.closed);
+
+    expect(error, isA<StateError>());
+  });
+
+  test('a terminal result closes the stream and socket', () async {
+    final events = <Map<String, dynamic>>[];
+    var done = false;
+    subscriptions()
+        .subscribe('subscription { x }')
+        .listen(events.add, onDone: () => done = true);
+    await waitUntil(() => server.connections.any((c) => c.identifier != null));
+
+    server.connections.single.pushResult({'x': true}, more: false);
+    await waitUntil(() => done && server.connections.single.closed);
+
+    expect(events, [
+      {'x': true},
+    ]);
   });
 
   test('a server-side close ends the stream', () async {

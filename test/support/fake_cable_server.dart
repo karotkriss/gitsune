@@ -74,15 +74,21 @@ class FakeCableConnection {
 
   /// Pushes one GraphQL event the way GitLab's `GraphqlChannel` streams
   /// subscription results.
-  void pushResult(Map<String, dynamic> data) {
+  void pushResult(Map<String, dynamic> data, {bool more = true}) {
     _socket.add(
       jsonEncode({
         'identifier': identifier,
         'message': {
           'result': {'data': data},
-          'more': true,
+          'more': more,
         },
       }),
+    );
+  }
+
+  void rejectSubscription() {
+    _socket.add(
+      jsonEncode({'identifier': identifier, 'type': 'reject_subscription'}),
     );
   }
 }

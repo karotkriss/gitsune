@@ -7,6 +7,8 @@ import 'package:gitsune/core/network/account_key.dart';
 import 'package:gitsune/core/network/gitlab_client.dart';
 import 'package:gitsune/core/network/graphql_subscriptions.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
+import 'package:gitsune/features/issues/data/issue_models.dart';
+import 'package:gitsune/features/issues/data/issues_repository.dart';
 import 'package:gitsune/features/issues/presentation/issue_detail_screen.dart';
 
 import '../../../support/fake_cable_server.dart';
@@ -25,24 +27,26 @@ void main() {
 
   tearDown(() => server.close());
 
-  Widget buildScreen() => MaterialApp(
-    theme: buildAppTheme(),
-    home: IssueDetailScreen(
-      projectId: 7,
-      projectPath: 'gitsune/app',
-      issueIid: 142,
-      repository: FixtureIssuesRepository(),
-      subscriptions: GraphQlSubscriptions(
-        account: const AccountKey(
-          instanceHost: 'gitlab.example.com',
-          accountId: '7',
+  Widget buildScreen({IssuesRepository? repository, Issue? initialIssue}) =>
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: IssueDetailScreen(
+          projectId: 7,
+          projectPath: 'gitsune/app',
+          issueIid: 142,
+          repository: repository ?? FixtureIssuesRepository(),
+          subscriptions: GraphQlSubscriptions(
+            account: const AccountKey(
+              instanceHost: 'gitlab.example.com',
+              accountId: '7',
+            ),
+            readToken: (_) async => const TokenReadResult('token-live'),
+            cableUri: server.uri,
+          ),
+          initialIssue: initialIssue,
+          now: now,
         ),
-        readToken: (_) async => const TokenReadResult('token-live'),
-        cableUri: server.uri,
-      ),
-      now: now,
-    ),
-  );
+      );
 
   Future<void> pumpUntil(WidgetTester tester, bool Function() condition) async {
     final deadline = DateTime.now().add(const Duration(seconds: 10));
@@ -90,6 +94,37 @@ void main() {
     expect(find.text('Keep draft comments after reconnecting'), findsNothing);
   });
 
+  testWidgets('a pending refresh cannot overwrite a live title', (
+    tester,
+  ) async {
+    final fixtureRepository = FixtureIssuesRepository();
+    final initialIssue = await fixtureRepository.loadIssue(7, 142);
+    final repository = _DelayedIssueRepository();
+    await tester.pumpWidget(
+      buildScreen(repository: repository, initialIssue: initialIssue),
+    );
+    await waitUntil(
+      () =>
+          server.connections.isNotEmpty &&
+          server.connections.single.identifier != null,
+    );
+    final connection = server.connections.single;
+
+    connection.pushResult({
+      'issuableTitleUpdated': {'title': 'Newest subscription title'},
+    });
+    await pumpUntil(
+      tester,
+      () => find.text('Newest subscription title').evaluate().isNotEmpty,
+    );
+
+    repository.issue.complete(initialIssue);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Newest subscription title'), findsWidgets);
+    expect(find.text(initialIssue.title), findsNothing);
+  });
+
   testWidgets('backgrounding stops the subscription; showing resumes it', (
     tester,
   ) async {
@@ -120,4 +155,11 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await waitUntil(() => connection.closed);
   });
+}
+
+class _DelayedIssueRepository extends FixtureIssuesRepository {
+  final issue = Completer<Issue>();
+
+  @override
+  Future<Issue> loadIssue(int projectId, int issueIid) => issue.future;
 }

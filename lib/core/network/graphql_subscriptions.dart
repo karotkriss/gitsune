@@ -10,7 +10,7 @@ import 'gitlab_client.dart';
 /// Fake-server tests point [GraphQlSubscriptions]'s `cableUri` directly at the
 /// server instead, since the fake runs over plain `ws` rather than `wss`.
 Uri resolveCableUri(AccountKey account) =>
-    Uri(scheme: 'wss', host: account.instanceHost, path: '/-/cable');
+    Uri.https(account.instanceHost, '/-/cable').replace(scheme: 'wss');
 
 /// GitLab GraphQL subscriptions over the instance's ActionCable WebSocket
 /// (`/-/cable`), bearer-token authenticated.
@@ -52,31 +52,44 @@ class GraphQlSubscriptions {
       'operationName': operationName,
     });
     WebSocket? socket;
+    var cancelled = false;
     late final StreamController<Map<String, dynamic>> controller;
     controller = StreamController(
       onListen: () async {
         try {
           final token = (await readToken(account)).accessToken;
+          if (cancelled) return;
           final connected = await WebSocket.connect(
             cableUri.toString(),
             headers: {if (token != null) 'Authorization': 'Bearer $token'},
           );
-          if (controller.isClosed) {
+          if (cancelled) {
             await connected.close();
             return;
           }
           socket = connected;
           connected.listen(
             (frame) => _handleFrame(frame, identifier, connected, controller),
-            onError: controller.addError,
-            onDone: controller.close,
+            onError: (Object error, StackTrace stackTrace) {
+              if (!controller.isClosed) {
+                controller.addError(error, stackTrace);
+              }
+            },
+            onDone: () {
+              if (!controller.isClosed) unawaited(controller.close());
+            },
           );
         } on Object catch (error, stackTrace) {
-          controller.addError(error, stackTrace);
-          await controller.close();
+          if (!cancelled && !controller.isClosed) {
+            controller.addError(error, stackTrace);
+            await controller.close();
+          }
         }
       },
-      onCancel: () => socket?.close(),
+      onCancel: () {
+        cancelled = true;
+        return socket?.close();
+      },
     );
     return controller.stream;
   }
@@ -97,7 +110,7 @@ class GraphQlSubscriptions {
         return;
       case 'reject_subscription':
         controller.addError(StateError('GraphQL subscription rejected'));
-        unawaited(controller.close());
+        unawaited(_closeTransport(socket, controller));
         return;
     }
     if (decoded['identifier'] != identifier) return;
@@ -108,5 +121,17 @@ class GraphQlSubscriptions {
     // GraphqlChannel's initial confirmation result carries null data; only
     // real events reach subscribers.
     if (data is Map<String, dynamic>) controller.add(data);
+    if (message['more'] == false) {
+      unawaited(_closeTransport(socket, controller));
+    }
+  }
+
+  Future<void> _closeTransport(
+    WebSocket socket,
+    StreamController<Map<String, dynamic>> controller,
+  ) async {
+    final controllerClosed = controller.isClosed ? null : controller.close();
+    await socket.close();
+    await controllerClosed;
   }
 }
