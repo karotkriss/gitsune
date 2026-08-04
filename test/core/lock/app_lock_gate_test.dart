@@ -38,8 +38,9 @@ void main() {
 
   Finder lockScreen() => find.text('Gitsune is locked');
 
-  testWidgets('enabled lock gates a cold launch until the check passes',
-      (tester) async {
+  testWidgets('enabled lock gates a cold launch until the check passes', (
+    tester,
+  ) async {
     storage.values['gitsune.appLock.enabled'] = 'true';
     await controller.load();
 
@@ -52,8 +53,9 @@ void main() {
     expect(authenticator.authCalls, 1);
   });
 
-  testWidgets('disabled lock passes straight through without prompting',
-      (tester) async {
+  testWidgets('disabled lock passes straight through without prompting', (
+    tester,
+  ) async {
     await controller.load();
 
     await pumpGate(tester);
@@ -62,8 +64,9 @@ void main() {
     expect(authenticator.authCalls, 0);
   });
 
-  testWidgets('unavailable hardware degrades open instead of hard-locking',
-      (tester) async {
+  testWidgets('unavailable hardware degrades open instead of hard-locking', (
+    tester,
+  ) async {
     storage.values['gitsune.appLock.enabled'] = 'true';
     await controller.load();
     authenticator.supported = false;
@@ -74,8 +77,9 @@ void main() {
     expect(authenticator.authCalls, 0);
   });
 
-  testWidgets('a failed check stays locked and the button retries',
-      (tester) async {
+  testWidgets('a failed check stays locked and the button retries', (
+    tester,
+  ) async {
     storage.values['gitsune.appLock.enabled'] = 'true';
     await controller.load();
     authenticator.result = BiometricResult.failure;
@@ -90,8 +94,41 @@ void main() {
     expect(lockScreen(), findsNothing);
   });
 
-  testWidgets('leaving the foreground re-locks and resume prompts again',
-      (tester) async {
+  testWidgets('locked content cannot receive input or expose semantics', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    var presses = 0;
+    storage.values['gitsune.appLock.enabled'] = 'true';
+    await controller.load();
+    authenticator.result = BiometricResult.failure;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: AppLockGate(
+          controller: controller,
+          child: Center(
+            child: FilledButton(
+              onPressed: () => presses += 1,
+              child: const Text('Sensitive action'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sensitive action'), findsOneWidget);
+    expect(find.bySemanticsLabel('Sensitive action'), findsNothing);
+    await tester.tap(find.text('Sensitive action'), warnIfMissed: false);
+    expect(presses, 0);
+    semantics.dispose();
+  });
+
+  testWidgets('leaving the foreground re-locks and resume prompts again', (
+    tester,
+  ) async {
     storage.values['gitsune.appLock.enabled'] = 'true';
     await controller.load();
 
