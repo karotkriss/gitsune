@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/icons/gs_icons.dart';
+import '../../core/lock/app_lock.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Profile tab. Placeholder until E13 builds account management; opens the
-/// E2.7 sign-in screen. [onQuietHoursTap] surfaces the E12.2 quiet-hours
-/// settings once the composition root wires a store; null hides the entry.
+/// Profile tab. Placeholder until E13.2 builds account management; opens the
+/// E2.7 sign-in screen and hosts the E13.1 biometric app lock toggle.
+/// [onQuietHoursTap] surfaces the E12.2 quiet-hours settings once the
+/// composition root wires a store; null hides the entry.
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key, this.onQuietHoursTap});
+  const ProfileScreen({
+    super.key,
+    this.appLockController,
+    this.onQuietHoursTap,
+  });
 
+  final AppLockController? appLockController;
   final VoidCallback? onQuietHoursTap;
 
   @override
@@ -37,9 +44,50 @@ class ProfileScreen extends StatelessWidget {
                   onTap: onQuietHoursTap,
                 ),
               ],
+              if (appLockController != null) ...[
+                const SizedBox(height: 24),
+                _AppLockTile(controller: appLockController!),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The E13.1 settings toggle. Enabling runs one authentication first (see
+/// [AppLockController.setEnabled]); when that fails the switch stays off and
+/// a snackbar explains the degradation path instead of arming a dead lock.
+class _AppLockTile extends StatelessWidget {
+  const _AppLockTile({required this.controller});
+
+  final AppLockController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) => SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('Biometric app lock'),
+        subtitle: const Text(
+          'Require a biometric or device credential check to open Gitsune',
+        ),
+        value: controller.enabled,
+        onChanged: (value) async {
+          final changed = await controller.setEnabled(value);
+          if (value && !changed && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Could not verify. Set up a device screen lock or '
+                  'biometrics and try again.',
+                ),
+              ),
+            );
+          }
+        },
       ),
     );
   }

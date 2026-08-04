@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/icons/gs_icons.dart';
+import '../../core/lock/app_lock.dart';
 import '../../core/notifications/quiet_hours.dart';
 import '../../core/repository/offline_first_repository.dart';
 import '../../core/repository/recently_viewed_repository.dart';
@@ -53,8 +54,10 @@ import '../todos/todos_screen.dart';
 /// request, and pipeline detail screens serve recently viewed items offline,
 /// and [commentDraftQueue] routes issue comment sends through the offline
 /// outbox. [quietHoursStore] enables the Profile tab's quiet-hours entry and
-/// its settings route.
+/// its settings route. [appLockController] surfaces the E13.1 app lock toggle
+/// on the Profile tab.
 GoRouter buildAppRouter({
+  AppLockController? appLockController,
   HomeTileOrderStore? homeTileOrderStore,
   QuietHoursStore? quietHoursStore,
   IssuesRepository? issuesRepository,
@@ -114,6 +117,7 @@ GoRouter buildAppRouter({
               GoRoute(
                 path: '/profile',
                 builder: (context, state) => ProfileScreen(
+                  appLockController: appLockController,
                   onQuietHoursTap: quietHoursStore == null
                       ? null
                       : () => context.push('/settings/quiet-hours'),

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/database/app_database.dart';
+import 'core/lock/app_lock.dart';
+import 'core/lock/app_lock_gate.dart';
 import 'core/repository/offline_first_repository.dart';
 import 'core/theme/app_theme.dart';
 import 'features/issues/data/issues_repository.dart';
@@ -13,8 +15,14 @@ void main() {
 }
 
 class GitsuneApp extends StatefulWidget {
-  const GitsuneApp({super.key, this.issuesRepository, this.todosRepository});
+  const GitsuneApp({
+    super.key,
+    this.appLockController,
+    this.issuesRepository,
+    this.todosRepository,
+  });
 
+  final AppLockController? appLockController;
   final IssuesRepository? issuesRepository;
   final OfflineFirstRepository<List<TodoItem>>? todosRepository;
 
@@ -23,14 +31,25 @@ class GitsuneApp extends StatefulWidget {
 }
 
 class _GitsuneAppState extends State<GitsuneApp> {
+  late final AppLockController _appLock =
+      widget.appLockController ??
+      AppLockController(authenticator: LocalAuthBiometricAuthenticator());
   late final GoRouter _router = buildAppRouter(
+    appLockController: _appLock,
     issuesRepository: widget.issuesRepository,
     todosRepository: widget.todosRepository,
   );
 
   @override
+  void initState() {
+    super.initState();
+    _appLock.load();
+  }
+
+  @override
   void dispose() {
     _router.dispose();
+    if (widget.appLockController == null) _appLock.dispose();
     super.dispose();
   }
 
@@ -40,6 +59,8 @@ class _GitsuneAppState extends State<GitsuneApp> {
       title: 'Gitsune',
       theme: buildAppTheme(),
       routerConfig: _router,
+      builder: (context, child) =>
+          AppLockGate(controller: _appLock, child: child!),
     );
   }
 }
