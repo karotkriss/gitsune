@@ -9,6 +9,7 @@ import '../../core/database/app_database.dart';
 import '../../core/glass/glass_overlays.dart';
 import '../../core/glass/glass_surface.dart';
 import '../../core/icons/gs_icons.dart';
+import '../../core/illustrations/gs_illustrations.dart';
 import '../../core/repository/offline_first_repository.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -177,6 +178,9 @@ class _TodosScreenState extends State<TodosScreen> {
             SliverFillRemaining(
               hasScrollBody: false,
               child: _TodosMessage(
+                illustration: filtered
+                    ? null
+                    : const GsIllustration(GsIllustrationArt.emptyTodosAllDone),
                 title: filtered
                     ? 'No ${todoReasonLabel(_selectedReason!).toLowerCase()} to-dos.'
                     : 'All done.',
@@ -647,10 +651,12 @@ class _TodosMessage extends StatelessWidget {
   const _TodosMessage({
     required this.title,
     required this.detail,
+    this.illustration,
     this.actionLabel,
     this.onAction,
   });
 
+  final Widget? illustration;
   final String title;
   final String detail;
   final String? actionLabel;
@@ -666,6 +672,10 @@ class _TodosMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (illustration != null) ...[
+              ExcludeSemantics(child: illustration),
+              const SizedBox(height: 20),
+            ],
             Text(
               title,
               textAlign: TextAlign.center,
