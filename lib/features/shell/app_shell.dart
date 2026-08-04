@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/database/app_database.dart';
 import '../../core/icons/gs_icons.dart';
 import '../../core/lock/app_lock.dart';
+import '../../core/network/graphql_subscriptions.dart';
 import '../../core/notifications/quiet_hours.dart';
 import '../../core/repository/offline_first_repository.dart';
 import '../../core/repository/recently_viewed_repository.dart';
@@ -55,11 +56,13 @@ import '../todos/todos_screen.dart';
 /// and [commentDraftQueue] routes issue comment sends through the offline
 /// outbox. [quietHoursStore] enables the Profile tab's quiet-hours entry and
 /// its settings route. [appLockController] surfaces the E13.1 app lock toggle
-/// on the Profile tab.
+/// on the Profile tab. [graphQlSubscriptions] gives detail screens foreground
+/// live updates over the E12.3 GraphQL subscription transport.
 GoRouter buildAppRouter({
   AppLockController? appLockController,
   HomeTileOrderStore? homeTileOrderStore,
   QuietHoursStore? quietHoursStore,
+  GraphQlSubscriptions? graphQlSubscriptions,
   IssuesRepository? issuesRepository,
   CommentDraftQueue? commentDraftQueue,
   MergeRequestsRepository? mergeRequestsRepository,
@@ -172,6 +175,7 @@ GoRouter buildAppRouter({
               repository: issuesRepository,
               recentlyViewedCache: recentlyViewedCache,
               draftQueue: commentDraftQueue,
+              subscriptions: graphQlSubscriptions,
               initialIssue: state.extra is Issue ? state.extra! as Issue : null,
             );
           },

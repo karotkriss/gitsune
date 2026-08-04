@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/icons/gs_icons.dart';
+import '../../../core/network/foreground_subscription.dart';
+import '../../../core/network/graphql_subscriptions.dart';
 import '../../../core/repository/recently_viewed_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/comment_draft_queue.dart';
@@ -20,6 +22,7 @@ class IssueDetailScreen extends StatefulWidget {
     required this.repository,
     this.recentlyViewedCache,
     this.draftQueue,
+    this.subscriptions,
     this.initialIssue,
     this.now,
   });
@@ -36,6 +39,11 @@ class IssueDetailScreen extends StatefulWidget {
   /// Routes comment sends through the E14.2 offline outbox; null keeps the
   /// direct network send until the composition root wires the queue.
   final CommentDraftQueue? draftQueue;
+
+  /// Live-updates the issue title from server events while the screen is
+  /// visible (E12.3); null keeps the screen refresh-only until the
+  /// composition root wires the transport.
+  final GraphQlSubscriptions? subscriptions;
   final Issue? initialIssue;
   final DateTime? now;
 
@@ -70,6 +78,8 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   List<CommentDraft> _drafts = const [];
   StreamSubscription<List<CommentDraft>>? _draftsSubscription;
   StreamSubscription<SentCommentDraft>? _sentSubscription;
+  ForegroundSubscription<Map<String, dynamic>>? _liveTitleUpdates;
+  int? _liveIssueId;
 
   @override
   void initState() {
@@ -78,7 +88,56 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
     _scrollController.addListener(_handleScroll);
     _rebuildRecentIssue();
     _subscribeDrafts();
+    _ensureLiveUpdates();
     _reload();
+  }
+
+  /// GitLab's `issuableTitleUpdated` GraphQL subscription: the server pushes
+  /// the new title whenever anyone renames the issue.
+  static const _titleUpdatedQuery = r'''
+subscription issuableTitleUpdated($issuableId: IssuableID!) {
+  issuableTitleUpdated(issuableId: $issuableId) {
+    ... on Issue {
+      title
+    }
+  }
+}
+''';
+
+  /// Starts the foreground live-update subscription once the issue's global
+  /// id is known (the subscription addresses the issue by GID, which the
+  /// route's project id and iid cannot provide).
+  void _ensureLiveUpdates() {
+    final subscriptions = widget.subscriptions;
+    final issueId = _issue?.id;
+    if (subscriptions == null || issueId == null || _liveIssueId == issueId) {
+      return;
+    }
+    _liveTitleUpdates?.dispose();
+    _liveIssueId = issueId;
+    _liveTitleUpdates = ForegroundSubscription(
+      subscribe: () => subscriptions.subscribe(
+        _titleUpdatedQuery,
+        variables: {'issuableId': 'gid://gitlab/Issue/$issueId'},
+      ),
+      onEvent: _applyLiveTitle,
+    );
+  }
+
+  void _disposeLiveUpdates() {
+    _liveTitleUpdates?.dispose();
+    _liveTitleUpdates = null;
+    _liveIssueId = null;
+  }
+
+  void _applyLiveTitle(Map<String, dynamic> data) {
+    final title =
+        (data['issuableTitleUpdated'] as Map<String, dynamic>?)?['title'];
+    final issue = _issue;
+    if (title is! String || issue == null || title == issue.title) return;
+    setState(
+      () => _issue = Issue.fromJson({...issue.toJson(), 'title': title}),
+    );
   }
 
   void _subscribeDrafts() {
@@ -129,6 +188,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         oldWidget.issueIid != widget.issueIid ||
         oldWidget.repository != widget.repository ||
         oldWidget.draftQueue != widget.draftQueue ||
+        oldWidget.subscriptions != widget.subscriptions ||
         cacheChanged) {
       _issueGeneration++;
       _issueStateRevision++;
@@ -145,6 +205,8 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
       _rebuildRecentIssue();
       _unsubscribeDrafts();
       _subscribeDrafts();
+      _disposeLiveUpdates();
+      _ensureLiveUpdates();
       _reload();
     }
   }
@@ -152,6 +214,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
   @override
   void dispose() {
     _unsubscribeDrafts();
+    _disposeLiveUpdates();
     _scrollController
       ..removeListener(_handleScroll)
       ..dispose();
@@ -243,6 +306,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
           _issue = cached;
           _issueLoading = true;
         });
+        _ensureLiveUpdates();
       }
     }
     try {
@@ -264,6 +328,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
         _issue = issue;
         _issueLoading = false;
       });
+      _ensureLiveUpdates();
     } on Object {
       if (!mounted ||
           generation != _generation ||
