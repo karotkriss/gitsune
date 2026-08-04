@@ -35,13 +35,14 @@ void main() {
   tearDown(() => controller.dispose());
 
   test('load with nothing persisted leaves the lock off and open', () async {
+    expect(controller.loaded, isFalse);
     await controller.load();
+    expect(controller.loaded, isTrue);
     expect(controller.enabled, isFalse);
     expect(controller.locked, isFalse);
   });
 
-  test('load with the lock enabled starts locked (cold-launch gate)',
-      () async {
+  test('load with the lock enabled starts locked (cold-launch gate)', () async {
     storage.values['gitsune.appLock.enabled'] = 'true';
     await controller.load();
     expect(controller.enabled, isTrue);
@@ -67,8 +68,7 @@ void main() {
     expect(storage.values['gitsune.appLock.enabled'], 'true');
   });
 
-  test('enabling on an unsupported device refuses without prompting',
-      () async {
+  test('enabling on an unsupported device refuses without prompting', () async {
     authenticator.supported = false;
     expect(await controller.setEnabled(true), isFalse);
     expect(authenticator.authCalls, 0);
@@ -83,6 +83,17 @@ void main() {
     expect(storage.values, isEmpty);
   });
 
+  test('an enable write failure leaves state unchanged and surfaces', () async {
+    storage.writeError = StateError('keystore unavailable');
+
+    await expectLater(controller.setEnabled(true), throwsStateError);
+
+    expect(controller.loaded, isFalse);
+    expect(controller.enabled, isFalse);
+    expect(controller.locked, isFalse);
+    expect(storage.values, isEmpty);
+  });
+
   test('disabling persists and opens the gate without a check', () async {
     await controller.setEnabled(true);
     authenticator.authCalls = 0;
@@ -91,6 +102,20 @@ void main() {
     expect(controller.enabled, isFalse);
     expect(storage.values['gitsune.appLock.enabled'], 'false');
   });
+
+  test(
+    'a disable write failure preserves enabled state and surfaces',
+    () async {
+      await controller.setEnabled(true);
+      storage.writeError = StateError('keystore unavailable');
+
+      await expectLater(controller.setEnabled(false), throwsStateError);
+
+      expect(controller.enabled, isTrue);
+      expect(controller.locked, isFalse);
+      expect(storage.values['gitsune.appLock.enabled'], 'true');
+    },
+  );
 
   test('lock only arms while enabled', () async {
     controller.lock();

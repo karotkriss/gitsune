@@ -78,7 +78,11 @@ class AppLockController extends ChangeNotifier {
 
   bool _enabled = false;
   bool _locked = false;
+  bool _loaded = false;
   bool _unlocking = false;
+
+  /// Whether the persisted setting has been read.
+  bool get loaded => _loaded;
 
   /// Whether the lock is switched on in settings.
   bool get enabled => _enabled;
@@ -96,6 +100,7 @@ class AppLockController extends ChangeNotifier {
     } catch (_) {}
     _enabled = enabled;
     _locked = enabled;
+    _loaded = true;
     notifyListeners();
   }
 
@@ -111,11 +116,10 @@ class AppLockController extends ChangeNotifier {
       );
       if (result != BiometricResult.success) return false;
     }
+    await _storage.write(key: _enabledKey, value: '$value');
     _enabled = value;
     _locked = false;
-    try {
-      await _storage.write(key: _enabledKey, value: '$value');
-    } catch (_) {}
+    _loaded = true;
     notifyListeners();
     return true;
   }

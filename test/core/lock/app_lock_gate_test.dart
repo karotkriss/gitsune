@@ -38,6 +38,39 @@ void main() {
 
   Finder lockScreen() => find.text('Gitsune is locked');
 
+  testWidgets('content stays covered until the persisted setting is loaded', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    var presses = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: AppLockGate(
+          controller: controller,
+          child: Center(
+            child: FilledButton(
+              onPressed: () => presses += 1,
+              child: const Text('Sensitive action'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.bySemanticsLabel('Sensitive action'), findsNothing);
+    await tester.tap(find.text('Sensitive action'), warnIfMissed: false);
+    expect(presses, 0);
+
+    await controller.load();
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.bySemanticsLabel('Sensitive action'), findsOneWidget);
+    semantics.dispose();
+  });
+
   testWidgets('enabled lock gates a cold launch until the check passes', (
     tester,
   ) async {

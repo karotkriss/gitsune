@@ -70,20 +70,29 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final covered = !widget.controller.loaded || widget.controller.locked;
     return Stack(
       fit: StackFit.expand,
       children: [
         ExcludeSemantics(
-          excluding: widget.controller.locked,
-          child: IgnorePointer(
-            ignoring: widget.controller.locked,
-            child: widget.child,
-          ),
+          excluding: covered,
+          child: IgnorePointer(ignoring: covered, child: widget.child),
         ),
-        if (widget.controller.locked)
+        if (!widget.controller.loaded)
+          const _LoadingScreen()
+        else if (widget.controller.locked)
           _LockScreen(onUnlock: widget.controller.unlock),
       ],
     );
+  }
+}
+
+class _LoadingScreen extends StatelessWidget {
+  const _LoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }
 

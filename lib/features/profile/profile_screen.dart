@@ -76,7 +76,19 @@ class _AppLockTile extends StatelessWidget {
         ),
         value: controller.enabled,
         onChanged: (value) async {
-          final changed = await controller.setEnabled(value);
+          late final bool changed;
+          try {
+            changed = await controller.setEnabled(value);
+          } catch (_) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Could not save the app lock setting.'),
+                ),
+              );
+            }
+            return;
+          }
           if (value && !changed && context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(

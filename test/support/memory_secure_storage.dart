@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// guarantee, without ever touching a real keyring).
 class MemorySecureStorage extends FlutterSecureStorage {
   final values = <String, String>{};
+  Object? writeError;
 
   @override
   Future<void> write({
@@ -17,6 +18,7 @@ class MemorySecureStorage extends FlutterSecureStorage {
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
   }) async {
+    if (writeError case final error?) throw error;
     if (value == null) {
       values.remove(key);
     } else {
