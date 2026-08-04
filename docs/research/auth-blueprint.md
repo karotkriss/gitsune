@@ -130,10 +130,14 @@ Access token, refresh token, and expiry are encoded in one JSON value and replac
 Tokens without a refresh token are sent as-is even after expiry so the resulting 401 surfaces as the authentication failure.
 Refresh is single-flight per account, so concurrent requests await one refresh instead of spending the same single-use refresh token more than once.
 A 401 refresh call carries the rejected access token; if another request has already stored a newer token, a straggler reuses that token without refreshing again.
-A failed refresh returns no token and leaves the stored value untouched; E2.6 owns marking that account for re-authentication.
+A failed refresh returns no token and leaves the stored value untouched.
+Only an explicit OAuth authentication rejection (`invalid_client`, `invalid_grant`, or `unauthorized_client` in a 400 or 401 response) marks that account as needing re-authentication.
+Connectivity failures, timeouts, unrelated server responses, and malformed successful responses leave the account unmarked because they do not establish that its credentials were rejected.
 
-When a refresh genuinely fails (the user revoked the app, an administrator rotated credentials, or a single-sign-on session expired), Gitsune does not sign the user out of every connected account.
-The E2.6 session model will mark only that one account as needing re-authentication, keep it visible in the account switcher, and prompt re-authentication scoped to that account while preserving the current screen.
+The session registry stores every signed-in account under the composite key of instance host and account ID, so the same account ID can coexist on different instances.
+When an instance rejects one account's refresh, the registry marks only that account and keeps its row available to the account switcher; every other account remains untouched and usable.
+Signing in to the marked account again clears only its re-authentication mark and preserves its switcher position.
+Composition-root wiring and the account-management interface remain deferred to E13.2.
 
 **The Personal Access Token fallback stays deliberately minimal.**
 It exists specifically for the one structural case where OAuth-first cannot work: an instance that forbids user-level OAuth application creation, where the signed-in user is not an administrator either.
