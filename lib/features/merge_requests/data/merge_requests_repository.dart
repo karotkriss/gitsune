@@ -42,6 +42,18 @@ abstract interface class MergeRequestsRepository {
 
   Future<MergeRequestApprovals> loadApprovals(int projectId, int mergeIid);
 
+  /// Approves the merge request, returning the updated approval state as the
+  /// server shaped it.
+  Future<MergeRequestApprovals> approve(int projectId, int mergeIid);
+
+  /// Revokes the current user's approval, returning the updated approval
+  /// state as the server shaped it.
+  Future<MergeRequestApprovals> unapprove(int projectId, int mergeIid);
+
+  /// Merges the merge request, returning it as the server shaped it after
+  /// the merge.
+  Future<MergeRequest> merge(int projectId, int mergeIid);
+
   /// Loads the merge request's full multi-file diff, following every
   /// pagination link, in the order GitLab returns the files.
   Future<List<DiffFile>> loadDiffs(int projectId, int mergeIid);
@@ -201,6 +213,30 @@ class GitLabMergeRequestsRepository implements MergeRequestsRepository {
       _apiUri('projects/$projectId/merge_requests/$mergeIid/approvals'),
     );
     return MergeRequestApprovals.fromJson(response.data!);
+  }
+
+  @override
+  Future<MergeRequestApprovals> approve(int projectId, int mergeIid) async {
+    final response = await _client.postUri<Map<String, dynamic>>(
+      _apiUri('projects/$projectId/merge_requests/$mergeIid/approve'),
+    );
+    return MergeRequestApprovals.fromJson(response.data!);
+  }
+
+  @override
+  Future<MergeRequestApprovals> unapprove(int projectId, int mergeIid) async {
+    final response = await _client.postUri<Map<String, dynamic>>(
+      _apiUri('projects/$projectId/merge_requests/$mergeIid/unapprove'),
+    );
+    return MergeRequestApprovals.fromJson(response.data!);
+  }
+
+  @override
+  Future<MergeRequest> merge(int projectId, int mergeIid) async {
+    final response = await _client.putUri<Map<String, dynamic>>(
+      _apiUri('projects/$projectId/merge_requests/$mergeIid/merge'),
+    );
+    return MergeRequest.fromJson(response.data!);
   }
 
   @override

@@ -24,22 +24,21 @@ class FixtureMergeRequestsRepository implements MergeRequestsRepository {
          'merge_request_142_pipelines_page1',
          'merge_request_142_pipelines_page2',
        ]),
-       _approvals = MergeRequestApprovals.fromJson(
-         Map<String, dynamic>.from(
-           Fixtures.json('merge_request_142_approvals') as Map,
-         ),
-       );
+       _approvals = _approvalsFrom('merge_request_142_approvals');
 
   final List<String> diffFixtures;
   final List<String> discussionFixtures;
   final List<MergeRequest> _firstPage;
   final List<MergeRequest> _secondPage;
-  final MergeRequest _mergeRequest;
+  MergeRequest _mergeRequest;
   final List<MergeRequestPipeline> _pipelines;
-  final MergeRequestApprovals _approvals;
+  MergeRequestApprovals _approvals;
   int firstPageLoads = 0;
   int nextPageLoads = 0;
   int detailLoads = 0;
+  int approveCalls = 0;
+  int unapproveCalls = 0;
+  int mergeCalls = 0;
   String? lastCreatedBody;
   DiffPosition? lastCreatedPosition;
   List<Map<String, dynamic>>? _rawDiscussions;
@@ -86,6 +85,24 @@ class FixtureMergeRequestsRepository implements MergeRequestsRepository {
     int mergeIid,
   ) async {
     return _approvals;
+  }
+
+  @override
+  Future<MergeRequestApprovals> approve(int projectId, int mergeIid) async {
+    approveCalls++;
+    return _approvals = _approvalsFrom('merge_request_142_approved');
+  }
+
+  @override
+  Future<MergeRequestApprovals> unapprove(int projectId, int mergeIid) async {
+    unapproveCalls++;
+    return _approvals = _approvalsFrom('merge_request_142_unapproved');
+  }
+
+  @override
+  Future<MergeRequest> merge(int projectId, int mergeIid) async {
+    mergeCalls++;
+    return _mergeRequest = _mergeRequestFrom('merge_request_142_merged');
   }
 
   @override
@@ -148,6 +165,11 @@ List<MergeRequest> _mergeRequestsFrom(String fixture) =>
 MergeRequest _mergeRequestFrom(String fixture) => MergeRequest.fromJson(
   Map<String, dynamic>.from(Fixtures.json(fixture) as Map),
 );
+
+MergeRequestApprovals _approvalsFrom(String fixture) =>
+    MergeRequestApprovals.fromJson(
+      Map<String, dynamic>.from(Fixtures.json(fixture) as Map),
+    );
 
 List<MergeRequestPipeline> _pipelinesFrom(List<String> fixtures) => fixtures
     .expand((fixture) => Fixtures.json(fixture) as List)

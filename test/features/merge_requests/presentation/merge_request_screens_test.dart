@@ -99,8 +99,10 @@ void main() {
     expect(find.text('4 files changed'), findsOneWidget);
     expect(find.text('Pipelines'), findsOneWidget);
     expect(find.text('Approvals'), findsOneWidget);
-    expect(find.text('1 of 2 approved'), findsOneWidget);
-    expect(find.byType(CiStatusBadge), findsNWidgets(4));
+    // Once in the merge box, once as the approvals section summary.
+    expect(find.text('1 of 2 approved'), findsNWidgets(2));
+    // Three pipeline rows, the pipelines section summary, and the merge box.
+    expect(find.byType(CiStatusBadge), findsNWidgets(5));
     expect(
       find.textContaining('Pipeline #88123', findRichText: true),
       findsOneWidget,
@@ -117,6 +119,10 @@ void main() {
       isTrue,
     );
 
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('pipelines-section-toggle')),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('pipelines-section-toggle')));
     await tester.pumpAndSettle();
     expect(
@@ -156,6 +162,12 @@ void main() {
     expect(find.text('4 files changed'), findsOneWidget);
     expect(find.text('Unable to load Pipelines.'), findsOneWidget);
     expect(find.text('Unable to load Approvals.'), findsOneWidget);
+    expect(find.text('Pipeline state unavailable'), findsOneWidget);
+    expect(find.text('Approval state unavailable'), findsOneWidget);
+    final mergeButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('merge-button')),
+    );
+    expect(mergeButton.onPressed, isNull);
   });
 
   testWidgets(

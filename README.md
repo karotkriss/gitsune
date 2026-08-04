@@ -43,7 +43,8 @@ Use the same `--flavor` option with Android `flutter build` commands.
 
 ## Testing
 
-`flutter test` runs the whole suite, unit, widget, and golden tests alike, with no external network access and no secrets required.
+`flutter test` runs the complete host-side suite, including unit, widget, and golden tests, with no external network access and no secrets required.
+Device-side tests under `integration_test/` run separately against a device or emulator, using the in-process fake GitLab server rather than a live instance.
 The default concurrent reporter can attribute progress lines to whichever test file is still running while shorter files finish silently in the background; the final test count and pass or fail result remain authoritative.
 Rerun with `flutter test --concurrency=1` when you need every file's tests printed individually.
 GitLab is always faked: bulk-data tests replay recorded, scrubbed JSON fixtures from `test/fixtures/` via `test/support/fixtures.dart`, and tests that need real HTTP semantics use the in-process `test/support/fake_gitlab_server.dart`, which binds to loopback only.

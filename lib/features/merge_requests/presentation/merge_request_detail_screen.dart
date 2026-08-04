@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../data/merge_request_models.dart';
 import '../data/merge_requests_repository.dart';
 import 'merge_request_components.dart';
+import 'merge_request_merge_box.dart';
 
 class MergeRequestDetailScreen extends StatefulWidget {
   const MergeRequestDetailScreen({
@@ -55,6 +56,10 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
   bool _loadingMorePipelines = false;
   bool _approvalsLoading = true;
   bool _approvalsFailed = false;
+  int? _unresolvedCount;
+  bool _discussionsLoading = true;
+  bool _discussionsFailed = false;
+  bool _actionInFlight = false;
   int _generation = 0;
   RecentItemRepository<MergeRequest>? _recentMergeRequest;
 
@@ -75,9 +80,11 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
         oldWidget.mergeIid != widget.mergeIid ||
         oldWidget.repository != widget.repository ||
         cacheChanged) {
+      _actionInFlight = false;
       _mergeRequest = cacheChanged ? null : widget.initialMergeRequest;
       _pipelines = null;
       _approvals = null;
+      _unresolvedCount = null;
       _rebuildRecentMergeRequest();
       _load();
     }
@@ -103,6 +110,7 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
   }
 
   Future<void> _load() async {
+    if (_actionInFlight) return;
     final generation = ++_generation;
     setState(() {
       _loading = true;
@@ -112,11 +120,14 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
       _loadingMorePipelines = false;
       _approvalsLoading = true;
       _approvalsFailed = false;
+      _discussionsLoading = true;
+      _discussionsFailed = false;
     });
     await Future.wait([
       _loadCore(generation),
       _loadPipelines(generation),
       _loadApprovals(generation),
+      _loadUnresolvedCount(generation),
     ]);
   }
 
@@ -197,6 +208,101 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
         _approvalsLoading = false;
         _approvalsFailed = true;
       });
+    }
+  }
+
+  Future<void> _loadUnresolvedCount(int generation) async {
+    try {
+      final discussions = await widget.repository.loadDiscussions(
+        widget.projectId,
+        widget.mergeIid,
+      );
+      if (!mounted || generation != _generation) return;
+      setState(() {
+        _unresolvedCount = discussions
+            .where(
+              (discussion) => discussion.resolvable && !discussion.resolved,
+            )
+            .length;
+        _discussionsLoading = false;
+      });
+    } on Object {
+      if (!mounted || generation != _generation) return;
+      setState(() {
+        _unresolvedCount = null;
+        _discussionsLoading = false;
+        _discussionsFailed = true;
+      });
+    }
+  }
+
+  Future<void> _approve() async {
+    if (_actionInFlight) return;
+    final generation = _generation;
+    setState(() => _actionInFlight = true);
+    try {
+      final approvals = await widget.repository.approve(
+        widget.projectId,
+        widget.mergeIid,
+      );
+      if (!mounted || generation != _generation) return;
+      setState(() {
+        _approvals = approvals;
+        _actionInFlight = false;
+      });
+    } on Object {
+      if (!mounted || generation != _generation) return;
+      setState(() => _actionInFlight = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to approve this merge request.')),
+      );
+    }
+  }
+
+  Future<void> _unapprove() async {
+    if (_actionInFlight) return;
+    final generation = _generation;
+    setState(() => _actionInFlight = true);
+    try {
+      final approvals = await widget.repository.unapprove(
+        widget.projectId,
+        widget.mergeIid,
+      );
+      if (!mounted || generation != _generation) return;
+      setState(() {
+        _approvals = approvals;
+        _actionInFlight = false;
+      });
+    } on Object {
+      if (!mounted || generation != _generation) return;
+      setState(() => _actionInFlight = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to revoke your approval.')),
+      );
+    }
+  }
+
+  Future<void> _merge() async {
+    if (_actionInFlight) return;
+    final generation = _generation;
+    setState(() => _actionInFlight = true);
+    try {
+      final merged = await widget.repository.merge(
+        widget.projectId,
+        widget.mergeIid,
+      );
+      await _recentMergeRequest?.writeThrough(merged);
+      if (!mounted || generation != _generation) return;
+      setState(() {
+        _mergeRequest = merged;
+        _actionInFlight = false;
+      });
+    } on Object {
+      if (!mounted || generation != _generation) return;
+      setState(() => _actionInFlight = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to merge this merge request.')),
+      );
     }
   }
 
@@ -289,6 +395,25 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
                             onTap: widget.onShowChanges == null
                                 ? null
                                 : () => widget.onShowChanges!(mergeRequest),
+                          ),
+                          const SizedBox(height: 12),
+                          MergeRequestMergeBox(
+                            mergeRequest: mergeRequest,
+                            mergeRequestLoading: _loading,
+                            mergeRequestFailed: _failed,
+                            pipelineStatus: _pipelines?.firstOrNull?.status,
+                            pipelinesLoading: _pipelinesLoading,
+                            pipelinesFailed: _pipelinesFailed,
+                            approvals: _approvals,
+                            approvalsLoading: _approvalsLoading,
+                            approvalsFailed: _approvalsFailed,
+                            unresolvedCount: _unresolvedCount,
+                            discussionsLoading: _discussionsLoading,
+                            discussionsFailed: _discussionsFailed,
+                            actionInFlight: _actionInFlight,
+                            onApprove: _approve,
+                            onUnapprove: _unapprove,
+                            onMerge: _merge,
                           ),
                           const SizedBox(height: 12),
                           _PipelineSectionState(

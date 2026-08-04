@@ -4,15 +4,23 @@
   "project_id": 7,
   "title": "Add instance switcher sheet",
   "approvals_required": 2,
-  "approvals_left": 1,
-  "user_has_approved": false,
-  "user_can_approve": true,
+  "approvals_left": 0,
+  "user_has_approved": true,
+  "user_can_approve": false,
   "approved_by": [
     {
       "user": {
         "id": 19,
         "username": "priya",
         "name": "Priya Sharma",
+        "avatar_url": null
+      }
+    },
+    {
+      "user": {
+        "id": 23,
+        "username": "marin",
+        "name": "Marin Petrova",
         "avatar_url": null
       }
     }
