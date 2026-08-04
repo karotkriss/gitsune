@@ -57,6 +57,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - ADR 0002's layered notification model (never a project-operated relay) starts in `lib/core/notifications/`: `TodosPoller` polls `GET /todos` conditionally with the per-account ETag and last-seen ids persisted in the `TodoPollStates` table, and fires only genuinely new to-dos through the `TodoNotifier` seam (`LocalTodoNotifier` is the on-device `flutter_local_notifications` implementation, which is why `android/app/build.gradle.kts` enables core-library desugaring).
   Scheduling hides behind the `PollScheduler` seam so later platform scheduling work can swap the baseline foreground `TimerPollScheduler` for real background scheduling without touching the poller.
 - A widget test that awaits a real network round trip (fake server plus `tester.runAsync`) must wait on the visible UI condition (e.g. the submit spinner disappearing), never a fixed real-time delay, because full-suite concurrency can overrun any fixed sleep (see `settleNetwork` in `test/features/sign_in/pat_sign_in_screen_test.dart`).
+- `integration_test/` files run device-side, where `test/fixtures/` does not exist: inline their JSON payloads instead of using `Fixtures`, and note the in-process `FakeGitLabServer` still works there (loopback inside the app process), so even device tests keep the no-live-instance guarantee (see `integration_test/merge_request_review_actions_test.dart`).
 
 ## Maintaining this file
 
