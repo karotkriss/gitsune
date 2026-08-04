@@ -5,6 +5,30 @@ import 'account_scope.dart';
 
 part 'app_database.g.dart';
 
+class MicrosecondDateTimeConverter extends TypeConverter<DateTime, int> {
+  const MicrosecondDateTimeConverter();
+
+  @override
+  DateTime fromSql(int fromDb) => DateTime.fromMicrosecondsSinceEpoch(fromDb);
+
+  @override
+  int toSql(DateTime value) => value.microsecondsSinceEpoch;
+}
+
+/// The signed-in account registry (E2.6): one row per session, keyed by the
+/// composite key, so accounts across instances coexist. [needsReauth] marks
+/// a session whose token refresh the instance rejected; the row stays
+/// registered so the switcher keeps listing it and re-authentication can be
+/// scoped to just that account. See `core/auth/account_sessions.dart`.
+class Accounts extends Table with AccountScoped {
+  BoolColumn get needsReauth => boolean().withDefault(const Constant(false))();
+  IntColumn get addedAt =>
+      integer().map(const MicrosecondDateTimeConverter())();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId};
+}
+
 /// A generic per-account local cache, scoped by [AccountScoped]. This is the
 /// foundation layer's proof table: it demonstrates the scoping pattern that
 /// later feature tables (E3.3+) follow, without owning any feature's data.
@@ -187,6 +211,7 @@ class QuietHoursSettings extends Table with AccountScoped {
 
 @DriftDatabase(
   tables: [
+    Accounts,
     LocalCacheEntries,
     CurrentUserProfiles,
     PaginationCursors,
@@ -206,7 +231,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -240,6 +265,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 11) {
         await migrator.createTable(quietHoursSettings);
+      }
+      if (from < 12) {
+        await migrator.createTable(accounts);
       }
     },
   );

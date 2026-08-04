@@ -23,6 +23,9 @@ void main() {
   late TokenRefreshCoordinator coordinator;
   late Dio api;
 
+  final reauthRequired = <AccountKey>[];
+  setUp(reauthRequired.clear);
+
   setUp(() async {
     server = await FakeGitLabServer.start();
     store = SecureTokenStore(storage: MemorySecureStorage());
@@ -33,6 +36,7 @@ void main() {
         authorizeEndpoint: server.baseUri.replace(path: '/oauth/authorize'),
         tokenEndpoint: server.baseUri.replace(path: '/oauth/token'),
       ),
+      onReauthRequired: (account) async => reauthRequired.add(account),
     );
     api = createGitLabClient(
       account: account,
@@ -252,9 +256,10 @@ void main() {
 
     expect(refreshCalls, 1);
     expect(apiCalls, 1);
-    // The failed refresh did not clobber the stored session; E2.6 decides
-    // how to mark the account for re-auth.
+    // The failed refresh did not clobber the stored session, and it marked
+    // exactly this account for re-auth (E2.6).
     expect((await store.read(account))?.refreshToken, 'rt-1');
+    expect(reauthRequired, [account]);
   });
 
   test('a failed lazy refresh is not attempted again after the 401', () async {
@@ -284,6 +289,71 @@ void main() {
 
     expect(refreshCalls, 1);
     expect(apiCalls, 1);
+    expect((await store.read(account))?.refreshToken, 'rt-1');
+    expect(reauthRequired, [account]);
+  });
+
+  test('an unreachable token endpoint (offline) fails the refresh without '
+      'marking the account for re-auth', () async {
+    // A started-then-closed server yields a connection-refused port: the
+    // refresh never reached the instance, so nothing was rejected.
+    final offlineServer = await FakeGitLabServer.start();
+    final offlineUri = offlineServer.baseUri;
+    await offlineServer.close();
+    final offlineCoordinator = TokenRefreshCoordinator(
+      tokenStore: store,
+      configFor: (_) => GitLabOAuthConfig(
+        clientId: 'test-client',
+        authorizeEndpoint: offlineUri.replace(path: '/oauth/authorize'),
+        tokenEndpoint: offlineUri.replace(path: '/oauth/token'),
+      ),
+      onReauthRequired: (account) async => reauthRequired.add(account),
+    );
+    await store.save(account, seedTokens(expired: true));
+
+    expect(await offlineCoordinator.refreshToken(account, 'at-1'), isNull);
+    expect(reauthRequired, isEmpty);
+    expect((await store.read(account))?.refreshToken, 'rt-1');
+  });
+
+  for (final statusCode in [429, 500]) {
+    test('a $statusCode token endpoint response does not mark the account '
+        'for re-auth', () async {
+      server.handle('POST /oauth/token', (request) async {
+        request.response.statusCode = statusCode;
+        request.response.write(jsonEncode({'error': 'server_error'}));
+        await request.response.close();
+      });
+      await store.save(account, seedTokens(expired: true));
+
+      expect(await coordinator.refreshToken(account, 'at-1'), isNull);
+      expect(reauthRequired, isEmpty);
+      expect((await store.read(account))?.refreshToken, 'rt-1');
+    });
+  }
+
+  test('a receive timeout does not mark the account for re-auth', () async {
+    final timeoutDio = Dio()
+      ..interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) => handler.reject(
+            DioException(
+              requestOptions: options,
+              type: DioExceptionType.receiveTimeout,
+            ),
+          ),
+        ),
+      );
+    final timeoutCoordinator = TokenRefreshCoordinator(
+      tokenStore: store,
+      configFor: coordinator.configFor,
+      dio: timeoutDio,
+      onReauthRequired: (account) async => reauthRequired.add(account),
+    );
+    await store.save(account, seedTokens(expired: true));
+
+    expect(await timeoutCoordinator.refreshToken(account, 'at-1'), isNull);
+    expect(reauthRequired, isEmpty);
     expect((await store.read(account))?.refreshToken, 'rt-1');
   });
 
@@ -325,6 +395,9 @@ void main() {
       }
 
       expect(refreshCalls, responses.length);
+      // A malformed body is a server anomaly, not a rejection of the grant,
+      // so no account gets marked for re-auth.
+      expect(reauthRequired, isEmpty);
     },
   );
 

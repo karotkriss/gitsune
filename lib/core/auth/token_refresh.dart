@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../network/account_key.dart';
+import '../network/connectivity.dart';
 import '../network/gitlab_client.dart';
 import 'oauth_config.dart';
 import 'token_store.dart';
@@ -20,6 +23,7 @@ class TokenRefreshCoordinator {
   TokenRefreshCoordinator({
     required this.tokenStore,
     required this.configFor,
+    this.onReauthRequired,
     Dio? dio,
   }) : _dio = dio ?? Dio();
 
@@ -27,6 +31,14 @@ class TokenRefreshCoordinator {
 
   /// Resolves the OAuth endpoints and client ID for an account's instance.
   final GitLabOAuthConfig Function(AccountKey account) configFor;
+
+  /// Called when an instance rejects [AccountKey]'s refresh (revoked app,
+  /// rotated credentials, expired SSO session) - a permanent auth failure
+  /// for that one account only. Connectivity failures never fire it, since
+  /// being offline is transient, not an auth failure. Wired to
+  /// `AccountSessions.markNeedsReauth` so E2.6's failed-refresh isolation
+  /// marks just this account for re-auth and no other.
+  final Future<void> Function(AccountKey account)? onReauthRequired;
 
   final Dio _dio;
   final _inFlight = <AccountKey, Future<String?>>{};
@@ -97,9 +109,14 @@ class TokenRefreshCoordinator {
         options: Options(contentType: Headers.formUrlEncodedContentType),
       );
       body = response.data;
-    } on DioException {
-      // A failed refresh (revoked app, rotated credentials, expired SSO) is
-      // an auth failure for this account; E2.6 marks it for re-auth.
+    } on DioException catch (error) {
+      // A rejected refresh (revoked app, rotated credentials, expired SSO)
+      // is a permanent auth failure for this account alone: mark it for
+      // re-auth before the failure surfaces. Never reached the server means
+      // offline, which is transient and marks nothing.
+      if (!isConnectivityError(error) && _isAuthenticationRejection(error)) {
+        await onReauthRequired?.call(account);
+      }
       return null;
     }
 
@@ -134,5 +151,29 @@ class TokenRefreshCoordinator {
       refreshToken: refreshToken,
       expiresAt: DateTime.now().add(Duration(seconds: expiresIn)),
     );
+  }
+
+  bool _isAuthenticationRejection(DioException error) {
+    final response = error.response;
+    if (response == null ||
+        (response.statusCode != 400 && response.statusCode != 401)) {
+      return false;
+    }
+    Object? data = response.data;
+    if (data is String) {
+      try {
+        data = jsonDecode(data);
+      } on FormatException {
+        return false;
+      }
+    }
+    if (data is! Map) {
+      return false;
+    }
+    return const {
+      'invalid_client',
+      'invalid_grant',
+      'unauthorized_client',
+    }.contains(data['error']);
   }
 }
