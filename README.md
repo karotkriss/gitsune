@@ -41,6 +41,13 @@ Android uses separate `play` and `fdroid` build flavors.
 Run the Android app with `flutter run --flavor play` for the Google Play variant or `flutter run --flavor fdroid` for the F-Droid variant.
 Use the same `--flavor` option with Android `flutter build` commands.
 
+## App lock
+
+The optional app lock is controlled by the **Biometric app lock** toggle on the Profile tab.
+Enabling it first verifies that the device can unlock with biometrics or its screen-lock credential, such as a PIN, pattern, or passcode.
+Once enabled, Gitsune requires that check on launch and whenever the app resumes after being backgrounded.
+Devices without supported or configured authentication remain accessible, while a failed or dismissed prompt keeps the app locked and offers another unlock attempt.
+
 ## Testing
 
 `flutter test` runs the complete host-side suite, including unit, widget, and golden tests, with no external network access and no secrets required.

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gitsune/core/lock/app_lock.dart';
 import 'package:gitsune/main.dart';
+
+import '../support/fake_biometric_authenticator.dart';
+import '../support/memory_secure_storage.dart';
 
 void main() {
   const tabs = {
@@ -14,7 +18,14 @@ void main() {
     testWidgets('$label tab navigates and matches the dark-theme golden', (
       tester,
     ) async {
-      await tester.pumpWidget(const GitsuneApp());
+      final appLock = AppLockController(
+        authenticator: FakeBiometricAuthenticator(),
+        storage: MemorySecureStorage(),
+      );
+      addTearDown(appLock.dispose);
+      await appLock.load();
+
+      await tester.pumpWidget(GitsuneApp(appLockController: appLock));
       await tester.pumpAndSettle();
 
       await tester.tap(
