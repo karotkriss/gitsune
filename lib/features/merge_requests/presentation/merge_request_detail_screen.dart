@@ -58,6 +58,7 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
   bool _approvalsFailed = false;
   int? _unresolvedCount;
   bool _discussionsLoading = true;
+  bool _discussionsFailed = false;
   bool _actionInFlight = false;
   int _generation = 0;
   RecentItemRepository<MergeRequest>? _recentMergeRequest;
@@ -118,6 +119,8 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
       _approvalsLoading = true;
       _approvalsFailed = false;
       _discussionsLoading = true;
+      _discussionsFailed = false;
+      _actionInFlight = false;
     });
     await Future.wait([
       _loadCore(generation),
@@ -227,6 +230,7 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
       setState(() {
         _unresolvedCount = null;
         _discussionsLoading = false;
+        _discussionsFailed = true;
       });
     }
   }
@@ -394,12 +398,17 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
                           const SizedBox(height: 12),
                           MergeRequestMergeBox(
                             mergeRequest: mergeRequest,
+                            mergeRequestLoading: _loading,
+                            mergeRequestFailed: _failed,
                             pipelineStatus: _pipelines?.firstOrNull?.status,
                             pipelinesLoading: _pipelinesLoading,
+                            pipelinesFailed: _pipelinesFailed,
                             approvals: _approvals,
                             approvalsLoading: _approvalsLoading,
+                            approvalsFailed: _approvalsFailed,
                             unresolvedCount: _unresolvedCount,
                             discussionsLoading: _discussionsLoading,
+                            discussionsFailed: _discussionsFailed,
                             actionInFlight: _actionInFlight,
                             onApprove: _approve,
                             onUnapprove: _unapprove,

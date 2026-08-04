@@ -17,12 +17,17 @@ class MergeRequestMergeBox extends StatelessWidget {
   const MergeRequestMergeBox({
     super.key,
     required this.mergeRequest,
+    required this.mergeRequestLoading,
+    required this.mergeRequestFailed,
     required this.pipelineStatus,
     required this.pipelinesLoading,
+    required this.pipelinesFailed,
     required this.approvals,
     required this.approvalsLoading,
+    required this.approvalsFailed,
     required this.unresolvedCount,
     required this.discussionsLoading,
+    required this.discussionsFailed,
     required this.actionInFlight,
     required this.onApprove,
     required this.onUnapprove,
@@ -30,15 +35,20 @@ class MergeRequestMergeBox extends StatelessWidget {
   });
 
   final MergeRequest mergeRequest;
+  final bool mergeRequestLoading;
+  final bool mergeRequestFailed;
 
   /// Latest pipeline status; null with [pipelinesLoading] false means the
   /// merge request has no pipeline or the pipelines failed to load.
   final CiStatus? pipelineStatus;
   final bool pipelinesLoading;
+  final bool pipelinesFailed;
   final MergeRequestApprovals? approvals;
   final bool approvalsLoading;
+  final bool approvalsFailed;
   final int? unresolvedCount;
   final bool discussionsLoading;
+  final bool discussionsFailed;
   final bool actionInFlight;
   final VoidCallback onApprove;
   final VoidCallback onUnapprove;
@@ -53,10 +63,17 @@ class MergeRequestMergeBox extends StatelessWidget {
       _open &&
       !mergeRequest.draft &&
       !actionInFlight &&
+      !mergeRequestLoading &&
+      !mergeRequestFailed &&
       _pipelineOk &&
       !pipelinesLoading &&
+      !pipelinesFailed &&
+      !approvalsLoading &&
+      !approvalsFailed &&
       (approvals?.complete ?? false) &&
       mergeRequest.mergeable &&
+      !discussionsLoading &&
+      !discussionsFailed &&
       unresolvedCount == 0;
 
   @override
@@ -98,6 +115,9 @@ class MergeRequestMergeBox extends StatelessWidget {
     if (pipelinesLoading) {
       return _MergeBoxRow.pending(gs, 'Checking pipeline status');
     }
+    if (pipelinesFailed) {
+      return _MergeBoxRow.unavailable(gs, 'Pipeline state unavailable');
+    }
     if (status == null) {
       return _MergeBoxRow(
         leading: GsIcon(GsIconGlyph.clock, size: 16, color: gs.textSubtle),
@@ -114,10 +134,11 @@ class MergeRequestMergeBox extends StatelessWidget {
 
   Widget _approvalsRow(GsTheme gs) {
     final loadedApprovals = approvals;
-    if (loadedApprovals == null) {
-      return approvalsLoading
-          ? _MergeBoxRow.pending(gs, 'Checking approvals')
-          : _MergeBoxRow.unavailable(gs, 'Approval state unavailable');
+    if (approvalsLoading) {
+      return _MergeBoxRow.pending(gs, 'Checking approvals');
+    }
+    if (approvalsFailed || loadedApprovals == null) {
+      return _MergeBoxRow.unavailable(gs, 'Approval state unavailable');
     }
     final complete = loadedApprovals.complete;
     return _MergeBoxRow(
@@ -132,6 +153,12 @@ class MergeRequestMergeBox extends StatelessWidget {
   }
 
   Widget _mergeabilityRow(GsTheme gs) {
+    if (mergeRequestLoading) {
+      return _MergeBoxRow.pending(gs, 'Checking mergeability');
+    }
+    if (mergeRequestFailed) {
+      return _MergeBoxRow.unavailable(gs, 'Mergeability unavailable');
+    }
     final mergeable = mergeRequest.mergeable;
     return _MergeBoxRow(
       leading: GsIcon(
@@ -146,10 +173,11 @@ class MergeRequestMergeBox extends StatelessWidget {
 
   Widget _discussionsRow(GsTheme gs) {
     final count = unresolvedCount;
-    if (count == null) {
-      return discussionsLoading
-          ? _MergeBoxRow.pending(gs, 'Checking discussions')
-          : _MergeBoxRow.unavailable(gs, 'Discussion state unavailable');
+    if (discussionsLoading) {
+      return _MergeBoxRow.pending(gs, 'Checking discussions');
+    }
+    if (discussionsFailed || count == null) {
+      return _MergeBoxRow.unavailable(gs, 'Discussion state unavailable');
     }
     final resolved = count == 0;
     return _MergeBoxRow(
@@ -176,7 +204,7 @@ class MergeRequestMergeBox extends StatelessWidget {
           Expanded(
             child: OutlinedButton(
               key: const ValueKey('approve-button'),
-              onPressed: actionInFlight
+              onPressed: actionInFlight || approvalsLoading || approvalsFailed
                   ? null
                   : loadedApprovals.userHasApproved
                   ? onUnapprove

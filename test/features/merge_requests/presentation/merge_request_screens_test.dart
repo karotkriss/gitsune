@@ -162,6 +162,12 @@ void main() {
     expect(find.text('4 files changed'), findsOneWidget);
     expect(find.text('Unable to load Pipelines.'), findsOneWidget);
     expect(find.text('Unable to load Approvals.'), findsOneWidget);
+    expect(find.text('Pipeline state unavailable'), findsOneWidget);
+    expect(find.text('Approval state unavailable'), findsOneWidget);
+    final mergeButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('merge-button')),
+    );
+    expect(mergeButton.onPressed, isNull);
   });
 
   testWidgets(

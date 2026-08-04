@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
+import 'package:gitsune/features/merge_requests/data/merge_request_models.dart';
 import 'package:gitsune/features/merge_requests/presentation/merge_request_detail_screen.dart';
 import 'package:gitsune/features/merge_requests/presentation/merge_request_merge_box.dart';
 
@@ -90,4 +93,52 @@ void main() {
     // The header badge may be scrolled offstage after tapping merge.
     expect(find.text('Merged', skipOffstage: false), findsOneWidget);
   });
+
+  testWidgets('refresh releases only the obsolete action lock', (tester) async {
+    final repository = _DelayedApproveRepository(
+      discussionFixtures: const ['merge_request_142_discussions_page2'],
+    );
+    final approved = await FixtureMergeRequestsRepository().approve(7, 142);
+    await tester.pumpWidget(detailScreen(repository));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byKey(const ValueKey('approve-button')));
+    await tester.tap(find.byKey(const ValueKey('approve-button')));
+    await tester.pump();
+    expect(repository.approveCalls, 1);
+
+    unawaited(
+      tester.state<RefreshIndicatorState>(find.byType(RefreshIndicator)).show(),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('approve-button')));
+    await tester.tap(find.byKey(const ValueKey('approve-button')));
+    await tester.pump();
+    expect(repository.approveCalls, 2);
+
+    repository.approvals[0].complete(approved);
+    await tester.pump();
+    final approve = tester.widget<OutlinedButton>(
+      find.byKey(const ValueKey('approve-button')),
+    );
+    expect(approve.onPressed, isNull);
+
+    repository.approvals[1].complete(approved);
+    await tester.pumpAndSettle();
+    expect(find.text('Unapprove'), findsOneWidget);
+  });
+}
+
+class _DelayedApproveRepository extends FixtureMergeRequestsRepository {
+  _DelayedApproveRepository({required super.discussionFixtures});
+
+  final approvals = <Completer<MergeRequestApprovals>>[];
+
+  @override
+  Future<MergeRequestApprovals> approve(int projectId, int mergeIid) {
+    approveCalls++;
+    final request = Completer<MergeRequestApprovals>();
+    approvals.add(request);
+    return request.future;
+  }
 }
