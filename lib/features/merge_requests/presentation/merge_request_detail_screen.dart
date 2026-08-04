@@ -80,6 +80,7 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
         oldWidget.mergeIid != widget.mergeIid ||
         oldWidget.repository != widget.repository ||
         cacheChanged) {
+      _actionInFlight = false;
       _mergeRequest = cacheChanged ? null : widget.initialMergeRequest;
       _pipelines = null;
       _approvals = null;
@@ -109,6 +110,7 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
   }
 
   Future<void> _load() async {
+    if (_actionInFlight) return;
     final generation = ++_generation;
     setState(() {
       _loading = true;
@@ -120,7 +122,6 @@ class _MergeRequestDetailScreenState extends State<MergeRequestDetailScreen> {
       _approvalsFailed = false;
       _discussionsLoading = true;
       _discussionsFailed = false;
-      _actionInFlight = false;
     });
     await Future.wait([
       _loadCore(generation),

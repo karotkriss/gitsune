@@ -94,7 +94,7 @@ void main() {
     expect(find.text('Merged', skipOffstage: false), findsOneWidget);
   });
 
-  testWidgets('refresh releases only the obsolete action lock', (tester) async {
+  testWidgets('refresh preserves the active action lock', (tester) async {
     final repository = _DelayedApproveRepository(
       discussionFixtures: const ['merge_request_142_discussions_page2'],
     );
@@ -111,19 +111,13 @@ void main() {
       tester.state<RefreshIndicatorState>(find.byType(RefreshIndicator)).show(),
     );
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const ValueKey('approve-button')));
-    await tester.tap(find.byKey(const ValueKey('approve-button')));
-    await tester.pump();
-    expect(repository.approveCalls, 2);
-
-    repository.approvals[0].complete(approved);
-    await tester.pump();
     final approve = tester.widget<OutlinedButton>(
       find.byKey(const ValueKey('approve-button')),
     );
     expect(approve.onPressed, isNull);
+    expect(repository.approveCalls, 1);
 
-    repository.approvals[1].complete(approved);
+    repository.approvals.single.complete(approved);
     await tester.pumpAndSettle();
     expect(find.text('Unapprove'), findsOneWidget);
   });
