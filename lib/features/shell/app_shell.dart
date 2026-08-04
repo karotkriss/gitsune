@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/icons/gs_icons.dart';
+import '../../core/notifications/quiet_hours.dart';
 import '../../core/repository/offline_first_repository.dart';
 import '../../core/repository/recently_viewed_repository.dart';
 import '../code/data/repository_tree_repository.dart';
@@ -31,6 +32,7 @@ import '../releases/presentation/release_detail_screen.dart';
 import '../releases/presentation/release_list_screen.dart';
 import '../search/data/search_repository.dart';
 import '../search/presentation/search_screen.dart';
+import '../settings/quiet_hours_screen.dart';
 import '../sign_in/sign_in_screen.dart';
 import '../todos/todos_screen.dart';
 
@@ -50,9 +52,11 @@ import '../todos/todos_screen.dart';
 /// tab's tile order per account. [recentlyViewedCache] lets the issue, merge
 /// request, and pipeline detail screens serve recently viewed items offline,
 /// and [commentDraftQueue] routes issue comment sends through the offline
-/// outbox.
+/// outbox. [quietHoursStore] enables the Profile tab's quiet-hours entry and
+/// its settings route.
 GoRouter buildAppRouter({
   HomeTileOrderStore? homeTileOrderStore,
+  QuietHoursStore? quietHoursStore,
   IssuesRepository? issuesRepository,
   CommentDraftQueue? commentDraftQueue,
   MergeRequestsRepository? mergeRequestsRepository,
@@ -109,7 +113,11 @@ GoRouter buildAppRouter({
             routes: [
               GoRoute(
                 path: '/profile',
-                builder: (context, state) => const ProfileScreen(),
+                builder: (context, state) => ProfileScreen(
+                  onQuietHoursTap: quietHoursStore == null
+                      ? null
+                      : () => context.push('/settings/quiet-hours'),
+                ),
               ),
             ],
           ),
@@ -119,6 +127,11 @@ GoRouter buildAppRouter({
         path: '/signin',
         builder: (context, state) => const SignInScreen(),
       ),
+      if (quietHoursStore != null)
+        GoRoute(
+          path: '/settings/quiet-hours',
+          builder: (context, state) => QuietHoursScreen(store: quietHoursStore),
+        ),
       if (issuesRepository != null) ...[
         GoRoute(
           path: '/projects/:projectId/issues',
