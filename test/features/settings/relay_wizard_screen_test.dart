@@ -26,7 +26,13 @@ void main() {
   Future<void> pumpScreen(
     WidgetTester tester, {
     Future<void> Function(RelayTarget target)? sendTest,
+    bool enabled = false,
   }) async {
+    // The steps only render while the opt-in is on, so most tests start
+    // from an already-enabled setup.
+    if (enabled) {
+      await store.save(RelaySetup.defaults.copyWith(enabled: true));
+    }
     await tester.pumpWidget(
       MaterialApp(
         theme: buildAppTheme(),
@@ -51,9 +57,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('opt-in defaults off with ntfy prefilled and no config yet', (
-    tester,
-  ) async {
+  testWidgets('opt-in defaults off and hides the wizard steps', (tester) async {
     await pumpScreen(tester);
 
     expect(
@@ -64,15 +68,14 @@ void main() {
           .value,
       isFalse,
     );
-    expect(find.text('https://ntfy.sh'), findsOneWidget);
-    expect(
-      find.text('Finish step 2 to generate the webhook configuration.'),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('relay-ntfy-server')), findsNothing);
+    expect(find.byKey(const ValueKey('relay-test-button')), findsNothing);
     expect((await store.read()).enabled, isFalse);
   });
 
-  testWidgets('toggling the switch persists the opt-in', (tester) async {
+  testWidgets('toggling the switch persists the opt-in and reveals the steps', (
+    tester,
+  ) async {
     await pumpScreen(tester);
 
     await tapVisible(
@@ -81,13 +84,18 @@ void main() {
     );
 
     expect((await store.read()).enabled, isTrue);
+    expect(find.text('https://ntfy.sh'), findsOneWidget);
+    expect(
+      find.text('Finish step 2 to generate the webhook configuration.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('an invalid topic surfaces its error and blocks the send', (
     tester,
   ) async {
     var sends = 0;
-    await pumpScreen(tester, sendTest: (_) async => sends++);
+    await pumpScreen(tester, sendTest: (_) async => sends++, enabled: true);
 
     await enterTopicSetup(tester, 'not a topic!');
     await tapVisible(tester, find.byKey(const ValueKey('relay-test-button')));
@@ -106,7 +114,11 @@ void main() {
     tester,
   ) async {
     RelayTarget? sent;
-    await pumpScreen(tester, sendTest: (target) async => sent = target);
+    await pumpScreen(
+      tester,
+      sendTest: (target) async => sent = target,
+      enabled: true,
+    );
 
     await enterTopicSetup(tester, 'gitsune-a1b2c3');
     await tapVisible(tester, find.byKey(const ValueKey('relay-test-button')));
@@ -127,6 +139,7 @@ void main() {
       tester,
       sendTest: (_) async =>
           throw const RelayTestException(RelayTestFailure.unreachable),
+      enabled: true,
     );
 
     await enterTopicSetup(tester, 'gitsune-a1b2c3');
@@ -144,7 +157,7 @@ void main() {
   testWidgets('valid ntfy details generate the webhook configuration', (
     tester,
   ) async {
-    await pumpScreen(tester);
+    await pumpScreen(tester, enabled: true);
 
     await enterTopicSetup(tester, 'gitsune-a1b2c3');
 
@@ -168,6 +181,7 @@ void main() {
       tester,
       sendTest: (_) async =>
           throw const RelayTestException(RelayTestFailure.rejected),
+      enabled: true,
     );
 
     await tapVisible(tester, find.text('Pushover'));

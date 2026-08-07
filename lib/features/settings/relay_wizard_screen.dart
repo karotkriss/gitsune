@@ -12,6 +12,12 @@ import '../../core/widgets/copyable_value.dart';
 /// from their instance to that relay. Gitsune only guides the setup; it
 /// never hosts or proxies notifications, and the baseline poller (E12.1)
 /// stays the default delivery layer either way.
+///
+/// The wizard steps render only while the opt-in switch is on, making the
+/// switch mean "show me this path": delivery itself is controlled by the
+/// webhook in GitLab, which the app never touches, so turning the switch
+/// off hides the setup rather than stopping an already-configured webhook
+/// (the step-4 copy tells the user where delivery is actually controlled).
 class RelayWizardScreen extends StatefulWidget {
   const RelayWizardScreen({super.key, required this.store, this.sendTest});
 
@@ -290,182 +296,188 @@ class _RelayWizardScreenState extends State<RelayWizardScreen> {
                         style: bodyStyle,
                       ),
                     ),
-                    Text('1. Choose your relay service', style: stepStyle),
-                    const SizedBox(height: 12),
-                    SegmentedButton<RelayService>(
-                      segments: const [
-                        ButtonSegment(
-                          value: RelayService.ntfy,
-                          label: Text('ntfy'),
-                        ),
-                        ButtonSegment(
-                          value: RelayService.pushover,
-                          label: Text('Pushover'),
-                        ),
-                      ],
-                      selected: {setup.service},
-                      onSelectionChanged: (selection) {
-                        _serverError = null;
-                        _topicError = null;
-                        _tokenError = null;
-                        _userKeyError = null;
-                        _onDetailsChanged(
-                          setup.copyWith(service: selection.single),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      '2. Enter your $_serviceName details',
-                      style: stepStyle,
-                    ),
-                    const SizedBox(height: 6),
-                    if (setup.service == RelayService.ntfy) ...[
-                      Text(
-                        'Install the ntfy app on this device and subscribe '
-                        'it to a topic of your choice. A topic is public to '
-                        'anyone who knows its name, so pick one that is '
-                        'hard to guess.',
-                        style: bodyStyle,
-                      ),
+                    if (setup.enabled) ...[
+                      Text('1. Choose your relay service', style: stepStyle),
                       const SizedBox(height: 12),
-                      _detailField(
-                        key: const ValueKey('relay-ntfy-server'),
-                        controller: _serverController,
-                        hint: 'Server',
-                        helper:
-                            'The public ntfy.sh or your own self-hosted '
-                            'ntfy server.',
-                        error: _serverError,
-                        onChanged: (value) {
+                      SegmentedButton<RelayService>(
+                        segments: const [
+                          ButtonSegment(
+                            value: RelayService.ntfy,
+                            label: Text('ntfy'),
+                          ),
+                          ButtonSegment(
+                            value: RelayService.pushover,
+                            label: Text('Pushover'),
+                          ),
+                        ],
+                        selected: {setup.service},
+                        onSelectionChanged: (selection) {
                           _serverError = null;
-                          _onDetailsChanged(setup.copyWith(ntfyServer: value));
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      _detailField(
-                        key: const ValueKey('relay-ntfy-topic'),
-                        controller: _topicController,
-                        hint: 'Topic',
-                        helper:
-                            'The topic the ntfy app on this device is '
-                            'subscribed to.',
-                        error: _topicError,
-                        onChanged: (value) {
                           _topicError = null;
-                          _onDetailsChanged(setup.copyWith(ntfyTopic: value));
-                        },
-                      ),
-                    ] else ...[
-                      Text(
-                        'Install the Pushover app on this device, then '
-                        'create an application for Gitsune at '
-                        'pushover.net/apps - its API token plus your user '
-                        'key are all this path needs.',
-                        style: bodyStyle,
-                      ),
-                      const SizedBox(height: 12),
-                      _detailField(
-                        key: const ValueKey('relay-pushover-token'),
-                        controller: _tokenController,
-                        hint: 'Application API token',
-                        helper:
-                            'From the application you created at '
-                            'pushover.net/apps.',
-                        error: _tokenError,
-                        onChanged: (value) {
                           _tokenError = null;
-                          _onDetailsChanged(
-                            setup.copyWith(pushoverAppToken: value),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      _detailField(
-                        key: const ValueKey('relay-pushover-user'),
-                        controller: _userKeyController,
-                        hint: 'User key',
-                        helper: 'Shown on your Pushover dashboard.',
-                        error: _userKeyError,
-                        onChanged: (value) {
                           _userKeyError = null;
                           _onDetailsChanged(
-                            setup.copyWith(pushoverUserKey: value),
+                            setup.copyWith(service: selection.single),
                           );
                         },
                       ),
-                    ],
-                    const SizedBox(height: 24),
-                    Text('3. Send a test notification', style: stepStyle),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Confirms these details reach your relay, using the '
-                      'same request shape GitLab will send.',
-                      style: bodyStyle,
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      key: const ValueKey('relay-test-button'),
-                      onPressed: _sendingTest ? null : _sendTest,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
+                      const SizedBox(height: 24),
+                      Text(
+                        '2. Enter your $_serviceName details',
+                        style: stepStyle,
                       ),
-                      child: _sendingTest
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Send test notification'),
-                    ),
-                    if (_testSent)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Row(
-                          children: [
-                            GsIcon(
-                              GsIconGlyph.checkCircle,
-                              size: 16,
-                              color: gs.textSuccess,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Sent. Check the $_serviceName app on this '
-                                'device.',
-                                style: bodyStyle.copyWith(
-                                  color: gs.textSuccess,
+                      const SizedBox(height: 6),
+                      if (setup.service == RelayService.ntfy) ...[
+                        Text(
+                          'Install the ntfy app on this device and subscribe '
+                          'it to a topic of your choice. A topic is public to '
+                          'anyone who knows its name, so pick one that is '
+                          'hard to guess.',
+                          style: bodyStyle,
+                        ),
+                        const SizedBox(height: 12),
+                        _detailField(
+                          key: const ValueKey('relay-ntfy-server'),
+                          controller: _serverController,
+                          hint: 'Server',
+                          helper:
+                              'The public ntfy.sh or your own self-hosted '
+                              'ntfy server.',
+                          error: _serverError,
+                          onChanged: (value) {
+                            _serverError = null;
+                            _onDetailsChanged(
+                              setup.copyWith(ntfyServer: value),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _detailField(
+                          key: const ValueKey('relay-ntfy-topic'),
+                          controller: _topicController,
+                          hint: 'Topic',
+                          helper:
+                              'The topic the ntfy app on this device is '
+                              'subscribed to.',
+                          error: _topicError,
+                          onChanged: (value) {
+                            _topicError = null;
+                            _onDetailsChanged(setup.copyWith(ntfyTopic: value));
+                          },
+                        ),
+                      ] else ...[
+                        Text(
+                          'Install the Pushover app on this device, then '
+                          'create an application for Gitsune at '
+                          'pushover.net/apps - its API token plus your user '
+                          'key are all this path needs.',
+                          style: bodyStyle,
+                        ),
+                        const SizedBox(height: 12),
+                        _detailField(
+                          key: const ValueKey('relay-pushover-token'),
+                          controller: _tokenController,
+                          hint: 'Application API token',
+                          helper:
+                              'From the application you created at '
+                              'pushover.net/apps.',
+                          error: _tokenError,
+                          onChanged: (value) {
+                            _tokenError = null;
+                            _onDetailsChanged(
+                              setup.copyWith(pushoverAppToken: value),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _detailField(
+                          key: const ValueKey('relay-pushover-user'),
+                          controller: _userKeyController,
+                          hint: 'User key',
+                          helper: 'Shown on your Pushover dashboard.',
+                          error: _userKeyError,
+                          onChanged: (value) {
+                            _userKeyError = null;
+                            _onDetailsChanged(
+                              setup.copyWith(pushoverUserKey: value),
+                            );
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      Text('3. Send a test notification', style: stepStyle),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Confirms these details reach your relay, using the '
+                        'same request shape GitLab will send.',
+                        style: bodyStyle,
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        key: const ValueKey('relay-test-button'),
+                        onPressed: _sendingTest ? null : _sendTest,
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        child: _sendingTest
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text('Send test notification'),
+                      ),
+                      if (_testSent)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Row(
+                            children: [
+                              GsIcon(
+                                GsIconGlyph.checkCircle,
+                                size: 16,
+                                color: gs.textSuccess,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Sent. Check the $_serviceName app on this '
+                                  'device.',
+                                  style: bodyStyle.copyWith(
+                                    color: gs.textSuccess,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    if (_testError != null)
+                      if (_testError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Text(
+                            _testError!,
+                            style: bodyStyle.copyWith(color: gs.textDanger),
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                      Text('4. Add the webhook to GitLab', style: stepStyle),
+                      const SizedBox(height: 6),
+                      ..._webhookStep(bodyStyle),
                       Padding(
-                        padding: const EdgeInsets.only(top: 12),
+                        padding: const EdgeInsets.only(top: 24, bottom: 16),
                         child: Text(
-                          _testError!,
-                          style: bodyStyle.copyWith(color: gs.textDanger),
+                          'Relay notifications are delivered by the '
+                          '$_serviceName app, so quiet hours in Gitsune apply '
+                          'only to its built-in notifications - use your '
+                          'relay app\'s own quiet or do-not-disturb settings '
+                          'for this path.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: gs.textSubtle,
+                          ),
                         ),
                       ),
-                    const SizedBox(height: 24),
-                    Text('4. Add the webhook to GitLab', style: stepStyle),
-                    const SizedBox(height: 6),
-                    ..._webhookStep(bodyStyle),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24, bottom: 16),
-                      child: Text(
-                        'Relay notifications are delivered by the '
-                        '$_serviceName app, so quiet hours in Gitsune apply '
-                        'only to its built-in notifications - use your '
-                        'relay app\'s own quiet or do-not-disturb settings '
-                        'for this path.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: gs.textSubtle,
-                        ),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
               ),

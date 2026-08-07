@@ -56,7 +56,9 @@ void main() {
   testWidgets('unreachable-relay error state matches the golden', (
     tester,
   ) async {
-    await store.save(RelaySetup.defaults.copyWith(ntfyTopic: 'gitsune-a1b2c3'));
+    await store.save(
+      RelaySetup.defaults.copyWith(enabled: true, ntfyTopic: 'gitsune-a1b2c3'),
+    );
     await pumpScreen(
       tester,
       sendTest: (_) async =>
