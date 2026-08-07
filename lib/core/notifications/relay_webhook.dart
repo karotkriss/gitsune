@@ -63,7 +63,9 @@ final _pushoverKeyPattern = RegExp(r'^[A-Za-z0-9]{30}$');
 /// Parses the wizard's ntfy inputs, throwing [RelayInputException] with the
 /// specific rejection when a value cannot work. The server address accepts
 /// the same forms as instance entry ("ntfy.sh", "https://ntfy.example.com")
-/// and keeps only its host-level base.
+/// and, unlike GitLab instance entry, keeps any URL subpath so a
+/// self-hosted ntfy under a subpath ("https://example.com/ntfy/") is
+/// published to correctly.
 NtfyTarget parseNtfyTarget({required String server, required String topic}) {
   final serverText = server.trim();
   if (serverText.isEmpty) {
@@ -73,6 +75,11 @@ NtfyTarget parseNtfyTarget({required String server, required String topic}) {
   if (base == null) {
     throw const RelayInputException(RelayInputRejection.malformedServer);
   }
+  final withPath = base.replace(
+    path: Uri.parse(
+      serverText.contains('://') ? serverText : 'https://$serverText',
+    ).path,
+  );
   final topicText = topic.trim();
   if (topicText.isEmpty) {
     throw const RelayInputException(RelayInputRejection.emptyTopic);
@@ -80,7 +87,7 @@ NtfyTarget parseNtfyTarget({required String server, required String topic}) {
   if (!_ntfyTopicPattern.hasMatch(topicText)) {
     throw const RelayInputException(RelayInputRejection.malformedTopic);
   }
-  return NtfyTarget(server: base, topic: topicText);
+  return NtfyTarget(server: withPath, topic: topicText);
 }
 
 /// Parses the wizard's Pushover inputs, throwing [RelayInputException] with

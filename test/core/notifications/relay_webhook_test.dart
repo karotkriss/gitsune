@@ -20,13 +20,21 @@ void main() {
   );
 
   group('parseNtfyTarget', () {
-    test('normalizes the server to its host-level https base', () {
+    test('defaults the scheme to https and drops any query', () {
       final target = parseNtfyTarget(
-        server: 'ntfy.example.com/some/path?x=1',
+        server: 'ntfy.example.com?x=1',
         topic: ' $topic ',
       );
       expect(target.server, Uri.parse('https://ntfy.example.com'));
       expect(target.topic, topic);
+    });
+
+    test('preserves a self-hosted subpath', () {
+      final target = parseNtfyTarget(
+        server: 'https://example.com/ntfy/',
+        topic: topic,
+      );
+      expect(target.server, Uri.parse('https://example.com/ntfy/'));
     });
 
     test('rejects each bad input with its specific rejection', () {
@@ -85,6 +93,17 @@ void main() {
         NtfyTarget(server: Uri.parse('https://ntfy.sh'), topic: topic),
       );
       expect(config.url, Uri.parse('https://ntfy.sh'));
+      expect(
+        config.payloadTemplate,
+        Fixtures.raw('notifications/ntfy_webhook_template').trimRight(),
+      );
+    });
+
+    test('ntfy: a subpath server posts to that subpath, exact template', () {
+      final config = buildRelayWebhookConfig(
+        NtfyTarget(server: Uri.parse('https://example.com/ntfy/'), topic: topic),
+      );
+      expect(config.url, Uri.parse('https://example.com/ntfy/'));
       expect(
         config.payloadTemplate,
         Fixtures.raw('notifications/ntfy_webhook_template').trimRight(),
