@@ -119,10 +119,12 @@ class PushDeliveryMessage {
     if (decoded is! Map<String, dynamic>) return null;
     final title = decoded['title'];
     if (title is! String) return null;
+    final body = decoded['body'];
+    final url = decoded['url'];
     return PushDeliveryMessage(
       title: title,
-      body: decoded['body'] as String? ?? '',
-      url: decoded['url'] as String? ?? '',
+      body: body is String ? body : '',
+      url: url is String ? url : '',
     );
   }
 }
@@ -138,12 +140,6 @@ class PushDeliverySettings {
 
   final bool enabled;
   final Uri? endpoint;
-
-  PushDeliverySettings copyWith({bool? enabled, Uri? endpoint}) =>
-      PushDeliverySettings(
-        enabled: enabled ?? this.enabled,
-        endpoint: endpoint ?? this.endpoint,
-      );
 }
 
 /// Persists one account's [PushDeliverySettings] in
