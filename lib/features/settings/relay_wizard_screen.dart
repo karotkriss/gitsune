@@ -165,6 +165,9 @@ class _RelayWizardScreenState extends State<RelayWizardScreen> {
     final host = switch (target) {
       NtfyTarget(:final server) => server.host,
       PushoverTarget() => 'api.pushover.net',
+      UnifiedPushTarget() => throw StateError(
+        'unreachable: _validateTarget only returns NtfyTarget/PushoverTarget',
+      ),
     };
     try {
       await (widget.sendTest ?? sendRelayTestNotification)(target);

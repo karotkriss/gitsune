@@ -6,87 +6,25 @@ import 'package:flutter/foundation.dart';
 
 import '../database/app_database.dart';
 import '../network/account_key.dart';
+import 'relay_webhook.dart';
 import 'todos_poller.dart';
 
 /// The E12.4 Android opt-in delivery layer (ADR 0002, layer 3): UnifiedPush
 /// fed by the user's own webhook-to-ntfy bridge. Gitsune operates no server
 /// here. A project or group owner adds a GitLab webhook - whose exact
-/// configuration Gitsune generates - pointing at the ntfy UnifiedPush
-/// endpoint this device registered; ntfy forwards each event to Gitsune,
-/// which surfaces it as a local notification. This is opt-in and off by
-/// default; the [TodosPoller] baseline stays the default path.
+/// configuration Gitsune generates via [buildRelayWebhookConfig] in
+/// `relay_webhook.dart` (the single generator shared with the E12.5 iOS
+/// relay wizard) - pointing at the ntfy UnifiedPush endpoint this device
+/// registered; ntfy forwards each event to Gitsune, which surfaces it as a
+/// local notification. This is opt-in and off by default; the
+/// [TodosPoller] baseline stays the default path.
 ///
-/// This file is the Flutter-free (foundation-only) core: the webhook-config
-/// generator, the delivered-message parser, the persistence store, the
-/// gateway seam, and the controller. The concrete UnifiedPush plugin adapter
-/// is `UnifiedPushGateway` in `unified_push_gateway.dart`, kept separate so
+/// This file is the Flutter-free (foundation-only) core: the
+/// delivered-message parser, the persistence store, the gateway seam, and
+/// the controller. The concrete UnifiedPush plugin adapter is
+/// `UnifiedPushGateway` in `unified_push_gateway.dart`, kept separate so
 /// this core stays plainly unit-testable and the OS plumbing is validated
 /// on-device.
-
-/// The GitLab webhook configuration a user pastes into their own project or
-/// group webhook so GitLab posts each selected event to their ntfy
-/// UnifiedPush endpoint, which forwards it to Gitsune.
-///
-/// GitLab supports a custom webhook payload template and custom headers, so
-/// the [payloadTemplate] renders GitLab's event fields straight into the
-/// compact JSON [PushDeliveryMessage.parse] reads on receipt, with no
-/// translation server in between.
-@immutable
-class NtfyWebhookConfig {
-  const NtfyWebhookConfig({
-    required this.url,
-    required this.headers,
-    required this.payloadTemplate,
-    required this.triggerEvents,
-  });
-
-  /// Where GitLab POSTs: the UnifiedPush endpoint the ntfy distributor issued
-  /// for this device.
-  final Uri url;
-
-  /// Custom headers to set on the GitLab webhook.
-  final Map<String, String> headers;
-
-  /// The GitLab custom webhook payload template ({{...}} fields), rendered by
-  /// GitLab into the JSON [PushDeliveryMessage.parse] expects.
-  final String payloadTemplate;
-
-  /// The webhook trigger checkboxes to enable, as their GitLab UI labels.
-  /// These cover the events that create to-dos (assignment, mention, review
-  /// request) without broadcasting every project event.
-  final List<String> triggerEvents;
-
-  @override
-  bool operator ==(Object other) =>
-      other is NtfyWebhookConfig &&
-      other.url == url &&
-      mapEquals(other.headers, headers) &&
-      other.payloadTemplate == payloadTemplate &&
-      listEquals(other.triggerEvents, triggerEvents);
-
-  @override
-  int get hashCode => Object.hash(
-    url,
-    Object.hashAllUnordered(
-      headers.entries.map((e) => Object.hash(e.key, e.value)),
-    ),
-    payloadTemplate,
-    Object.hashAll(triggerEvents),
-  );
-}
-
-/// Builds the exact [NtfyWebhookConfig] for [endpoint] (the UnifiedPush
-/// endpoint the ntfy distributor issued). Deterministic so its output can be
-/// asserted against fixtures.
-NtfyWebhookConfig buildNtfyWebhookConfig(Uri endpoint) => NtfyWebhookConfig(
-  url: endpoint,
-  headers: const {'Content-Type': 'application/json'},
-  payloadTemplate:
-      '{"title":"{{object_attributes.title}}",'
-      '"body":"{{object_kind}} · {{project.path_with_namespace}}",'
-      '"url":"{{object_attributes.url}}"}',
-  triggerEvents: const ['Issues events', 'Merge request events', 'Comments'],
-);
 
 /// One event forwarded from ntfy to this device: the compact JSON produced by
 /// the generated webhook template, parsed into the fields a notification
@@ -232,8 +170,9 @@ class PushDeliveryController extends ChangeNotifier {
   Uri? get endpoint => _endpoint;
 
   /// The webhook configuration to show the user, once an endpoint exists.
-  NtfyWebhookConfig? get webhookConfig =>
-      _endpoint == null ? null : buildNtfyWebhookConfig(_endpoint!);
+  RelayWebhookConfig? get webhookConfig => _endpoint == null
+      ? null
+      : buildRelayWebhookConfig(UnifiedPushTarget(endpoint: _endpoint!));
 
   /// Loads the persisted setting and, if enabled, binds the gateway and
   /// (re)registers so a fresh endpoint arrives. Call once at startup.
