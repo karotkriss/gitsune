@@ -150,10 +150,7 @@ void main() {
       'opens externally rather than downloading', () {
     expect(ReleaseAssetLinkType.fromApi(null), ReleaseAssetLinkType.other);
     expect(ReleaseAssetLinkType.fromApi('image'), ReleaseAssetLinkType.image);
-    expect(
-      ReleaseAssetLinkType.fromApi('mystery'),
-      ReleaseAssetLinkType.other,
-    );
+    expect(ReleaseAssetLinkType.fromApi('mystery'), ReleaseAssetLinkType.other);
     expect(ReleaseAssetLinkType.other.isDownloadable, isFalse);
     expect(ReleaseAssetLinkType.runbook.isDownloadable, isFalse);
     expect(ReleaseAssetLinkType.package.isDownloadable, isTrue);

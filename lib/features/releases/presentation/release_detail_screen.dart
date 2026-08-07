@@ -109,9 +109,9 @@ class _ReleaseDetailScreenState extends State<ReleaseDetailScreen> {
       );
       if (!mounted) return;
       setState(() => _downloadProgress.remove(asset.url));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Downloaded ${asset.name}.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Downloaded ${asset.name}.')));
     } on Object {
       if (!mounted) return;
       setState(() => _downloadProgress.remove(asset.url));

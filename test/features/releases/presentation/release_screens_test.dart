@@ -164,8 +164,9 @@ void main() {
     expect(find.text('Release not found.'), findsOneWidget);
   });
 
-  testWidgets('tapping an asset downloads it and reports completion',
-      (tester) async {
+  testWidgets('tapping an asset downloads it and reports completion', (
+    tester,
+  ) async {
     final repository = await pumpReleases(
       tester,
       resolveDownloadsDirectory: () async => Directory('/fake/downloads'),
@@ -199,7 +200,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(openedUrls, [
-      Uri.parse('https://gitlab.example.com/acme/app/-/releases/v1.2.0/runbook'),
+      Uri.parse(
+        'https://gitlab.example.com/acme/app/-/releases/v1.2.0/runbook',
+      ),
     ]);
     expect(repository.downloadedAssets, isEmpty);
     expect(find.textContaining('Downloaded'), findsNothing);
