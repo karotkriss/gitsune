@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/account_sessions.dart';
+import '../../core/auth/active_account.dart';
+import '../../core/auth/token_store.dart';
 import '../../core/database/app_database.dart';
 import '../../core/icons/gs_icons.dart';
 import '../../core/lock/app_lock.dart';
@@ -8,6 +11,7 @@ import '../../core/network/graphql_subscriptions.dart';
 import '../../core/notifications/quiet_hours.dart';
 import '../../core/repository/offline_first_repository.dart';
 import '../../core/repository/recently_viewed_repository.dart';
+import '../accounts/accounts_screen.dart';
 import '../code/data/repository_tree_repository.dart';
 import '../code/presentation/file_view_screen.dart';
 import '../code/presentation/repository_tree_screen.dart';
@@ -58,7 +62,14 @@ import '../todos/todos_screen.dart';
 /// its settings route. [appLockController] surfaces the E13.1 app lock toggle
 /// on the Profile tab. [graphQlSubscriptions] gives detail screens foreground
 /// live updates over the E12.3 GraphQL subscription transport.
+/// [accountSessions] with [activeAccountStore] enable the E13.2 account
+/// management surface, its `/accounts` route, and the Profile tab's
+/// quick-switch entry; [tokenStore] additionally clears a removed account's
+/// tokens.
 GoRouter buildAppRouter({
+  AccountSessions? accountSessions,
+  ActiveAccountStore? activeAccountStore,
+  TokenStore? tokenStore,
   AppLockController? appLockController,
   HomeTileOrderStore? homeTileOrderStore,
   QuietHoursStore? quietHoursStore,
@@ -124,6 +135,18 @@ GoRouter buildAppRouter({
                   onQuietHoursTap: quietHoursStore == null
                       ? null
                       : () => context.push('/settings/quiet-hours'),
+                  onSwitchAccountTap:
+                      accountSessions == null || activeAccountStore == null
+                      ? null
+                      : () => showAccountSwitchSheet(
+                          context,
+                          sessions: accountSessions,
+                          activeAccount: activeAccountStore,
+                        ),
+                  onManageAccountsTap:
+                      accountSessions == null || activeAccountStore == null
+                      ? null
+                      : () => context.push('/accounts'),
                 ),
               ),
             ],
@@ -134,6 +157,16 @@ GoRouter buildAppRouter({
         path: '/signin',
         builder: (context, state) => const SignInScreen(),
       ),
+      if (accountSessions != null && activeAccountStore != null)
+        GoRoute(
+          path: '/accounts',
+          builder: (context, state) => AccountsScreen(
+            sessions: accountSessions,
+            activeAccount: activeAccountStore,
+            tokenStore: tokenStore,
+            onAddAccount: () => context.push('/signin'),
+          ),
+        ),
       if (quietHoursStore != null)
         GoRoute(
           path: '/settings/quiet-hours',
