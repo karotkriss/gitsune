@@ -1,0 +1,6 @@
+{
+  "token": "azGDORePK8gMaC0QOYAMyEEuzJnyUi",
+  "user": "uQiRzpo4DXghDmr9QzzfQu27cmVRsG",
+  "title": "{{project.path_with_namespace}}",
+  "message": "{{object_kind}} update by {{user.name}}"
+}

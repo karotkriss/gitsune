@@ -223,6 +223,26 @@ class PushNotificationSettings extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId};
 }
 
+/// One account's opt-in relay notification setup (E12.5): the chosen relay
+/// service plus the wizard's raw inputs, so reopening the wizard restores
+/// the setup. Off by default. The relay details the row holds are the same
+/// values the user pastes into GitLab's webhook configuration, so they are
+/// no more sensitive than that server-side copy. See
+/// `core/notifications/relay_setup.dart`.
+@DataClassName('RelaySetupRow')
+class RelaySetups extends Table with AccountScoped {
+  BoolColumn get enabled => boolean()();
+  TextColumn get service => text()();
+  TextColumn get ntfyServer => text()();
+  TextColumn get ntfyTopic => text()();
+  TextColumn get pushoverAppToken => text()();
+  TextColumn get pushoverUserKey => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId};
+}
+
 @DriftDatabase(
   tables: [
     Accounts,
@@ -238,6 +258,7 @@ class PushNotificationSettings extends Table with AccountScoped {
     CommentDrafts,
     QuietHoursSettings,
     PushNotificationSettings,
+    RelaySetups,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -246,7 +267,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -291,6 +312,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 14) {
         await migrator.createTable(pushNotificationSettings);
+      }
+      if (from < 15) {
+        await migrator.createTable(relaySetups);
       }
     },
   );

@@ -13,6 +13,7 @@ import '../../core/lock/app_lock.dart';
 import '../../core/network/graphql_subscriptions.dart';
 import '../../core/notifications/push_delivery.dart';
 import '../../core/notifications/quiet_hours.dart';
+import '../../core/notifications/relay_setup.dart';
 import '../../core/repository/offline_first_repository.dart';
 import '../../core/repository/recently_viewed_repository.dart';
 import '../accounts/accounts_screen.dart';
@@ -44,6 +45,7 @@ import '../search/data/search_repository.dart';
 import '../search/presentation/search_screen.dart';
 import '../settings/push_delivery_screen.dart';
 import '../settings/quiet_hours_screen.dart';
+import '../settings/relay_wizard_screen.dart';
 import '../sign_in/sign_in_screen.dart';
 import '../todos/todo_deep_link.dart';
 import '../todos/todos_screen.dart';
@@ -69,8 +71,9 @@ import '../todos/todos_screen.dart';
 /// (defaulting to the system browser; injectable for tests).
 /// [quietHoursStore] enables the Profile tab's quiet-hours entry and
 /// its settings route. [pushDeliveryController] enables the E12.4 Android
-/// opt-in push entry and its settings route. [appLockController] surfaces the
-/// E13.1 app lock toggle
+/// opt-in push entry and its settings route, and [relaySetupStore] likewise
+/// enables the E12.5 opt-in relay wizard entry and its `/settings/relay`
+/// route. [appLockController] surfaces the E13.1 app lock toggle
 /// on the Profile tab. [graphQlSubscriptions] gives detail screens foreground
 /// live updates over the E12.3 GraphQL subscription transport.
 /// [accountSessions] with [activeAccountStore] enable the E13.2 account
@@ -85,6 +88,7 @@ GoRouter buildAppRouter({
   HomeTileOrderStore? homeTileOrderStore,
   QuietHoursStore? quietHoursStore,
   PushDeliveryController? pushDeliveryController,
+  RelaySetupStore? relaySetupStore,
   GraphQlSubscriptions? graphQlSubscriptions,
   IssuesRepository? issuesRepository,
   CommentDraftQueue? commentDraftQueue,
@@ -178,6 +182,9 @@ GoRouter buildAppRouter({
                   onAndroidPushTap: pushDeliveryController == null
                       ? null
                       : () => context.push('/settings/android-push'),
+                  onRelayTap: relaySetupStore == null
+                      ? null
+                      : () => context.push('/settings/relay'),
                   onSwitchAccountTap:
                       accountSessions == null || activeAccountStore == null
                       ? null
@@ -220,6 +227,12 @@ GoRouter buildAppRouter({
           path: '/settings/android-push',
           builder: (context, state) =>
               PushDeliveryScreen(controller: pushDeliveryController),
+        ),
+      if (relaySetupStore != null)
+        GoRoute(
+          path: '/settings/relay',
+          builder: (context, state) =>
+              RelayWizardScreen(store: relaySetupStore),
         ),
       if (issuesRepository != null) ...[
         GoRoute(
