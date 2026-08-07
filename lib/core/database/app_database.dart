@@ -210,6 +210,19 @@ class QuietHoursSettings extends Table with AccountScoped {
   Set<Column> get primaryKey => {instanceHost, accountId};
 }
 
+/// One account's E12.4 opt-in Android push-delivery setting: whether the
+/// UnifiedPush path is [enabled] (off by default; the baseline poller stays
+/// the default) and the [endpoint] the ntfy distributor last issued. See
+/// `core/notifications/push_delivery.dart`.
+class PushNotificationSettings extends Table with AccountScoped {
+  BoolColumn get enabled => boolean()();
+  TextColumn get endpoint => text().nullable()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {instanceHost, accountId};
+}
+
 @DriftDatabase(
   tables: [
     Accounts,
@@ -224,6 +237,7 @@ class QuietHoursSettings extends Table with AccountScoped {
     TodoPollStates,
     CommentDrafts,
     QuietHoursSettings,
+    PushNotificationSettings,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -232,7 +246,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -274,6 +288,9 @@ class AppDatabase extends _$AppDatabase {
       // column added; the `from < 4` createTable already used today's shape.
       if (from >= 4 && from < 13) {
         await migrator.addColumn(todoItems, todoItems.projectId);
+      }
+      if (from < 14) {
+        await migrator.createTable(pushNotificationSettings);
       }
     },
   );

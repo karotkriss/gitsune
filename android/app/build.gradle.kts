@@ -60,6 +60,14 @@ kotlin {
     }
 }
 
+configurations.all {
+    // flutter_secure_storage pulls com.google.crypto.tink:tink-android and the
+    // UnifiedPush connector (E12.4) pulls the plain JVM com.google.crypto.tink:tink;
+    // the two ship duplicate classes and fail the build. tink-android is the
+    // Android artifact and a superset, so drop the JVM one.
+    exclude(group = "com.google.crypto.tink", module = "tink")
+}
+
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // Proprietary push (e.g. Firebase Cloud Messaging, added under E12.x) is scoped to the

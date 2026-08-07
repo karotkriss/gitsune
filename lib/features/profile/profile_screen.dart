@@ -7,20 +7,23 @@ import '../../core/theme/app_theme.dart';
 
 /// Profile tab: opens the E2.7 sign-in screen and hosts the E13.1 biometric
 /// app lock toggle. [onQuietHoursTap] surfaces the E12.2 quiet-hours
-/// settings, and [onSwitchAccountTap]/[onManageAccountsTap] surface the
-/// E13.2 quick-switch sheet and account management screen, once the
-/// composition root wires their stores; null hides each entry.
+/// settings, [onAndroidPushTap] the E12.4 Android opt-in push settings, and
+/// [onSwitchAccountTap]/[onManageAccountsTap] surface the E13.2 quick-switch
+/// sheet and account management screen, once the composition root wires their
+/// stores; null hides each entry.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({
     super.key,
     this.appLockController,
     this.onQuietHoursTap,
+    this.onAndroidPushTap,
     this.onSwitchAccountTap,
     this.onManageAccountsTap,
   });
 
   final AppLockController? appLockController;
   final VoidCallback? onQuietHoursTap;
+  final VoidCallback? onAndroidPushTap;
   final VoidCallback? onSwitchAccountTap;
   final VoidCallback? onManageAccountsTap;
 
@@ -65,6 +68,13 @@ class ProfileScreen extends StatelessWidget {
                   onTap: onQuietHoursTap,
                 ),
               ],
+              if (onAndroidPushTap != null)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Android push'),
+                  trailing: const GsIcon(GsIconGlyph.chevronRight, size: 20),
+                  onTap: onAndroidPushTap,
+                ),
               if (appLockController != null) ...[
                 const SizedBox(height: 24),
                 _AppLockTile(controller: appLockController!),
