@@ -29,5 +29,5 @@ String formatReleaseDate(DateTime timestamp) {
 String fileNameForAsset(ReleaseAssetLink asset) {
   final segments = Uri.parse(asset.url).pathSegments;
   final last = segments.isEmpty ? '' : segments.last;
-  return last.isEmpty ? asset.name : Uri.decodeComponent(last);
+  return last.isEmpty ? asset.name : last;
 }
