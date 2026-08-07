@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/markdown/gs_markdown.dart';
@@ -10,10 +12,12 @@ void main() {
   Future<FixtureReleasesRepository> pumpReleases(
     WidgetTester tester, {
     String initialLocation = '/projects/7/releases?projectPath=acme%2Fapp',
+    Future<Directory> Function()? resolveDownloadsDirectory,
   }) async {
     final repository = FixtureReleasesRepository();
     final router = buildAppRouter(
       releasesRepository: repository,
+      resolveDownloadsDirectory: resolveDownloadsDirectory,
       initialLocation: initialLocation,
     );
     addTearDown(router.dispose);
@@ -99,5 +103,39 @@ void main() {
     );
 
     expect(find.text('Release not found.'), findsOneWidget);
+  });
+
+  testWidgets('tapping an asset downloads it and reports completion',
+      (tester) async {
+    final repository = await pumpReleases(
+      tester,
+      resolveDownloadsDirectory: () async => Directory('/fake/downloads'),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('release-row-v1.2.0')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('release-asset-Android APK')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Downloaded Android APK.'), findsOneWidget);
+    expect(repository.downloadedAssets.map((a) => a.name), ['Android APK']);
+  });
+
+  testWidgets('a failed download reports an honest error', (tester) async {
+    final repository = await pumpReleases(
+      tester,
+      resolveDownloadsDirectory: () async => Directory('/fake/downloads'),
+    );
+    repository.downloadError = Exception('network unreachable');
+
+    await tester.tap(find.byKey(const ValueKey('release-row-v1.2.0')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('release-asset-Android APK')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to download Android APK.'), findsOneWidget);
+    expect(repository.downloadedAssets, isEmpty);
   });
 }

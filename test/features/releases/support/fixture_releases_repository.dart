@@ -13,6 +13,10 @@ class FixtureReleasesRepository implements ReleasesRepository {
 
   final List<ReleaseEntry> _releases;
   final refreshedProjectIds = <int>[];
+  final downloadedAssets = <ReleaseAssetLink>[];
+
+  /// Set to make the next [downloadAsset] call fail instead of succeeding.
+  Object? downloadError;
 
   @override
   Stream<List<ReleaseEntry>> watchReleases(int projectId) =>
@@ -27,6 +31,25 @@ class FixtureReleasesRepository implements ReleasesRepository {
   @override
   Future<void> refreshReleases(int projectId) async {
     refreshedProjectIds.add(projectId);
+  }
+
+  /// Deliberately doesn't touch the real filesystem: `dart:io` async file
+  /// operations hang under `testWidgets` (unlike a plain `test()`), so the
+  /// real download-and-write path is covered at the repository level against
+  /// the fake HTTP server instead; this double only exercises the screen's
+  /// progress and completion/error UI.
+  @override
+  Future<void> downloadAsset(
+    ReleaseAssetLink asset,
+    String destinationPath, {
+    void Function(int received, int total)? onProgress,
+  }) async {
+    onProgress?.call(5, 10);
+    if (downloadError case final error?) {
+      throw error;
+    }
+    downloadedAssets.add(asset);
+    onProgress?.call(10, 10);
   }
 }
 

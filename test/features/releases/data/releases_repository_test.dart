@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/database/app_database.dart';
@@ -204,5 +205,64 @@ void main() {
       db.releaseEntries.projectId,
       db.releaseEntries.tagName,
     });
+  });
+
+  test('downloadAsset fetches through the authenticated client, writes the '
+      'bytes, and reports progress', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    final bytes = List<int>.generate(20, (i) => i);
+    String? capturedAuth;
+    server.handle('GET /downloads/app-release.apk', (request) async {
+      capturedAuth = request.headers.value('authorization');
+      request.response.statusCode = 200;
+      request.response.headers.contentLength = bytes.length;
+      request.response.add(bytes);
+      await request.response.close();
+    });
+
+    final repository = repositoryFor(server);
+    final asset = ReleaseAssetLink(
+      name: 'Android APK',
+      url: server.baseUri.resolve('/downloads/app-release.apk').toString(),
+    );
+    final tempDir = await Directory.systemTemp.createTemp('gitsune-download');
+    addTearDown(() => tempDir.delete(recursive: true));
+    final destination = '${tempDir.path}/app-release.apk';
+
+    final progressUpdates = <List<int>>[];
+    await repository.downloadAsset(
+      asset,
+      destination,
+      onProgress: (received, total) => progressUpdates.add([received, total]),
+    );
+
+    expect(capturedAuth, 'Bearer tok');
+    expect(await File(destination).readAsBytes(), bytes);
+    expect(progressUpdates, isNotEmpty);
+    expect(progressUpdates.last, [bytes.length, bytes.length]);
+  });
+
+  test('downloadAsset throws on a failed request instead of swallowing it '
+      '(unlike refreshReleases, there is no cache to fall back to)', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    server.handle('GET /downloads/missing.apk', (request) async {
+      request.response.statusCode = 404;
+      await request.response.close();
+    });
+
+    final repository = repositoryFor(server);
+    final asset = ReleaseAssetLink(
+      name: 'Missing',
+      url: server.baseUri.resolve('/downloads/missing.apk').toString(),
+    );
+    final tempDir = await Directory.systemTemp.createTemp('gitsune-download');
+    addTearDown(() => tempDir.delete(recursive: true));
+
+    await expectLater(
+      repository.downloadAsset(asset, '${tempDir.path}/missing.apk'),
+      throwsA(isA<DioException>()),
+    );
   });
 }

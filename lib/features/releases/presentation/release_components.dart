@@ -1,3 +1,5 @@
+import '../data/releases_repository.dart';
+
 const _monthNames = [
   'Jan',
   'Feb',
@@ -19,4 +21,13 @@ const _monthNames = [
 String formatReleaseDate(DateTime timestamp) {
   final local = timestamp.toLocal();
   return '${_monthNames[local.month - 1]} ${local.day}, ${local.year}';
+}
+
+/// The file name a downloaded asset should be saved under: the URL's last
+/// path segment, percent-decoded, falling back to the asset's display name
+/// for a URL with no path segments.
+String fileNameForAsset(ReleaseAssetLink asset) {
+  final segments = Uri.parse(asset.url).pathSegments;
+  final last = segments.isEmpty ? '' : segments.last;
+  return last.isEmpty ? asset.name : Uri.decodeComponent(last);
 }

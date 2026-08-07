@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +9,7 @@ import '../../core/auth/account_sessions.dart';
 import '../../core/auth/active_account.dart';
 import '../../core/auth/token_store.dart';
 import '../../core/database/app_database.dart';
+import '../../core/downloads/asset_downloads.dart' as asset_downloads;
 import '../../core/icons/gs_icons.dart';
 import '../../core/lock/app_lock.dart';
 import '../../core/network/graphql_subscriptions.dart';
@@ -80,6 +82,9 @@ import '../todos/todos_screen.dart';
 /// management surface, its `/accounts` route, and the Profile tab's
 /// quick-switch entry; [tokenStore] additionally clears a removed account's
 /// tokens.
+/// [resolveDownloadsDirectory] overrides where the E11.2 release detail
+/// screen saves a downloaded asset, letting tests avoid the real platform
+/// downloads directory; it defaults to the real one.
 GoRouter buildAppRouter({
   AccountSessions? accountSessions,
   ActiveAccountStore? activeAccountStore,
@@ -95,6 +100,7 @@ GoRouter buildAppRouter({
   MergeRequestsRepository? mergeRequestsRepository,
   PipelinesRepository? pipelinesRepository,
   ReleasesRepository? releasesRepository,
+  Future<Directory> Function()? resolveDownloadsDirectory,
   RepositoryTreeRepository? repositoryTreeRepository,
   SearchRepository? searchRepository,
   OfflineFirstRepository<List<TodoItem>>? todosRepository,
@@ -313,6 +319,9 @@ GoRouter buildAppRouter({
                   'Project $projectId',
               tagName: state.uri.queryParameters['tag'] ?? '',
               repository: releasesRepository,
+              resolveDownloadsDirectory:
+                  resolveDownloadsDirectory ??
+                  asset_downloads.resolveDownloadsDirectory,
             );
           },
         ),

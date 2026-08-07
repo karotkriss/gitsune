@@ -11,13 +11,24 @@ import '../../../core/network/keyset_paginator.dart';
 /// seam: [watchReleases] and [watchRelease] are reactive database reads of a
 /// project's cached releases; [refreshReleases] fetches the project's
 /// releases from the network and writes through, swallowing network failures
-/// so the streams keep serving the cache.
+/// so the streams keep serving the cache. [downloadAsset] (E11.2) is
+/// network-only, since a downloaded file has no cache row to write through.
 abstract interface class ReleasesRepository {
   Stream<List<ReleaseEntry>> watchReleases(int projectId);
 
   Stream<ReleaseEntry?> watchRelease(int projectId, String tagName);
 
   Future<void> refreshReleases(int projectId);
+
+  /// Downloads [asset] to [destinationPath], authenticated via the account's
+  /// client so a private project's assets work. Reports progress through
+  /// [onProgress] as `(received, total)` bytes; `total` is `-1` when the
+  /// server response omits `Content-Length`.
+  Future<void> downloadAsset(
+    ReleaseAssetLink asset,
+    String destinationPath, {
+    void Function(int received, int total)? onProgress,
+  });
 }
 
 /// GitLab releases reader (`GET /projects/:id/releases`), account-scoped and
@@ -104,6 +115,19 @@ class GitLabReleasesRepository implements ReleasesRepository {
         (batch) => batch.insertAll(database.releaseEntries, rows),
       );
     });
+  }
+
+  @override
+  Future<void> downloadAsset(
+    ReleaseAssetLink asset,
+    String destinationPath, {
+    void Function(int received, int total)? onProgress,
+  }) async {
+    await client.downloadUri(
+      Uri.parse(asset.url),
+      destinationPath,
+      onReceiveProgress: onProgress,
+    );
   }
 
   Uri _releasesUri(int projectId) {
