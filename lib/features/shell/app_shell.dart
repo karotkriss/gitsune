@@ -322,6 +322,7 @@ GoRouter buildAppRouter({
               resolveDownloadsDirectory:
                   resolveDownloadsDirectory ??
                   asset_downloads.resolveDownloadsDirectory,
+              openExternalUrl: openWebUrl,
             );
           },
         ),

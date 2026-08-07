@@ -36,6 +36,13 @@
           "url": "https://gitlab.example.com/acme/app/-/releases/v1.2.0/downloads/app-release.apk",
           "direct_asset_url": "https://gitlab.example.com/acme/app/-/releases/v1.2.0/downloads/app-release.apk",
           "link_type": "package"
+        },
+        {
+          "id": 8,
+          "name": "Upgrade runbook",
+          "url": "https://gitlab.example.com/acme/app/-/releases/v1.2.0/runbook",
+          "direct_asset_url": "https://gitlab.example.com/acme/app/-/releases/v1.2.0/runbook",
+          "link_type": "runbook"
         }
       ]
     }

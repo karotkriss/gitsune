@@ -165,13 +165,47 @@ class GitLabReleasesRepository implements ReleasesRepository {
   }
 }
 
-/// One downloadable entry of a release's assets: a custom link or an
-/// auto-generated source archive.
+/// The kind of a release asset link, mirroring GitLab's `link_type` on custom
+/// links plus a synthetic [sourceArchive] for the auto-generated source
+/// entries. Distinguishes file-like assets (downloaded on tap) from links
+/// meant to open as a page.
+enum ReleaseAssetLinkType {
+  package,
+  image,
+  runbook,
+  other,
+  sourceArchive;
+
+  /// Whether a tap should download the asset to a file rather than open its
+  /// URL externally. Runbook/other links (and any unrecognized custom type)
+  /// are pages, not files.
+  bool get isDownloadable =>
+      this == package || this == image || this == sourceArchive;
+
+  /// Maps a custom link's `link_type` field, defaulting an absent or
+  /// unrecognized value to [other] so it opens externally rather than saving
+  /// an unexpected body to disk.
+  static ReleaseAssetLinkType fromApi(String? value) => switch (value) {
+    'package' => package,
+    'image' => image,
+    'runbook' => runbook,
+    _ => other,
+  };
+}
+
+/// One entry of a release's assets: a custom link or an auto-generated source
+/// archive. [linkType] decides whether a tap downloads the file or opens the
+/// URL as a page.
 class ReleaseAssetLink {
-  const ReleaseAssetLink({required this.name, required this.url});
+  const ReleaseAssetLink({
+    required this.name,
+    required this.url,
+    required this.linkType,
+  });
 
   final String name;
   final String url;
+  final ReleaseAssetLinkType linkType;
 }
 
 /// Flattens a cached release's `assets` object into a display list: custom
@@ -186,12 +220,14 @@ List<ReleaseAssetLink> releaseAssetLinks(ReleaseEntry release) {
         ReleaseAssetLink(
           name: link['name'] as String? ?? '',
           url: (link['direct_asset_url'] ?? link['url']) as String? ?? '',
+          linkType: ReleaseAssetLinkType.fromApi(link['link_type'] as String?),
         ),
     for (final source in assets['sources'] as List? ?? const [])
       if (source is Map<String, dynamic>)
         ReleaseAssetLink(
           name: 'Source code (${source['format']})',
           url: source['url'] as String? ?? '',
+          linkType: ReleaseAssetLinkType.sourceArchive,
         ),
   ];
   return links.where((link) => link.url.isNotEmpty).toList(growable: false);

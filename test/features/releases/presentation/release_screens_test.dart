@@ -18,6 +18,7 @@ void main() {
           const ReleaseAssetLink(
             name: 'App',
             url: 'https://example.com/uploads/app-1.0.apk',
+            linkType: ReleaseAssetLinkType.package,
           ),
         ),
         'app-1.0.apk',
@@ -29,8 +30,8 @@ void main() {
         fileNameForAsset(
           const ReleaseAssetLink(
             name: 'App',
-            url:
-                'https://example.com/%2e%2e%2f%2e%2e%2fpwned.txt',
+            url: 'https://example.com/%2e%2e%2f%2e%2e%2fpwned.txt',
+            linkType: ReleaseAssetLinkType.package,
           ),
         ),
         'pwned.txt',
@@ -40,7 +41,11 @@ void main() {
     test('falls back to a sanitized asset name for a segmentless URL', () {
       expect(
         fileNameForAsset(
-          const ReleaseAssetLink(name: 'notes.txt', url: 'https://example.com'),
+          const ReleaseAssetLink(
+            name: 'notes.txt',
+            url: 'https://example.com',
+            linkType: ReleaseAssetLinkType.package,
+          ),
         ),
         'notes.txt',
       );
@@ -52,6 +57,7 @@ void main() {
           const ReleaseAssetLink(
             name: 'safe.bin',
             url: 'https://example.com/foo/%2e%2e',
+            linkType: ReleaseAssetLinkType.package,
           ),
         ),
         'safe.bin',
@@ -63,11 +69,13 @@ void main() {
     WidgetTester tester, {
     String initialLocation = '/projects/7/releases?projectPath=acme%2Fapp',
     Future<Directory> Function()? resolveDownloadsDirectory,
+    Future<void> Function(Uri url)? openWebUrl,
   }) async {
     final repository = FixtureReleasesRepository();
     final router = buildAppRouter(
       releasesRepository: repository,
       resolveDownloadsDirectory: resolveDownloadsDirectory,
+      openWebUrl: openWebUrl,
       initialLocation: initialLocation,
     );
     addTearDown(router.dispose);
@@ -129,6 +137,7 @@ void main() {
 
     expect(find.text('Assets'), findsOneWidget);
     expect(find.text('Android APK'), findsOneWidget);
+    expect(find.text('Upgrade runbook'), findsOneWidget);
     expect(find.text('Source code (zip)'), findsOneWidget);
     expect(find.text('Source code (tar.gz)'), findsOneWidget);
   });
@@ -170,6 +179,30 @@ void main() {
 
     expect(find.text('Downloaded Android APK.'), findsOneWidget);
     expect(repository.downloadedAssets.map((a) => a.name), ['Android APK']);
+  });
+
+  testWidgets('tapping a non-file asset opens it externally instead of '
+      'downloading', (tester) async {
+    final openedUrls = <Uri>[];
+    final repository = await pumpReleases(
+      tester,
+      resolveDownloadsDirectory: () async => Directory('/fake/downloads'),
+      openWebUrl: (url) async => openedUrls.add(url),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('release-row-v1.2.0')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('release-asset-Upgrade runbook')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(openedUrls, [
+      Uri.parse('https://gitlab.example.com/acme/app/-/releases/v1.2.0/runbook'),
+    ]);
+    expect(repository.downloadedAssets, isEmpty);
+    expect(find.textContaining('Downloaded'), findsNothing);
   });
 
   testWidgets('a failed download reports an honest error', (tester) async {

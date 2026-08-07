@@ -133,10 +133,32 @@ void main() {
     final links = releaseAssetLinks(release!);
     expect(links.map((l) => l.name), [
       'Android APK',
+      'Upgrade runbook',
       'Source code (zip)',
       'Source code (tar.gz)',
     ]);
+    expect(links.map((l) => l.linkType), [
+      ReleaseAssetLinkType.package,
+      ReleaseAssetLinkType.runbook,
+      ReleaseAssetLinkType.sourceArchive,
+      ReleaseAssetLinkType.sourceArchive,
+    ]);
     expect(links.first.url, endsWith('app-release.apk'));
+  });
+
+  test('an absent or unrecognized custom link_type falls back to other so it '
+      'opens externally rather than downloading', () {
+    expect(ReleaseAssetLinkType.fromApi(null), ReleaseAssetLinkType.other);
+    expect(ReleaseAssetLinkType.fromApi('image'), ReleaseAssetLinkType.image);
+    expect(
+      ReleaseAssetLinkType.fromApi('mystery'),
+      ReleaseAssetLinkType.other,
+    );
+    expect(ReleaseAssetLinkType.other.isDownloadable, isFalse);
+    expect(ReleaseAssetLinkType.runbook.isDownloadable, isFalse);
+    expect(ReleaseAssetLinkType.package.isDownloadable, isTrue);
+    expect(ReleaseAssetLinkType.image.isDownloadable, isTrue);
+    expect(ReleaseAssetLinkType.sourceArchive.isDownloadable, isTrue);
   });
 
   test('a subsequent refresh replaces releases no longer returned', () async {
@@ -225,6 +247,7 @@ void main() {
     final asset = ReleaseAssetLink(
       name: 'Android APK',
       url: server.baseUri.resolve('/downloads/app-release.apk').toString(),
+      linkType: ReleaseAssetLinkType.package,
     );
     final tempDir = await Directory.systemTemp.createTemp('gitsune-download');
     addTearDown(() => tempDir.delete(recursive: true));
@@ -256,6 +279,7 @@ void main() {
     final asset = ReleaseAssetLink(
       name: 'Missing',
       url: server.baseUri.resolve('/downloads/missing.apk').toString(),
+      linkType: ReleaseAssetLinkType.package,
     );
     final tempDir = await Directory.systemTemp.createTemp('gitsune-download');
     addTearDown(() => tempDir.delete(recursive: true));

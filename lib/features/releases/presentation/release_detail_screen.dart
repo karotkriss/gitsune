@@ -27,6 +27,7 @@ class ReleaseDetailScreen extends StatefulWidget {
     required this.tagName,
     required this.repository,
     this.resolveDownloadsDirectory = asset_downloads.resolveDownloadsDirectory,
+    this.openExternalUrl,
   });
 
   final int projectId;
@@ -37,6 +38,11 @@ class ReleaseDetailScreen extends StatefulWidget {
   /// Resolves where a downloaded asset lands; overridden in tests to avoid
   /// touching the real platform downloads directory.
   final Future<Directory> Function() resolveDownloadsDirectory;
+
+  /// Opens a URL externally (markdown links and non-file asset links);
+  /// defaults to url_launcher, overridden in tests to observe the seam
+  /// without launching a real browser.
+  final Future<void> Function(Uri url)? openExternalUrl;
 
   @override
   State<ReleaseDetailScreen> createState() => _ReleaseDetailScreenState();
@@ -72,7 +78,18 @@ class _ReleaseDetailScreenState extends State<ReleaseDetailScreen> {
   }
 
   Future<void> _openLink(Uri url) =>
+      (widget.openExternalUrl ?? _launchExternally)(url);
+
+  static Future<void> _launchExternally(Uri url) =>
       launchUrl(url, mode: LaunchMode.externalApplication);
+
+  void _onAssetTap(ReleaseAssetLink asset) {
+    if (asset.linkType.isDownloadable) {
+      unawaited(_downloadAsset(asset));
+    } else {
+      unawaited(_openLink(Uri.parse(asset.url)));
+    }
+  }
 
   Future<void> _downloadAsset(ReleaseAssetLink asset) async {
     if (_downloadProgress.containsKey(asset.url)) return;
@@ -159,7 +176,7 @@ class _ReleaseDetailScreenState extends State<ReleaseDetailScreen> {
             release: release,
             onLinkTap: _openLink,
             downloadProgress: _downloadProgress,
-            onAssetTap: _downloadAsset,
+            onAssetTap: _onAssetTap,
           );
         },
       ),
@@ -259,11 +276,18 @@ class _AssetLinkRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final gs = theme.extension<GsTheme>()!;
+    final downloadable = link.linkType.isDownloadable;
+    final String label;
+    if (downloading) {
+      label = 'Downloading ${link.name}';
+    } else if (downloadable) {
+      label = 'Download ${link.name}';
+    } else {
+      label = 'Open ${link.name}';
+    }
     return Semantics(
       button: true,
-      label: downloading
-          ? 'Downloading ${link.name}'
-          : 'Download ${link.name}',
+      label: label,
       child: ExcludeSemantics(
         child: InkWell(
           key: ValueKey('release-asset-${link.name}'),
@@ -286,7 +310,13 @@ class _AssetLinkRow extends StatelessWidget {
                       ),
                     )
                   else
-                    GsIcon(GsIconGlyph.download, size: 16, color: gs.link),
+                    GsIcon(
+                      downloadable
+                          ? GsIconGlyph.download
+                          : GsIconGlyph.externalLink,
+                      size: 16,
+                      color: gs.link,
+                    ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
