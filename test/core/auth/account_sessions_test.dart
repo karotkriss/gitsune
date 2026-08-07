@@ -110,6 +110,78 @@ void main() {
     );
   });
 
+  test('reorder rewrites switcher positions and keeps later sign-ins '
+      'appending to the end', () async {
+    await sessions.signedIn(alice);
+    await sessions.signedIn(bob);
+    await sessions.signedIn(selfHostedAlice);
+    final before = await sessions.watchAll().first;
+
+    await sessions.reorder([bob, selfHostedAlice, alice]);
+
+    final after = await sessions.watchAll().first;
+    expect(after.map(keyOf), [bob, selfHostedAlice, alice]);
+    // The same position slots, reassigned: uniqueness survives any number
+    // of reorders.
+    expect(
+      after.map((row) => row.addedAt).toSet(),
+      before.map((row) => row.addedAt).toSet(),
+    );
+
+    const newcomer = AccountKey(instanceHost: 'gitlab.com', accountId: '3');
+    await sessions.signedIn(newcomer);
+    final withNewcomer = await sessions.watchAll().first;
+    expect(withNewcomer.map(keyOf), [bob, selfHostedAlice, alice, newcomer]);
+  });
+
+  test('remove deletes the registry row and every account-scoped local row, '
+      'leaving other accounts untouched', () async {
+    await sessions.signedIn(alice);
+    await sessions.signedIn(bob);
+    for (final (key, username) in [(alice, 'alice'), (bob, 'bob')]) {
+      await database
+          .into(database.currentUserProfiles)
+          .insert(
+            CurrentUserProfilesCompanion.insert(
+              instanceHost: key.instanceHost,
+              accountId: key.accountId,
+              username: username,
+              name: username,
+              updatedAt: DateTime.now(),
+            ),
+          );
+    }
+
+    await sessions.remove(alice);
+
+    final accounts = await sessions.watchAll().first;
+    expect(accounts.map(keyOf), [bob]);
+    final profiles = await database.select(database.currentUserProfiles).get();
+    expect(profiles.map((profile) => profile.username), ['bob']);
+  });
+
+  test('watchAllWithProfiles joins each account with its cached profile in '
+      'switcher order', () async {
+    await sessions.signedIn(alice);
+    await sessions.signedIn(selfHostedAlice);
+    await database
+        .into(database.currentUserProfiles)
+        .insert(
+          CurrentUserProfilesCompanion.insert(
+            instanceHost: alice.instanceHost,
+            accountId: alice.accountId,
+            username: 'alice',
+            name: 'Alice',
+            updatedAt: DateTime.now(),
+          ),
+        );
+
+    final rows = await sessions.watchAllWithProfiles().first;
+    expect(rows.map((row) => keyOf(row.account)), [alice, selfHostedAlice]);
+    expect(rows.first.profile?.username, 'alice');
+    expect(rows.last.profile, isNull);
+  });
+
   test('a rejected refresh marks only that account for re-auth; the other '
       'account keeps working and both stay in the switcher', () async {
     final server = await FakeGitLabServer.start();

@@ -5,19 +5,24 @@ import '../../core/icons/gs_icons.dart';
 import '../../core/lock/app_lock.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Profile tab. Placeholder until E13.2 builds account management; opens the
-/// E2.7 sign-in screen and hosts the E13.1 biometric app lock toggle.
-/// [onQuietHoursTap] surfaces the E12.2 quiet-hours settings once the
-/// composition root wires a store; null hides the entry.
+/// Profile tab: opens the E2.7 sign-in screen and hosts the E13.1 biometric
+/// app lock toggle. [onQuietHoursTap] surfaces the E12.2 quiet-hours
+/// settings, and [onSwitchAccountTap]/[onManageAccountsTap] surface the
+/// E13.2 quick-switch sheet and account management screen, once the
+/// composition root wires their stores; null hides each entry.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({
     super.key,
     this.appLockController,
     this.onQuietHoursTap,
+    this.onSwitchAccountTap,
+    this.onManageAccountsTap,
   });
 
   final AppLockController? appLockController;
   final VoidCallback? onQuietHoursTap;
+  final VoidCallback? onSwitchAccountTap;
+  final VoidCallback? onManageAccountsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +40,22 @@ class ProfileScreen extends StatelessWidget {
                 onPressed: () => context.push('/signin'),
                 child: const Text('Sign in'),
               ),
+              if (onSwitchAccountTap != null) ...[
+                const SizedBox(height: 16),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Switch account'),
+                  trailing: const GsIcon(GsIconGlyph.chevronRight, size: 20),
+                  onTap: onSwitchAccountTap,
+                ),
+              ],
+              if (onManageAccountsTap != null)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Accounts'),
+                  trailing: const GsIcon(GsIconGlyph.chevronRight, size: 20),
+                  onTap: onManageAccountsTap,
+                ),
               if (onQuietHoursTap != null) ...[
                 const SizedBox(height: 16),
                 ListTile(

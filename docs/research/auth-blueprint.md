@@ -137,7 +137,7 @@ Connectivity failures, timeouts, unrelated server responses, and malformed succe
 The session registry stores every signed-in account under the composite key of instance host and account ID, so the same account ID can coexist on different instances.
 When an instance rejects one account's refresh, the registry marks only that account and keeps its row available to the account switcher; every other account remains untouched and usable.
 Signing in to the marked account again clears only its re-authentication mark and preserves its switcher position.
-Composition-root wiring and the account-management interface remain deferred to E13.2.
+The account-management interface (the account switcher and add/remove/reorder surface) landed in E13.2; per-account repository wiring from the composition root remains deferred until a screen consumes the active account.
 
 **The Personal Access Token fallback stays deliberately minimal.**
 It exists specifically for the one structural case where OAuth-first cannot work: an instance that forbids user-level OAuth application creation, where the signed-in user is not an administrator either.

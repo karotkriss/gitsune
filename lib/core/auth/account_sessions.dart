@@ -67,4 +67,79 @@ class AccountSessions {
             (row) => OrderingTerm.asc(row.accountId),
           ]))
           .watch();
+
+  /// [watchAll] joined with each account's cached `CurrentUserProfiles` row
+  /// (null until `CurrentUserRepository` caches one), for surfaces that show
+  /// avatar and username per session (E13.2).
+  Stream<List<AccountWithProfile>> watchAllWithProfiles() {
+    final accounts = _database.accounts;
+    final profiles = _database.currentUserProfiles;
+    final query =
+        _database.select(accounts).join([
+          leftOuterJoin(
+            profiles,
+            profiles.instanceHost.equalsExp(accounts.instanceHost) &
+                profiles.accountId.equalsExp(accounts.accountId),
+          ),
+        ])..orderBy([
+          OrderingTerm.asc(accounts.addedAt),
+          OrderingTerm.asc(accounts.instanceHost),
+          OrderingTerm.asc(accounts.accountId),
+        ]);
+    return query.watch().map(
+      (rows) => [
+        for (final row in rows)
+          (
+            account: row.readTable(accounts),
+            profile: row.readTableOrNull(profiles),
+          ),
+      ],
+    );
+  }
+
+  /// Rewrites switcher positions so [watchAll] lists accounts in [order],
+  /// which must be a permutation of every registered account. The existing
+  /// [Account.addedAt] values are reassigned in the new order, so positions
+  /// stay unique and a later [signedIn] still appends to the end.
+  Future<void> reorder(List<AccountKey> order) =>
+      _database.transaction(() async {
+        final slots =
+            (await (_database.select(
+                  _database.accounts,
+                )..orderBy([(row) => OrderingTerm.asc(row.addedAt)])).get())
+                .map((row) => row.addedAt)
+                .toList();
+        for (var index = 0; index < order.length; index++) {
+          final account = order[index];
+          await (_database.update(_database.accounts)..where(
+                (row) =>
+                    row.instanceHost.equals(account.instanceHost) &
+                    row.accountId.equals(account.accountId),
+              ))
+              .write(AccountsCompanion(addedAt: Value(slots[index])));
+        }
+      });
+
+  /// Signs [account] out of this device: deletes its registry row and every
+  /// account-scoped local row (caches, drafts, per-account settings) in one
+  /// transaction. Token material lives in `TokenStore`; the caller clears
+  /// that separately.
+  Future<void> remove(AccountKey account) => _database.transaction(() async {
+    for (final table in _database.allTables) {
+      if (!table.columnsByName.containsKey('instance_host')) continue;
+      await _database.customUpdate(
+        'DELETE FROM "${table.actualTableName}" '
+        'WHERE instance_host = ? AND account_id = ?',
+        variables: [
+          Variable.withString(account.instanceHost),
+          Variable.withString(account.accountId),
+        ],
+        updates: {table},
+        updateKind: UpdateKind.delete,
+      );
+    }
+  });
 }
+
+/// One account-management row: the registry row plus its cached profile.
+typedef AccountWithProfile = ({Account account, CurrentUserProfile? profile});
