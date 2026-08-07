@@ -1,0 +1,36 @@
+[
+  {
+    "id": 201,
+    "project": { "id": 7, "name": "app", "path_with_namespace": "gitsune/app" },
+    "author": {
+      "id": 2,
+      "username": "priya",
+      "name": "Priya Sharma",
+      "avatar_url": null
+    },
+    "action_name": "assigned",
+    "target_type": "Issue",
+    "target": { "iid": 142, "title": "Keep draft comments after reconnecting" },
+    "target_url": "https://gitlab.example.com/gitsune/app/-/issues/142",
+    "body": "Priya assigned you",
+    "state": "pending",
+    "created_at": "2026-07-30T13:59:12.849Z"
+  },
+  {
+    "id": 202,
+    "project": { "id": 7, "name": "app", "path_with_namespace": "gitsune/app" },
+    "author": {
+      "id": 1,
+      "username": "ade",
+      "name": "Ade Ogunleye",
+      "avatar_url": null
+    },
+    "action_name": "directly_addressed",
+    "target_type": "Epic",
+    "target": { "iid": 9, "title": "Mobile release epic" },
+    "target_url": "https://gitlab.example.com/groups/gitsune/-/epics/9",
+    "body": "Ade mentioned you on the epic",
+    "state": "pending",
+    "created_at": "2026-07-29T09:12:00.000Z"
+  }
+]

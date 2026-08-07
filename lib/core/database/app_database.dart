@@ -68,6 +68,7 @@ class PaginationCursors extends Table with AccountScoped {
 /// account. See `core/repository/todos_repository.dart`.
 class TodoItems extends Table with AccountScoped {
   IntColumn get todoId => integer()();
+  IntColumn get projectId => integer().nullable()();
   TextColumn get projectPathWithNamespace => text().nullable()();
   TextColumn get authorName => text()();
   TextColumn get authorUsername => text()();
@@ -231,7 +232,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -268,6 +269,11 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 12) {
         await migrator.createTable(accounts);
+      }
+      // Only databases that created todoItems before version 13 need the
+      // column added; the `from < 4` createTable already used today's shape.
+      if (from >= 4 && from < 13) {
+        await migrator.addColumn(todoItems, todoItems.projectId);
       }
     },
   );

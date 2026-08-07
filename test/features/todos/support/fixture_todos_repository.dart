@@ -62,8 +62,10 @@ TodoItem fixtureTodo({
   required int id,
   required String actionName,
   required String targetType,
+  int? projectId = 1,
   int? targetIid,
   String? targetTitle,
+  String? targetUrl,
   required String body,
   required DateTime createdAt,
 }) {
@@ -77,6 +79,7 @@ TodoItem fixtureTodo({
     instanceHost: 'gitlab.example.com',
     accountId: 'alice',
     todoId: id,
+    projectId: projectId,
     projectPathWithNamespace: 'gitsune/app',
     authorName: 'Fixture Author',
     authorUsername: 'fixture',
@@ -84,7 +87,8 @@ TodoItem fixtureTodo({
     targetType: targetType,
     targetIid: targetIid,
     targetTitle: targetTitle,
-    targetUrl: 'https://gitlab.example.com/gitsune/app/-/$targetPath',
+    targetUrl:
+        targetUrl ?? 'https://gitlab.example.com/gitsune/app/-/$targetPath',
     body: body,
     state: 'pending',
     createdAt: createdAt,

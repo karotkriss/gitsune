@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/database/app_database.dart';
@@ -101,6 +102,26 @@ void main() {
               PRIMARY KEY (instance_host, account_id)
             )
           ''');
+          database.execute('''
+            CREATE TABLE todo_items (
+              instance_host TEXT NOT NULL,
+              account_id TEXT NOT NULL,
+              todo_id INTEGER NOT NULL,
+              project_path_with_namespace TEXT NULL,
+              author_name TEXT NOT NULL,
+              author_username TEXT NOT NULL,
+              author_avatar_url TEXT NULL,
+              action_name TEXT NOT NULL,
+              target_type TEXT NOT NULL,
+              target_iid INTEGER NULL,
+              target_title TEXT NULL,
+              target_url TEXT NOT NULL,
+              body TEXT NOT NULL,
+              state TEXT NOT NULL,
+              created_at INTEGER NOT NULL,
+              PRIMARY KEY (instance_host, account_id, todo_id)
+            )
+          ''');
           database.userVersion = 9;
         },
       ),
@@ -122,5 +143,27 @@ void main() {
     final draft = (await database.select(database.commentDrafts).get()).single;
     expect(draft.body, 'Still queued');
     expect(draft.retryAfter, isNull);
+
+    // Version 13 added the project id column to the pre-existing to-do table.
+    await database
+        .into(database.todoItems)
+        .insert(
+          TodoItemsCompanion.insert(
+            instanceHost: 'gitlab.example.com',
+            accountId: '1',
+            todoId: 7,
+            projectId: const Value(7),
+            authorName: 'Alice',
+            authorUsername: 'alice',
+            actionName: 'assigned',
+            targetType: 'Issue',
+            targetUrl: 'https://gitlab.example.com/group/app/-/issues/7',
+            body: 'Deep-linkable to-do',
+            state: 'pending',
+            createdAt: DateTime.utc(2026, 8, 7),
+          ),
+        );
+    final todo = (await database.select(database.todoItems).get()).single;
+    expect(todo.projectId, 7);
   });
 }

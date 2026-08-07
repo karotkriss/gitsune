@@ -1552,6 +1552,17 @@ class $TodoItemsTable extends TodoItems
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
+  @override
+  late final GeneratedColumn<int> projectId = GeneratedColumn<int>(
+    'project_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _projectPathWithNamespaceMeta =
       const VerificationMeta('projectPathWithNamespace');
   @override
@@ -1685,6 +1696,7 @@ class $TodoItemsTable extends TodoItems
     instanceHost,
     accountId,
     todoId,
+    projectId,
     projectPathWithNamespace,
     authorName,
     authorUsername,
@@ -1736,6 +1748,12 @@ class $TodoItemsTable extends TodoItems
       );
     } else if (isInserting) {
       context.missing(_todoIdMeta);
+    }
+    if (data.containsKey('project_id')) {
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
     }
     if (data.containsKey('project_path_with_namespace')) {
       context.handle(
@@ -1858,6 +1876,10 @@ class $TodoItemsTable extends TodoItems
         DriftSqlType.int,
         data['${effectivePrefix}todo_id'],
       )!,
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}project_id'],
+      ),
       projectPathWithNamespace: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}project_path_with_namespace'],
@@ -1919,6 +1941,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
   final String instanceHost;
   final String accountId;
   final int todoId;
+  final int? projectId;
   final String? projectPathWithNamespace;
   final String authorName;
   final String authorUsername;
@@ -1935,6 +1958,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     required this.instanceHost,
     required this.accountId,
     required this.todoId,
+    this.projectId,
     this.projectPathWithNamespace,
     required this.authorName,
     required this.authorUsername,
@@ -1954,6 +1978,9 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     map['instance_host'] = Variable<String>(instanceHost);
     map['account_id'] = Variable<String>(accountId);
     map['todo_id'] = Variable<int>(todoId);
+    if (!nullToAbsent || projectId != null) {
+      map['project_id'] = Variable<int>(projectId);
+    }
     if (!nullToAbsent || projectPathWithNamespace != null) {
       map['project_path_with_namespace'] = Variable<String>(
         projectPathWithNamespace,
@@ -1984,6 +2011,9 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
       instanceHost: Value(instanceHost),
       accountId: Value(accountId),
       todoId: Value(todoId),
+      projectId: projectId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(projectId),
       projectPathWithNamespace: projectPathWithNamespace == null && nullToAbsent
           ? const Value.absent()
           : Value(projectPathWithNamespace),
@@ -2016,6 +2046,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
       instanceHost: serializer.fromJson<String>(json['instanceHost']),
       accountId: serializer.fromJson<String>(json['accountId']),
       todoId: serializer.fromJson<int>(json['todoId']),
+      projectId: serializer.fromJson<int?>(json['projectId']),
       projectPathWithNamespace: serializer.fromJson<String?>(
         json['projectPathWithNamespace'],
       ),
@@ -2039,6 +2070,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
       'instanceHost': serializer.toJson<String>(instanceHost),
       'accountId': serializer.toJson<String>(accountId),
       'todoId': serializer.toJson<int>(todoId),
+      'projectId': serializer.toJson<int?>(projectId),
       'projectPathWithNamespace': serializer.toJson<String?>(
         projectPathWithNamespace,
       ),
@@ -2060,6 +2092,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     String? instanceHost,
     String? accountId,
     int? todoId,
+    Value<int?> projectId = const Value.absent(),
     Value<String?> projectPathWithNamespace = const Value.absent(),
     String? authorName,
     String? authorUsername,
@@ -2076,6 +2109,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     instanceHost: instanceHost ?? this.instanceHost,
     accountId: accountId ?? this.accountId,
     todoId: todoId ?? this.todoId,
+    projectId: projectId.present ? projectId.value : this.projectId,
     projectPathWithNamespace: projectPathWithNamespace.present
         ? projectPathWithNamespace.value
         : this.projectPathWithNamespace,
@@ -2100,6 +2134,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
           : this.instanceHost,
       accountId: data.accountId.present ? data.accountId.value : this.accountId,
       todoId: data.todoId.present ? data.todoId.value : this.todoId,
+      projectId: data.projectId.present ? data.projectId.value : this.projectId,
       projectPathWithNamespace: data.projectPathWithNamespace.present
           ? data.projectPathWithNamespace.value
           : this.projectPathWithNamespace,
@@ -2135,6 +2170,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
           ..write('instanceHost: $instanceHost, ')
           ..write('accountId: $accountId, ')
           ..write('todoId: $todoId, ')
+          ..write('projectId: $projectId, ')
           ..write('projectPathWithNamespace: $projectPathWithNamespace, ')
           ..write('authorName: $authorName, ')
           ..write('authorUsername: $authorUsername, ')
@@ -2156,6 +2192,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     instanceHost,
     accountId,
     todoId,
+    projectId,
     projectPathWithNamespace,
     authorName,
     authorUsername,
@@ -2176,6 +2213,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
           other.instanceHost == this.instanceHost &&
           other.accountId == this.accountId &&
           other.todoId == this.todoId &&
+          other.projectId == this.projectId &&
           other.projectPathWithNamespace == this.projectPathWithNamespace &&
           other.authorName == this.authorName &&
           other.authorUsername == this.authorUsername &&
@@ -2194,6 +2232,7 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
   final Value<String> instanceHost;
   final Value<String> accountId;
   final Value<int> todoId;
+  final Value<int?> projectId;
   final Value<String?> projectPathWithNamespace;
   final Value<String> authorName;
   final Value<String> authorUsername;
@@ -2211,6 +2250,7 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
     this.instanceHost = const Value.absent(),
     this.accountId = const Value.absent(),
     this.todoId = const Value.absent(),
+    this.projectId = const Value.absent(),
     this.projectPathWithNamespace = const Value.absent(),
     this.authorName = const Value.absent(),
     this.authorUsername = const Value.absent(),
@@ -2229,6 +2269,7 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
     required String instanceHost,
     required String accountId,
     required int todoId,
+    this.projectId = const Value.absent(),
     this.projectPathWithNamespace = const Value.absent(),
     required String authorName,
     required String authorUsername,
@@ -2257,6 +2298,7 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
     Expression<String>? instanceHost,
     Expression<String>? accountId,
     Expression<int>? todoId,
+    Expression<int>? projectId,
     Expression<String>? projectPathWithNamespace,
     Expression<String>? authorName,
     Expression<String>? authorUsername,
@@ -2275,6 +2317,7 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
       if (instanceHost != null) 'instance_host': instanceHost,
       if (accountId != null) 'account_id': accountId,
       if (todoId != null) 'todo_id': todoId,
+      if (projectId != null) 'project_id': projectId,
       if (projectPathWithNamespace != null)
         'project_path_with_namespace': projectPathWithNamespace,
       if (authorName != null) 'author_name': authorName,
@@ -2296,6 +2339,7 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
     Value<String>? instanceHost,
     Value<String>? accountId,
     Value<int>? todoId,
+    Value<int?>? projectId,
     Value<String?>? projectPathWithNamespace,
     Value<String>? authorName,
     Value<String>? authorUsername,
@@ -2314,6 +2358,7 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
       instanceHost: instanceHost ?? this.instanceHost,
       accountId: accountId ?? this.accountId,
       todoId: todoId ?? this.todoId,
+      projectId: projectId ?? this.projectId,
       projectPathWithNamespace:
           projectPathWithNamespace ?? this.projectPathWithNamespace,
       authorName: authorName ?? this.authorName,
@@ -2342,6 +2387,9 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
     }
     if (todoId.present) {
       map['todo_id'] = Variable<int>(todoId.value);
+    }
+    if (projectId.present) {
+      map['project_id'] = Variable<int>(projectId.value);
     }
     if (projectPathWithNamespace.present) {
       map['project_path_with_namespace'] = Variable<String>(
@@ -2393,6 +2441,7 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
           ..write('instanceHost: $instanceHost, ')
           ..write('accountId: $accountId, ')
           ..write('todoId: $todoId, ')
+          ..write('projectId: $projectId, ')
           ..write('projectPathWithNamespace: $projectPathWithNamespace, ')
           ..write('authorName: $authorName, ')
           ..write('authorUsername: $authorUsername, ')
@@ -6720,6 +6769,7 @@ typedef $$TodoItemsTableCreateCompanionBuilder =
       required String instanceHost,
       required String accountId,
       required int todoId,
+      Value<int?> projectId,
       Value<String?> projectPathWithNamespace,
       required String authorName,
       required String authorUsername,
@@ -6739,6 +6789,7 @@ typedef $$TodoItemsTableUpdateCompanionBuilder =
       Value<String> instanceHost,
       Value<String> accountId,
       Value<int> todoId,
+      Value<int?> projectId,
       Value<String?> projectPathWithNamespace,
       Value<String> authorName,
       Value<String> authorUsername,
@@ -6775,6 +6826,11 @@ class $$TodoItemsTableFilterComposer
 
   ColumnFilters<int> get todoId => $composableBuilder(
     column: $table.todoId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get projectId => $composableBuilder(
+    column: $table.projectId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6863,6 +6919,11 @@ class $$TodoItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get projectId => $composableBuilder(
+    column: $table.projectId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get projectPathWithNamespace => $composableBuilder(
     column: $table.projectPathWithNamespace,
     builder: (column) => ColumnOrderings(column),
@@ -6943,6 +7004,9 @@ class $$TodoItemsTableAnnotationComposer
 
   GeneratedColumn<int> get todoId =>
       $composableBuilder(column: $table.todoId, builder: (column) => column);
+
+  GeneratedColumn<int> get projectId =>
+      $composableBuilder(column: $table.projectId, builder: (column) => column);
 
   GeneratedColumn<String> get projectPathWithNamespace => $composableBuilder(
     column: $table.projectPathWithNamespace,
@@ -7026,6 +7090,7 @@ class $$TodoItemsTableTableManager
                 Value<String> instanceHost = const Value.absent(),
                 Value<String> accountId = const Value.absent(),
                 Value<int> todoId = const Value.absent(),
+                Value<int?> projectId = const Value.absent(),
                 Value<String?> projectPathWithNamespace = const Value.absent(),
                 Value<String> authorName = const Value.absent(),
                 Value<String> authorUsername = const Value.absent(),
@@ -7043,6 +7108,7 @@ class $$TodoItemsTableTableManager
                 instanceHost: instanceHost,
                 accountId: accountId,
                 todoId: todoId,
+                projectId: projectId,
                 projectPathWithNamespace: projectPathWithNamespace,
                 authorName: authorName,
                 authorUsername: authorUsername,
@@ -7062,6 +7128,7 @@ class $$TodoItemsTableTableManager
                 required String instanceHost,
                 required String accountId,
                 required int todoId,
+                Value<int?> projectId = const Value.absent(),
                 Value<String?> projectPathWithNamespace = const Value.absent(),
                 required String authorName,
                 required String authorUsername,
@@ -7079,6 +7146,7 @@ class $$TodoItemsTableTableManager
                 instanceHost: instanceHost,
                 accountId: accountId,
                 todoId: todoId,
+                projectId: projectId,
                 projectPathWithNamespace: projectPathWithNamespace,
                 authorName: authorName,
                 authorUsername: authorUsername,

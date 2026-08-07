@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/auth/account_sessions.dart';
 import '../../core/auth/active_account.dart';
@@ -40,6 +43,7 @@ import '../search/data/search_repository.dart';
 import '../search/presentation/search_screen.dart';
 import '../settings/quiet_hours_screen.dart';
 import '../sign_in/sign_in_screen.dart';
+import '../todos/todo_deep_link.dart';
 import '../todos/todos_screen.dart';
 
 /// Builds the app router: four tab branches behind [AppShell], each keeping
@@ -58,7 +62,10 @@ import '../todos/todos_screen.dart';
 /// tab's tile order per account. [recentlyViewedCache] lets the issue, merge
 /// request, and pipeline detail screens serve recently viewed items offline,
 /// and [commentDraftQueue] routes issue comment sends through the offline
-/// outbox. [quietHoursStore] enables the Profile tab's quiet-hours entry and
+/// outbox. Tapping a to-do deep-links to its underlying item's surface where
+/// one is wired, otherwise it opens the item's web URL via [openWebUrl]
+/// (defaulting to the system browser; injectable for tests).
+/// [quietHoursStore] enables the Profile tab's quiet-hours entry and
 /// its settings route. [appLockController] surfaces the E13.1 app lock toggle
 /// on the Profile tab. [graphQlSubscriptions] gives detail screens foreground
 /// live updates over the E12.3 GraphQL subscription transport.
@@ -83,6 +90,7 @@ GoRouter buildAppRouter({
   SearchRepository? searchRepository,
   OfflineFirstRepository<List<TodoItem>>? todosRepository,
   RecentlyViewedCache? recentlyViewedCache,
+  Future<void> Function(Uri url)? openWebUrl,
   String initialLocation = '/home',
 }) {
   return GoRouter(
@@ -110,9 +118,36 @@ GoRouter buildAppRouter({
             routes: [
               GoRoute(
                 path: '/todos',
-                builder: (context, state) => todosRepository == null
-                    ? const TodosScreen()
-                    : TodosScreen(repository: todosRepository),
+                builder: (context, state) {
+                  void openTodo(TodoItem todo) {
+                    final location = todoRouteLocation(todo);
+                    // Route only to surfaces whose repositories are wired,
+                    // mirroring the conditional route registration below;
+                    // everything else opens the item's web URL.
+                    final surfaceWired = switch (todo.targetType) {
+                      'Issue' => issuesRepository != null,
+                      'MergeRequest' => mergeRequestsRepository != null,
+                      'Pipeline' => pipelinesRepository != null,
+                      _ => false,
+                    };
+                    if (location != null && surfaceWired) {
+                      context.push(location);
+                    } else {
+                      unawaited(
+                        (openWebUrl ?? _launchExternally)(
+                          Uri.parse(todo.targetUrl),
+                        ),
+                      );
+                    }
+                  }
+
+                  return todosRepository == null
+                      ? TodosScreen(onTodoTap: openTodo)
+                      : TodosScreen(
+                          repository: todosRepository,
+                          onTodoTap: openTodo,
+                        );
+                },
               ),
             ],
           ),
@@ -451,6 +486,10 @@ GoRouter buildAppRouter({
 }
 
 int _treeDepth(String path) => path.isEmpty ? 0 : path.split('/').length;
+
+Future<void> _launchExternally(Uri url) async {
+  await launchUrl(url, mode: LaunchMode.externalApplication);
+}
 
 class _RepositoryTreeRouteHistory {
   const _RepositoryTreeRouteHistory({this.ancestorLevels = 0});

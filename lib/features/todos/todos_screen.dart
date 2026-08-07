@@ -12,6 +12,7 @@ import '../../core/icons/gs_icons.dart';
 import '../../core/illustrations/gs_illustrations.dart';
 import '../../core/repository/offline_first_repository.dart';
 import '../../core/theme/app_theme.dart';
+import 'todo_deep_link.dart';
 
 enum _TodoTriageAction { done, snooze }
 
@@ -768,19 +769,13 @@ String _todoTitle(TodoItem todo) {
 }
 
 String? _todoReference(TodoItem todo) {
-  final targetIid = todo.targetIid ?? _trailingUrlId(todo.targetUrl);
+  final targetIid = todo.targetIid ?? trailingUrlId(todo.targetUrl);
   if (targetIid == null) return null;
   return switch (todo.targetType) {
     'MergeRequest' => '!$targetIid',
     'Issue' || 'Pipeline' => '#$targetIid',
     _ => null,
   };
-}
-
-int? _trailingUrlId(String url) {
-  final uri = Uri.tryParse(url);
-  if (uri == null || uri.pathSegments.isEmpty) return null;
-  return int.tryParse(uri.pathSegments.last);
 }
 
 GsIconGlyph _todoGlyph(String targetType) => switch (targetType) {
