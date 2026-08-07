@@ -4,11 +4,61 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/markdown/gs_markdown.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
+import 'package:gitsune/features/releases/data/releases_repository.dart';
+import 'package:gitsune/features/releases/presentation/release_components.dart';
 import 'package:gitsune/features/shell/app_shell.dart';
 
 import '../support/fixture_releases_repository.dart';
 
 void main() {
+  group('fileNameForAsset', () {
+    test('uses the URL last segment when it is a plain file name', () {
+      expect(
+        fileNameForAsset(
+          const ReleaseAssetLink(
+            name: 'App',
+            url: 'https://example.com/uploads/app-1.0.apk',
+          ),
+        ),
+        'app-1.0.apk',
+      );
+    });
+
+    test('strips directory components decoded from the URL segment', () {
+      expect(
+        fileNameForAsset(
+          const ReleaseAssetLink(
+            name: 'App',
+            url:
+                'https://example.com/%2e%2e%2f%2e%2e%2fpwned.txt',
+          ),
+        ),
+        'pwned.txt',
+      );
+    });
+
+    test('falls back to a sanitized asset name for a segmentless URL', () {
+      expect(
+        fileNameForAsset(
+          const ReleaseAssetLink(name: 'notes.txt', url: 'https://example.com'),
+        ),
+        'notes.txt',
+      );
+    });
+
+    test('rejects a bare traversal segment', () {
+      expect(
+        fileNameForAsset(
+          const ReleaseAssetLink(
+            name: 'safe.bin',
+            url: 'https://example.com/foo/%2e%2e',
+          ),
+        ),
+        'safe.bin',
+      );
+    });
+  });
+
   Future<FixtureReleasesRepository> pumpReleases(
     WidgetTester tester, {
     String initialLocation = '/projects/7/releases?projectPath=acme%2Fapp',
