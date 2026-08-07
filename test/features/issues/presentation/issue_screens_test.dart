@@ -22,6 +22,7 @@ import 'package:gitsune/features/shell/app_shell.dart';
 
 import '../../../support/fake_gitlab_server.dart';
 import '../../../support/fixtures.dart';
+import '../../../support/loopback_http_overrides.dart';
 import '../support/fixture_issues_repository.dart';
 
 void main() {
@@ -837,7 +838,7 @@ void main() {
     client.interceptors.clear();
     client.options.headers['Authorization'] = 'Bearer fixture-token';
     client.httpClientAdapter = IOHttpClientAdapter(
-      createHttpClient: () => _LoopbackHttpOverrides().createHttpClient(null),
+      createHttpClient: () => LoopbackHttpOverrides().createHttpClient(null),
     );
     final repository = GitLabIssuesRepository(client);
     await tester.pumpWidget(
@@ -980,7 +981,7 @@ void main() {
     client.interceptors.clear();
     client.options.headers['Authorization'] = 'Bearer fixture-token';
     client.httpClientAdapter = IOHttpClientAdapter(
-      createHttpClient: () => _LoopbackHttpOverrides().createHttpClient(null),
+      createHttpClient: () => LoopbackHttpOverrides().createHttpClient(null),
     );
     final repository = GitLabIssuesRepository(client);
     await tester.pumpWidget(
@@ -1418,8 +1419,6 @@ Future<void> _waitForHttp<T>(WidgetTester tester, Future<T> future) async {
     throw TimeoutException('Loopback HTTP request did not complete.');
   }
 }
-
-class _LoopbackHttpOverrides extends HttpOverrides {}
 
 /// A repository whose reads fail the way an offline device's would.
 class _OfflineIssuesRepository extends FixtureIssuesRepository {

@@ -10,6 +10,7 @@ import 'package:gitsune/features/sign_in/pat_sign_in_screen.dart';
 import 'package:gitsune/features/sign_in/sign_in_screen.dart';
 
 import '../../support/fake_gitlab_server.dart';
+import '../../support/loopback_http_overrides.dart';
 import '../../support/memory_secure_storage.dart';
 
 Widget app(SignInScreen screen) =>
@@ -18,8 +19,6 @@ Widget app(SignInScreen screen) =>
 Finder tokenField() => find.byWidgetPredicate(
   (widget) => widget is TextField && widget.obscureText,
 );
-
-class _RealHttpOverrides extends HttpOverrides {}
 
 Future<void> signInAgainst(
   FakeGitLabServer server,
@@ -33,7 +32,7 @@ Future<void> signInAgainst(
     dio: server.createClient(),
     timeout: timeout,
   );
-}, _RealHttpOverrides());
+}, LoopbackHttpOverrides());
 
 /// Waits for the real network round-trip to finish by watching the submit
 /// spinner disappear, rather than sleeping a fixed interval that a loaded
