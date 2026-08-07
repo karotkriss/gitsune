@@ -25,10 +25,7 @@ void main() {
     expect(
       () => registerDevice(
         _client(server, account),
-        const DevicePushSubscription(
-          deviceToken: 'abc123',
-          platform: 'apns',
-        ),
+        const DevicePushSubscription(deviceToken: 'abc123', platform: 'apns'),
       ),
       throwsStateError,
     );
@@ -51,10 +48,10 @@ void main() {
       enabled: true,
     );
 
-    expect(
-      jsonDecode(requestBody!),
-      {'device_token': 'abc123', 'platform': 'apns'},
-    );
+    expect(jsonDecode(requestBody!), {
+      'device_token': 'abc123',
+      'platform': 'apns',
+    });
   });
 }
 
