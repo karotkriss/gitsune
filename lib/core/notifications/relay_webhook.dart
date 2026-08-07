@@ -36,6 +36,19 @@ class PushoverTarget extends RelayTarget {
   final String userKey;
 }
 
+/// The Android opt-in delivery layer's destination (E12.4, ADR 0002's
+/// Android layer): the UnifiedPush endpoint a distributor (such as ntfy)
+/// issued for this device. Unlike [NtfyTarget], the topic is already baked
+/// into [endpoint] by the distributor, and the forwarded body is parsed by
+/// Gitsune itself rather than displayed by the relay's own app, so its
+/// webhook configuration carries custom headers and trigger events that the
+/// user-facing relay wizard (E12.5) never needs.
+class UnifiedPushTarget extends RelayTarget {
+  const UnifiedPushTarget({required this.endpoint});
+
+  final Uri endpoint;
+}
+
 /// Why a wizard input could not become part of a [RelayTarget].
 enum RelayInputRejection {
   emptyServer,
@@ -113,18 +126,31 @@ PushoverTarget parsePushoverTarget({
   return PushoverTarget(appToken: tokenText, userKey: userText);
 }
 
-/// The GitLab webhook configuration the wizard outputs: the webhook URL and
-/// the custom payload template ("Custom webhook template", GitLab 16.10+)
-/// the user pastes into their project's webhook settings.
+/// The GitLab webhook configuration a platform opt-in path outputs: the
+/// webhook URL and the custom payload template ("Custom webhook template",
+/// GitLab 16.10+) the user pastes into their project's webhook settings.
 class RelayWebhookConfig {
-  const RelayWebhookConfig({required this.url, required this.payloadTemplate});
+  const RelayWebhookConfig({
+    required this.url,
+    required this.payloadTemplate,
+    this.headers = const {},
+    this.triggerEvents = const [],
+  });
 
   final Uri url;
 
-  /// A JSON template rendered by GitLab against the event payload. Its
-  /// `{{...}}` fields are common to issue, merge request, note, and pipeline
-  /// events, which are the triggers the wizard recommends enabling.
+  /// A JSON template rendered by GitLab against the event payload.
   final String payloadTemplate;
+
+  /// Custom headers to set on the GitLab webhook. Only [UnifiedPushTarget]
+  /// (E12.4) needs these; the ntfy/Pushover relay wizard (E12.5) leaves this
+  /// empty since it sets no custom headers.
+  final Map<String, String> headers;
+
+  /// The webhook trigger checkboxes to enable, as their GitLab UI labels.
+  /// Only [UnifiedPushTarget] (E12.4) needs these; the relay wizard (E12.5)
+  /// leaves this empty and recommends triggers in its own copy instead.
+  final List<String> triggerEvents;
 }
 
 const _titleTemplate = '{{project.path_with_namespace}}';
@@ -132,13 +158,15 @@ const _messageTemplate = '{{object_kind}} update by {{user.name}}';
 
 /// Builds the GitLab webhook configuration for [target].
 ///
-/// This is the single webhook-config generator for both platform opt-in
-/// paths: the iOS relay wizard (E12.5) and the Android webhook-to-ntfy
-/// bridge (E12.4) generate their GitLab side through here. ntfy receives
-/// GitLab's rendered template via its publish-as-JSON endpoint (the server
-/// root, with the topic in the body); Pushover receives it as the JSON body
-/// of its messages API, credentials included, so neither needs anything
-/// beyond a plain webhook with a custom payload template.
+/// This is the single webhook-config generator for every platform opt-in
+/// path: the iOS relay wizard (E12.5, [NtfyTarget]/[PushoverTarget]) and the
+/// Android UnifiedPush bridge (E12.4, [UnifiedPushTarget]) generate their
+/// GitLab side through here. ntfy receives GitLab's rendered template via
+/// its publish-as-JSON endpoint (the server root, with the topic in the
+/// body); Pushover receives it as the JSON body of its messages API,
+/// credentials included; the Android bridge posts to the UnifiedPush
+/// endpoint the distributor issued, with the compact JSON
+/// `PushDeliveryMessage.parse` reads on receipt.
 RelayWebhookConfig buildRelayWebhookConfig(RelayTarget target) {
   const encoder = JsonEncoder.withIndent('  ');
   return switch (target) {
@@ -158,6 +186,19 @@ RelayWebhookConfig buildRelayWebhookConfig(RelayTarget target) {
         'title': _titleTemplate,
         'message': _messageTemplate,
       }),
+    ),
+    UnifiedPushTarget(:final endpoint) => RelayWebhookConfig(
+      url: endpoint,
+      headers: const {'Content-Type': 'application/json'},
+      payloadTemplate:
+          '{"title":"{{object_attributes.title}}",'
+          '"body":"{{object_kind}} · {{project.path_with_namespace}}",'
+          '"url":"{{object_attributes.url}}"}',
+      triggerEvents: const [
+        'Issues events',
+        'Merge request events',
+        'Comments',
+      ],
     ),
   };
 }
@@ -187,6 +228,10 @@ class RelayTestException implements Exception {
 ///
 /// [url] overrides the destination (loopback in tests); the default is
 /// exactly [buildRelayWebhookConfig]'s URL.
+///
+/// Only meaningful for [NtfyTarget]/[PushoverTarget]: the relay wizard's
+/// manual test-send. [UnifiedPushTarget] registration is verified by the
+/// distributor's own endpoint callback instead, so it is never passed here.
 Future<void> sendRelayTestNotification(
   RelayTarget target, {
   Dio? dio,
@@ -214,6 +259,10 @@ Future<void> sendRelayTestNotification(
       'title': title,
       'message': message,
     },
+    UnifiedPushTarget() => throw UnsupportedError(
+      'sendRelayTestNotification is not used for UnifiedPushTarget; Android '
+      'registration is verified by the distributor callback instead.',
+    ),
   };
   final Response<void> response;
   try {

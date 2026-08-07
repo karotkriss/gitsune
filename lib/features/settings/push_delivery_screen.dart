@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/icons/gs_icons.dart';
 import '../../core/notifications/push_delivery.dart';
+import '../../core/notifications/relay_webhook.dart';
 import '../../core/theme/app_theme.dart';
 
 /// The E12.4 Android opt-in push settings surface (ADR 0002, layer 3). An
@@ -121,7 +122,7 @@ class _WebhookConfigSection extends StatelessWidget {
 
   final GsTheme gs;
   final ThemeData theme;
-  final NtfyWebhookConfig config;
+  final RelayWebhookConfig config;
 
   @override
   Widget build(BuildContext context) {

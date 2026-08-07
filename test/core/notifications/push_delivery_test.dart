@@ -4,6 +4,7 @@ import 'package:gitsune/core/database/app_database.dart';
 import 'package:gitsune/core/network/account_key.dart';
 import 'package:gitsune/core/notifications/push_delivery.dart';
 import 'package:gitsune/core/notifications/quiet_hours.dart';
+import 'package:gitsune/core/notifications/relay_webhook.dart';
 import 'package:gitsune/core/notifications/todos_poller.dart';
 
 class RecordingNotifier implements TodoNotifier {
@@ -55,7 +56,10 @@ void main() {
   );
   final endpoint = Uri.parse('https://ntfy.sh/upAbC123');
 
-  group('buildNtfyWebhookConfig', () {
+  RelayWebhookConfig buildNtfyWebhookConfig(Uri endpoint) =>
+      buildRelayWebhookConfig(UnifiedPushTarget(endpoint: endpoint));
+
+  group('buildRelayWebhookConfig(UnifiedPushTarget)', () {
     test('generates the exact GitLab webhook configuration', () {
       final config = buildNtfyWebhookConfig(endpoint);
       expect(config.url, endpoint);
@@ -74,10 +78,12 @@ void main() {
     });
 
     test('is deterministic for a given endpoint', () {
-      expect(
-        buildNtfyWebhookConfig(endpoint),
-        buildNtfyWebhookConfig(endpoint),
-      );
+      final a = buildNtfyWebhookConfig(endpoint);
+      final b = buildNtfyWebhookConfig(endpoint);
+      expect(a.url, b.url);
+      expect(a.headers, b.headers);
+      expect(a.payloadTemplate, b.payloadTemplate);
+      expect(a.triggerEvents, b.triggerEvents);
     });
 
     test('carries the endpoint through as the POST target', () {
@@ -205,7 +211,14 @@ void main() {
 
       gateway.onEndpoint!(endpoint, account.toString());
       expect(controller.endpoint, endpoint);
-      expect(controller.webhookConfig, buildNtfyWebhookConfig(endpoint));
+      final expected = buildNtfyWebhookConfig(endpoint);
+      expect(controller.webhookConfig?.url, expected.url);
+      expect(controller.webhookConfig?.headers, expected.headers);
+      expect(
+        controller.webhookConfig?.payloadTemplate,
+        expected.payloadTemplate,
+      );
+      expect(controller.webhookConfig?.triggerEvents, expected.triggerEvents);
       expect((await store.read()).endpoint, endpoint);
     });
 
