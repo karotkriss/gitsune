@@ -6262,6 +6262,591 @@ class PushNotificationSettingsCompanion
   }
 }
 
+class $RelaySetupsTable extends RelaySetups
+    with TableInfo<$RelaySetupsTable, RelaySetupRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RelaySetupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _serviceMeta = const VerificationMeta(
+    'service',
+  );
+  @override
+  late final GeneratedColumn<String> service = GeneratedColumn<String>(
+    'service',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ntfyServerMeta = const VerificationMeta(
+    'ntfyServer',
+  );
+  @override
+  late final GeneratedColumn<String> ntfyServer = GeneratedColumn<String>(
+    'ntfy_server',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ntfyTopicMeta = const VerificationMeta(
+    'ntfyTopic',
+  );
+  @override
+  late final GeneratedColumn<String> ntfyTopic = GeneratedColumn<String>(
+    'ntfy_topic',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pushoverAppTokenMeta = const VerificationMeta(
+    'pushoverAppToken',
+  );
+  @override
+  late final GeneratedColumn<String> pushoverAppToken = GeneratedColumn<String>(
+    'pushover_app_token',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pushoverUserKeyMeta = const VerificationMeta(
+    'pushoverUserKey',
+  );
+  @override
+  late final GeneratedColumn<String> pushoverUserKey = GeneratedColumn<String>(
+    'pushover_user_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    enabled,
+    service,
+    ntfyServer,
+    ntfyTopic,
+    pushoverAppToken,
+    pushoverUserKey,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'relay_setups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RelaySetupRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_enabledMeta);
+    }
+    if (data.containsKey('service')) {
+      context.handle(
+        _serviceMeta,
+        service.isAcceptableOrUnknown(data['service']!, _serviceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serviceMeta);
+    }
+    if (data.containsKey('ntfy_server')) {
+      context.handle(
+        _ntfyServerMeta,
+        ntfyServer.isAcceptableOrUnknown(data['ntfy_server']!, _ntfyServerMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ntfyServerMeta);
+    }
+    if (data.containsKey('ntfy_topic')) {
+      context.handle(
+        _ntfyTopicMeta,
+        ntfyTopic.isAcceptableOrUnknown(data['ntfy_topic']!, _ntfyTopicMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ntfyTopicMeta);
+    }
+    if (data.containsKey('pushover_app_token')) {
+      context.handle(
+        _pushoverAppTokenMeta,
+        pushoverAppToken.isAcceptableOrUnknown(
+          data['pushover_app_token']!,
+          _pushoverAppTokenMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_pushoverAppTokenMeta);
+    }
+    if (data.containsKey('pushover_user_key')) {
+      context.handle(
+        _pushoverUserKeyMeta,
+        pushoverUserKey.isAcceptableOrUnknown(
+          data['pushover_user_key']!,
+          _pushoverUserKeyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_pushoverUserKeyMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {instanceHost, accountId};
+  @override
+  RelaySetupRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RelaySetupRow(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      service: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}service'],
+      )!,
+      ntfyServer: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ntfy_server'],
+      )!,
+      ntfyTopic: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ntfy_topic'],
+      )!,
+      pushoverAppToken: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pushover_app_token'],
+      )!,
+      pushoverUserKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pushover_user_key'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $RelaySetupsTable createAlias(String alias) {
+    return $RelaySetupsTable(attachedDatabase, alias);
+  }
+}
+
+class RelaySetupRow extends DataClass implements Insertable<RelaySetupRow> {
+  final String instanceHost;
+  final String accountId;
+  final bool enabled;
+  final String service;
+  final String ntfyServer;
+  final String ntfyTopic;
+  final String pushoverAppToken;
+  final String pushoverUserKey;
+  final DateTime updatedAt;
+  const RelaySetupRow({
+    required this.instanceHost,
+    required this.accountId,
+    required this.enabled,
+    required this.service,
+    required this.ntfyServer,
+    required this.ntfyTopic,
+    required this.pushoverAppToken,
+    required this.pushoverUserKey,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    map['enabled'] = Variable<bool>(enabled);
+    map['service'] = Variable<String>(service);
+    map['ntfy_server'] = Variable<String>(ntfyServer);
+    map['ntfy_topic'] = Variable<String>(ntfyTopic);
+    map['pushover_app_token'] = Variable<String>(pushoverAppToken);
+    map['pushover_user_key'] = Variable<String>(pushoverUserKey);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  RelaySetupsCompanion toCompanion(bool nullToAbsent) {
+    return RelaySetupsCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      enabled: Value(enabled),
+      service: Value(service),
+      ntfyServer: Value(ntfyServer),
+      ntfyTopic: Value(ntfyTopic),
+      pushoverAppToken: Value(pushoverAppToken),
+      pushoverUserKey: Value(pushoverUserKey),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory RelaySetupRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RelaySetupRow(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      service: serializer.fromJson<String>(json['service']),
+      ntfyServer: serializer.fromJson<String>(json['ntfyServer']),
+      ntfyTopic: serializer.fromJson<String>(json['ntfyTopic']),
+      pushoverAppToken: serializer.fromJson<String>(json['pushoverAppToken']),
+      pushoverUserKey: serializer.fromJson<String>(json['pushoverUserKey']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'enabled': serializer.toJson<bool>(enabled),
+      'service': serializer.toJson<String>(service),
+      'ntfyServer': serializer.toJson<String>(ntfyServer),
+      'ntfyTopic': serializer.toJson<String>(ntfyTopic),
+      'pushoverAppToken': serializer.toJson<String>(pushoverAppToken),
+      'pushoverUserKey': serializer.toJson<String>(pushoverUserKey),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  RelaySetupRow copyWith({
+    String? instanceHost,
+    String? accountId,
+    bool? enabled,
+    String? service,
+    String? ntfyServer,
+    String? ntfyTopic,
+    String? pushoverAppToken,
+    String? pushoverUserKey,
+    DateTime? updatedAt,
+  }) => RelaySetupRow(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    enabled: enabled ?? this.enabled,
+    service: service ?? this.service,
+    ntfyServer: ntfyServer ?? this.ntfyServer,
+    ntfyTopic: ntfyTopic ?? this.ntfyTopic,
+    pushoverAppToken: pushoverAppToken ?? this.pushoverAppToken,
+    pushoverUserKey: pushoverUserKey ?? this.pushoverUserKey,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  RelaySetupRow copyWithCompanion(RelaySetupsCompanion data) {
+    return RelaySetupRow(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      service: data.service.present ? data.service.value : this.service,
+      ntfyServer: data.ntfyServer.present
+          ? data.ntfyServer.value
+          : this.ntfyServer,
+      ntfyTopic: data.ntfyTopic.present ? data.ntfyTopic.value : this.ntfyTopic,
+      pushoverAppToken: data.pushoverAppToken.present
+          ? data.pushoverAppToken.value
+          : this.pushoverAppToken,
+      pushoverUserKey: data.pushoverUserKey.present
+          ? data.pushoverUserKey.value
+          : this.pushoverUserKey,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RelaySetupRow(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('enabled: $enabled, ')
+          ..write('service: $service, ')
+          ..write('ntfyServer: $ntfyServer, ')
+          ..write('ntfyTopic: $ntfyTopic, ')
+          ..write('pushoverAppToken: $pushoverAppToken, ')
+          ..write('pushoverUserKey: $pushoverUserKey, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    instanceHost,
+    accountId,
+    enabled,
+    service,
+    ntfyServer,
+    ntfyTopic,
+    pushoverAppToken,
+    pushoverUserKey,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RelaySetupRow &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.enabled == this.enabled &&
+          other.service == this.service &&
+          other.ntfyServer == this.ntfyServer &&
+          other.ntfyTopic == this.ntfyTopic &&
+          other.pushoverAppToken == this.pushoverAppToken &&
+          other.pushoverUserKey == this.pushoverUserKey &&
+          other.updatedAt == this.updatedAt);
+}
+
+class RelaySetupsCompanion extends UpdateCompanion<RelaySetupRow> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<bool> enabled;
+  final Value<String> service;
+  final Value<String> ntfyServer;
+  final Value<String> ntfyTopic;
+  final Value<String> pushoverAppToken;
+  final Value<String> pushoverUserKey;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const RelaySetupsCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.service = const Value.absent(),
+    this.ntfyServer = const Value.absent(),
+    this.ntfyTopic = const Value.absent(),
+    this.pushoverAppToken = const Value.absent(),
+    this.pushoverUserKey = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  RelaySetupsCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    required bool enabled,
+    required String service,
+    required String ntfyServer,
+    required String ntfyTopic,
+    required String pushoverAppToken,
+    required String pushoverUserKey,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       enabled = Value(enabled),
+       service = Value(service),
+       ntfyServer = Value(ntfyServer),
+       ntfyTopic = Value(ntfyTopic),
+       pushoverAppToken = Value(pushoverAppToken),
+       pushoverUserKey = Value(pushoverUserKey),
+       updatedAt = Value(updatedAt);
+  static Insertable<RelaySetupRow> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<bool>? enabled,
+    Expression<String>? service,
+    Expression<String>? ntfyServer,
+    Expression<String>? ntfyTopic,
+    Expression<String>? pushoverAppToken,
+    Expression<String>? pushoverUserKey,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (enabled != null) 'enabled': enabled,
+      if (service != null) 'service': service,
+      if (ntfyServer != null) 'ntfy_server': ntfyServer,
+      if (ntfyTopic != null) 'ntfy_topic': ntfyTopic,
+      if (pushoverAppToken != null) 'pushover_app_token': pushoverAppToken,
+      if (pushoverUserKey != null) 'pushover_user_key': pushoverUserKey,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  RelaySetupsCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<bool>? enabled,
+    Value<String>? service,
+    Value<String>? ntfyServer,
+    Value<String>? ntfyTopic,
+    Value<String>? pushoverAppToken,
+    Value<String>? pushoverUserKey,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return RelaySetupsCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      enabled: enabled ?? this.enabled,
+      service: service ?? this.service,
+      ntfyServer: ntfyServer ?? this.ntfyServer,
+      ntfyTopic: ntfyTopic ?? this.ntfyTopic,
+      pushoverAppToken: pushoverAppToken ?? this.pushoverAppToken,
+      pushoverUserKey: pushoverUserKey ?? this.pushoverUserKey,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (service.present) {
+      map['service'] = Variable<String>(service.value);
+    }
+    if (ntfyServer.present) {
+      map['ntfy_server'] = Variable<String>(ntfyServer.value);
+    }
+    if (ntfyTopic.present) {
+      map['ntfy_topic'] = Variable<String>(ntfyTopic.value);
+    }
+    if (pushoverAppToken.present) {
+      map['pushover_app_token'] = Variable<String>(pushoverAppToken.value);
+    }
+    if (pushoverUserKey.present) {
+      map['pushover_user_key'] = Variable<String>(pushoverUserKey.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RelaySetupsCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('enabled: $enabled, ')
+          ..write('service: $service, ')
+          ..write('ntfyServer: $ntfyServer, ')
+          ..write('ntfyTopic: $ntfyTopic, ')
+          ..write('pushoverAppToken: $pushoverAppToken, ')
+          ..write('pushoverUserKey: $pushoverUserKey, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6285,6 +6870,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $QuietHoursSettingsTable(this);
   late final $PushNotificationSettingsTable pushNotificationSettings =
       $PushNotificationSettingsTable(this);
+  late final $RelaySetupsTable relaySetups = $RelaySetupsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6303,6 +6889,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     commentDrafts,
     quietHoursSettings,
     pushNotificationSettings,
+    relaySetups,
   ];
 }
 
@@ -9566,6 +10153,290 @@ typedef $$PushNotificationSettingsTableProcessedTableManager =
       PushNotificationSetting,
       PrefetchHooks Function()
     >;
+typedef $$RelaySetupsTableCreateCompanionBuilder =
+    RelaySetupsCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      required bool enabled,
+      required String service,
+      required String ntfyServer,
+      required String ntfyTopic,
+      required String pushoverAppToken,
+      required String pushoverUserKey,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$RelaySetupsTableUpdateCompanionBuilder =
+    RelaySetupsCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<bool> enabled,
+      Value<String> service,
+      Value<String> ntfyServer,
+      Value<String> ntfyTopic,
+      Value<String> pushoverAppToken,
+      Value<String> pushoverUserKey,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$RelaySetupsTableFilterComposer
+    extends Composer<_$AppDatabase, $RelaySetupsTable> {
+  $$RelaySetupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get service => $composableBuilder(
+    column: $table.service,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ntfyServer => $composableBuilder(
+    column: $table.ntfyServer,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ntfyTopic => $composableBuilder(
+    column: $table.ntfyTopic,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pushoverAppToken => $composableBuilder(
+    column: $table.pushoverAppToken,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pushoverUserKey => $composableBuilder(
+    column: $table.pushoverUserKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$RelaySetupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RelaySetupsTable> {
+  $$RelaySetupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get service => $composableBuilder(
+    column: $table.service,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ntfyServer => $composableBuilder(
+    column: $table.ntfyServer,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ntfyTopic => $composableBuilder(
+    column: $table.ntfyTopic,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pushoverAppToken => $composableBuilder(
+    column: $table.pushoverAppToken,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pushoverUserKey => $composableBuilder(
+    column: $table.pushoverUserKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$RelaySetupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RelaySetupsTable> {
+  $$RelaySetupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<String> get service =>
+      $composableBuilder(column: $table.service, builder: (column) => column);
+
+  GeneratedColumn<String> get ntfyServer => $composableBuilder(
+    column: $table.ntfyServer,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get ntfyTopic =>
+      $composableBuilder(column: $table.ntfyTopic, builder: (column) => column);
+
+  GeneratedColumn<String> get pushoverAppToken => $composableBuilder(
+    column: $table.pushoverAppToken,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get pushoverUserKey => $composableBuilder(
+    column: $table.pushoverUserKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$RelaySetupsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $RelaySetupsTable,
+          RelaySetupRow,
+          $$RelaySetupsTableFilterComposer,
+          $$RelaySetupsTableOrderingComposer,
+          $$RelaySetupsTableAnnotationComposer,
+          $$RelaySetupsTableCreateCompanionBuilder,
+          $$RelaySetupsTableUpdateCompanionBuilder,
+          (
+            RelaySetupRow,
+            BaseReferences<_$AppDatabase, $RelaySetupsTable, RelaySetupRow>,
+          ),
+          RelaySetupRow,
+          PrefetchHooks Function()
+        > {
+  $$RelaySetupsTableTableManager(_$AppDatabase db, $RelaySetupsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RelaySetupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$RelaySetupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$RelaySetupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<String> service = const Value.absent(),
+                Value<String> ntfyServer = const Value.absent(),
+                Value<String> ntfyTopic = const Value.absent(),
+                Value<String> pushoverAppToken = const Value.absent(),
+                Value<String> pushoverUserKey = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => RelaySetupsCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                enabled: enabled,
+                service: service,
+                ntfyServer: ntfyServer,
+                ntfyTopic: ntfyTopic,
+                pushoverAppToken: pushoverAppToken,
+                pushoverUserKey: pushoverUserKey,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                required bool enabled,
+                required String service,
+                required String ntfyServer,
+                required String ntfyTopic,
+                required String pushoverAppToken,
+                required String pushoverUserKey,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => RelaySetupsCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                enabled: enabled,
+                service: service,
+                ntfyServer: ntfyServer,
+                ntfyTopic: ntfyTopic,
+                pushoverAppToken: pushoverAppToken,
+                pushoverUserKey: pushoverUserKey,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$RelaySetupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $RelaySetupsTable,
+      RelaySetupRow,
+      $$RelaySetupsTableFilterComposer,
+      $$RelaySetupsTableOrderingComposer,
+      $$RelaySetupsTableAnnotationComposer,
+      $$RelaySetupsTableCreateCompanionBuilder,
+      $$RelaySetupsTableUpdateCompanionBuilder,
+      (
+        RelaySetupRow,
+        BaseReferences<_$AppDatabase, $RelaySetupsTable, RelaySetupRow>,
+      ),
+      RelaySetupRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -9599,4 +10470,6 @@ class $AppDatabaseManager {
         _db,
         _db.pushNotificationSettings,
       );
+  $$RelaySetupsTableTableManager get relaySetups =>
+      $$RelaySetupsTableTableManager(_db, _db.relaySetups);
 }

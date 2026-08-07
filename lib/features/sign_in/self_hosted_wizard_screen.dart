@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../core/auth/gitlab_oauth.dart';
 import '../../core/auth/oauth_config.dart';
 import '../../core/auth/self_hosted_setup.dart';
-import '../../core/icons/gs_icons.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/copyable_value.dart';
 import 'pat_sign_in_screen.dart';
 
 /// The guided self-hosted OAuth registration wizard (E2.3), following the
@@ -163,7 +162,7 @@ class _SelfHostedWizardScreenState extends State<SelfHostedWizardScreen> {
                 style: bodyStyle,
               ),
               const SizedBox(height: 8),
-              _CopyableValue(
+              GsCopyableValue(
                 widget.base.replace(path: '/-/profile/applications').toString(),
               ),
               const SizedBox(height: 24),
@@ -176,7 +175,7 @@ class _SelfHostedWizardScreenState extends State<SelfHostedWizardScreen> {
                 style: bodyStyle,
               ),
               const SizedBox(height: 8),
-              const _CopyableValue(oauthRedirectUri),
+              const GsCopyableValue(oauthRedirectUri),
               const SizedBox(height: 8),
               Text(
                 'Uncheck "Confidential": Gitsune is a public app (PKCE) and '
@@ -238,45 +237,6 @@ class _SelfHostedWizardScreenState extends State<SelfHostedWizardScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// A read-only value the user must transcribe exactly, with a copy button.
-class _CopyableValue extends StatelessWidget {
-  const _CopyableValue(this.value);
-
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final gs = theme.extension<GsTheme>()!;
-    return Container(
-      padding: const EdgeInsets.only(left: 12),
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.dividerColor),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: Text(value, style: gs.mono.copyWith(fontSize: 13))),
-          IconButton(
-            tooltip: 'Copy',
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: value));
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(const SnackBar(content: Text('Copied')));
-            },
-            icon: GsIcon(
-              GsIconGlyph.copyToClipboard,
-              size: 16,
-              color: gs.textSubtle,
-            ),
-          ),
-        ],
       ),
     );
   }
