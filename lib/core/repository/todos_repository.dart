@@ -105,6 +105,7 @@ TodoItemsCompanion _decodeTodo(Map<String, dynamic> json, AccountKey account) {
     instanceHost: account.instanceHost,
     accountId: account.accountId,
     todoId: json['id'] as int,
+    projectId: Value(project?['id'] as int?),
     projectPathWithNamespace: Value(
       project?['path_with_namespace'] as String? ??
           group?['full_path'] as String?,
