@@ -178,9 +178,9 @@ class _TodosScreenState extends State<TodosScreen> {
             SliverFillRemaining(
               hasScrollBody: false,
               child: _TodosMessage(
-                illustration: filtered
-                    ? null
-                    : const GsIllustration(GsIllustrationArt.emptyTodosAllDone),
+                illustration: const GsIllustration(
+                  GsIllustrationArt.emptyTodosAllDone,
+                ),
                 title: filtered
                     ? 'No ${todoReasonLabel(_selectedReason!).toLowerCase()} to-dos.'
                     : 'All done.',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gitsune/core/illustrations/gs_illustrations.dart';
 import 'package:gitsune/core/lock/app_lock.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/todos/todos_screen.dart';
@@ -134,6 +135,29 @@ void main() {
     expect(find.byKey(const ValueKey('todo-row-101')), findsOneWidget);
     expect(find.byKey(const ValueKey('todo-row-88101')), findsNothing);
     expect(find.text('Assigned'), findsOneWidget);
+  });
+
+  testWidgets('a filter matching nothing shows the illustrated empty state', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    await tester.tap(find.byKey(const ValueKey('todo-filter-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('todo-filter-assigned')));
+    await tester.pumpAndSettle();
+
+    repository.emit([fixtureTodos().first]);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(GsIllustration), findsOneWidget);
+    expect(find.text('No assigned to-dos.'), findsOneWidget);
+
+    await tester.tap(find.text('Show all'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(GsIllustration), findsNothing);
+    expect(find.byKey(const ValueKey('todo-row-102')), findsOneWidget);
   });
 
   testWidgets('the visible done control uses the same undo path', (
