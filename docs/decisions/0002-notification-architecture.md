@@ -38,6 +38,10 @@ Gitsune's notification system is layered, and the project operates no notificati
    The relay in this path is operated by that third-party service, chosen and authorized by the user, never by this project.
 5. **Native-push seam:** the device-registration layer is built around a single `registerDevice()` interface so that Gitsune can evaluate GitLab's native per-user push capability without architectural rework if it becomes available.
    Adoption for a self-hosted instance remains conditional on resolving the open question of how cooperating instance administrators can use APNs credentials bound to Gitsune's app identity.
+   `registerDevice()` lives in `lib/core/notifications/device_push_registration.dart`, shaped to GitLab's `POST /api/v4/user/push_subscriptions`.
+   It is deliberately unreachable: it is not wired into any composition root, and it throws unless called with its feature flag on, which defaults off (`nativePushRegistrationEnabled`).
+   Two gates must clear before that flag flips: GitLab's own feature flags for the registry, and the credential-sharing arrangement described above.
+   A fake-server test proves the request shape without either gate being open.
 
 An app-operated relay is explicitly and permanently out of scope.
 It is not a fallback held in reserve; it is excluded by this decision.
