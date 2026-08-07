@@ -1,19 +1,81 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/markdown/gs_markdown.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
+import 'package:gitsune/features/releases/data/releases_repository.dart';
+import 'package:gitsune/features/releases/presentation/release_components.dart';
 import 'package:gitsune/features/shell/app_shell.dart';
 
 import '../support/fixture_releases_repository.dart';
 
 void main() {
+  group('fileNameForAsset', () {
+    test('uses the URL last segment when it is a plain file name', () {
+      expect(
+        fileNameForAsset(
+          const ReleaseAssetLink(
+            name: 'App',
+            url: 'https://example.com/uploads/app-1.0.apk',
+            linkType: ReleaseAssetLinkType.package,
+          ),
+        ),
+        'app-1.0.apk',
+      );
+    });
+
+    test('strips directory components decoded from the URL segment', () {
+      expect(
+        fileNameForAsset(
+          const ReleaseAssetLink(
+            name: 'App',
+            url: 'https://example.com/%2e%2e%2f%2e%2e%2fpwned.txt',
+            linkType: ReleaseAssetLinkType.package,
+          ),
+        ),
+        'pwned.txt',
+      );
+    });
+
+    test('falls back to a sanitized asset name for a segmentless URL', () {
+      expect(
+        fileNameForAsset(
+          const ReleaseAssetLink(
+            name: 'notes.txt',
+            url: 'https://example.com',
+            linkType: ReleaseAssetLinkType.package,
+          ),
+        ),
+        'notes.txt',
+      );
+    });
+
+    test('rejects a bare traversal segment', () {
+      expect(
+        fileNameForAsset(
+          const ReleaseAssetLink(
+            name: 'safe.bin',
+            url: 'https://example.com/foo/%2e%2e',
+            linkType: ReleaseAssetLinkType.package,
+          ),
+        ),
+        'safe.bin',
+      );
+    });
+  });
+
   Future<FixtureReleasesRepository> pumpReleases(
     WidgetTester tester, {
     String initialLocation = '/projects/7/releases?projectPath=acme%2Fapp',
+    Future<Directory> Function()? resolveDownloadsDirectory,
+    Future<void> Function(Uri url)? openWebUrl,
   }) async {
     final repository = FixtureReleasesRepository();
     final router = buildAppRouter(
       releasesRepository: repository,
+      resolveDownloadsDirectory: resolveDownloadsDirectory,
+      openWebUrl: openWebUrl,
       initialLocation: initialLocation,
     );
     addTearDown(router.dispose);
@@ -75,6 +137,7 @@ void main() {
 
     expect(find.text('Assets'), findsOneWidget);
     expect(find.text('Android APK'), findsOneWidget);
+    expect(find.text('Upgrade runbook'), findsOneWidget);
     expect(find.text('Source code (zip)'), findsOneWidget);
     expect(find.text('Source code (tar.gz)'), findsOneWidget);
   });
@@ -99,5 +162,66 @@ void main() {
     );
 
     expect(find.text('Release not found.'), findsOneWidget);
+  });
+
+  testWidgets('tapping an asset downloads it and reports completion', (
+    tester,
+  ) async {
+    final repository = await pumpReleases(
+      tester,
+      resolveDownloadsDirectory: () async => Directory('/fake/downloads'),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('release-row-v1.2.0')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('release-asset-Android APK')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Downloaded Android APK.'), findsOneWidget);
+    expect(repository.downloadedAssets.map((a) => a.name), ['Android APK']);
+  });
+
+  testWidgets('tapping a non-file asset opens it externally instead of '
+      'downloading', (tester) async {
+    final openedUrls = <Uri>[];
+    final repository = await pumpReleases(
+      tester,
+      resolveDownloadsDirectory: () async => Directory('/fake/downloads'),
+      openWebUrl: (url) async => openedUrls.add(url),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('release-row-v1.2.0')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey('release-asset-Upgrade runbook')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(openedUrls, [
+      Uri.parse(
+        'https://gitlab.example.com/acme/app/-/releases/v1.2.0/runbook',
+      ),
+    ]);
+    expect(repository.downloadedAssets, isEmpty);
+    expect(find.textContaining('Downloaded'), findsNothing);
+  });
+
+  testWidgets('a failed download reports an honest error', (tester) async {
+    final repository = await pumpReleases(
+      tester,
+      resolveDownloadsDirectory: () async => Directory('/fake/downloads'),
+    );
+    repository.downloadError = Exception('network unreachable');
+
+    await tester.tap(find.byKey(const ValueKey('release-row-v1.2.0')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('release-asset-Android APK')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to download Android APK.'), findsOneWidget);
+    expect(repository.downloadedAssets, isEmpty);
   });
 }

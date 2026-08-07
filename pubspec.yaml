@@ -55,6 +55,7 @@ dependencies:
   # user's own webhook-to-ntfy bridge. FOSS and F-Droid-safe (no FCM), so it
   # belongs in the base dependency set, not the play-only flavor.
   unifiedpush: ^6.2.0
+  path_provider: ^2.1.6
 
 dev_dependencies:
   analyzer: ^12.1.0
