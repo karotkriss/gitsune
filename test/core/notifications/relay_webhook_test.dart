@@ -101,7 +101,10 @@ void main() {
 
     test('ntfy: a subpath server posts to that subpath, exact template', () {
       final config = buildRelayWebhookConfig(
-        NtfyTarget(server: Uri.parse('https://example.com/ntfy/'), topic: topic),
+        NtfyTarget(
+          server: Uri.parse('https://example.com/ntfy/'),
+          topic: topic,
+        ),
       );
       expect(config.url, Uri.parse('https://example.com/ntfy/'));
       expect(
