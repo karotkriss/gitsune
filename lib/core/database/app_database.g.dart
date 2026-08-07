@@ -5878,6 +5878,390 @@ class QuietHoursSettingsCompanion extends UpdateCompanion<QuietHoursSetting> {
   }
 }
 
+class $PushNotificationSettingsTable extends PushNotificationSettings
+    with TableInfo<$PushNotificationSettingsTable, PushNotificationSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PushNotificationSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _instanceHostMeta = const VerificationMeta(
+    'instanceHost',
+  );
+  @override
+  late final GeneratedColumn<String> instanceHost = GeneratedColumn<String>(
+    'instance_host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+  );
+  static const VerificationMeta _endpointMeta = const VerificationMeta(
+    'endpoint',
+  );
+  @override
+  late final GeneratedColumn<String> endpoint = GeneratedColumn<String>(
+    'endpoint',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    instanceHost,
+    accountId,
+    enabled,
+    endpoint,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'push_notification_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PushNotificationSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('instance_host')) {
+      context.handle(
+        _instanceHostMeta,
+        instanceHost.isAcceptableOrUnknown(
+          data['instance_host']!,
+          _instanceHostMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_instanceHostMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_enabledMeta);
+    }
+    if (data.containsKey('endpoint')) {
+      context.handle(
+        _endpointMeta,
+        endpoint.isAcceptableOrUnknown(data['endpoint']!, _endpointMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {instanceHost, accountId};
+  @override
+  PushNotificationSetting map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PushNotificationSetting(
+      instanceHost: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}instance_host'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      endpoint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}endpoint'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $PushNotificationSettingsTable createAlias(String alias) {
+    return $PushNotificationSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class PushNotificationSetting extends DataClass
+    implements Insertable<PushNotificationSetting> {
+  final String instanceHost;
+  final String accountId;
+  final bool enabled;
+  final String? endpoint;
+  final DateTime updatedAt;
+  const PushNotificationSetting({
+    required this.instanceHost,
+    required this.accountId,
+    required this.enabled,
+    this.endpoint,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['instance_host'] = Variable<String>(instanceHost);
+    map['account_id'] = Variable<String>(accountId);
+    map['enabled'] = Variable<bool>(enabled);
+    if (!nullToAbsent || endpoint != null) {
+      map['endpoint'] = Variable<String>(endpoint);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  PushNotificationSettingsCompanion toCompanion(bool nullToAbsent) {
+    return PushNotificationSettingsCompanion(
+      instanceHost: Value(instanceHost),
+      accountId: Value(accountId),
+      enabled: Value(enabled),
+      endpoint: endpoint == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endpoint),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory PushNotificationSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PushNotificationSetting(
+      instanceHost: serializer.fromJson<String>(json['instanceHost']),
+      accountId: serializer.fromJson<String>(json['accountId']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      endpoint: serializer.fromJson<String?>(json['endpoint']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'instanceHost': serializer.toJson<String>(instanceHost),
+      'accountId': serializer.toJson<String>(accountId),
+      'enabled': serializer.toJson<bool>(enabled),
+      'endpoint': serializer.toJson<String?>(endpoint),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  PushNotificationSetting copyWith({
+    String? instanceHost,
+    String? accountId,
+    bool? enabled,
+    Value<String?> endpoint = const Value.absent(),
+    DateTime? updatedAt,
+  }) => PushNotificationSetting(
+    instanceHost: instanceHost ?? this.instanceHost,
+    accountId: accountId ?? this.accountId,
+    enabled: enabled ?? this.enabled,
+    endpoint: endpoint.present ? endpoint.value : this.endpoint,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  PushNotificationSetting copyWithCompanion(
+    PushNotificationSettingsCompanion data,
+  ) {
+    return PushNotificationSetting(
+      instanceHost: data.instanceHost.present
+          ? data.instanceHost.value
+          : this.instanceHost,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      endpoint: data.endpoint.present ? data.endpoint.value : this.endpoint,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PushNotificationSetting(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('enabled: $enabled, ')
+          ..write('endpoint: $endpoint, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(instanceHost, accountId, enabled, endpoint, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PushNotificationSetting &&
+          other.instanceHost == this.instanceHost &&
+          other.accountId == this.accountId &&
+          other.enabled == this.enabled &&
+          other.endpoint == this.endpoint &&
+          other.updatedAt == this.updatedAt);
+}
+
+class PushNotificationSettingsCompanion
+    extends UpdateCompanion<PushNotificationSetting> {
+  final Value<String> instanceHost;
+  final Value<String> accountId;
+  final Value<bool> enabled;
+  final Value<String?> endpoint;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const PushNotificationSettingsCompanion({
+    this.instanceHost = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.endpoint = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PushNotificationSettingsCompanion.insert({
+    required String instanceHost,
+    required String accountId,
+    required bool enabled,
+    this.endpoint = const Value.absent(),
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : instanceHost = Value(instanceHost),
+       accountId = Value(accountId),
+       enabled = Value(enabled),
+       updatedAt = Value(updatedAt);
+  static Insertable<PushNotificationSetting> custom({
+    Expression<String>? instanceHost,
+    Expression<String>? accountId,
+    Expression<bool>? enabled,
+    Expression<String>? endpoint,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (instanceHost != null) 'instance_host': instanceHost,
+      if (accountId != null) 'account_id': accountId,
+      if (enabled != null) 'enabled': enabled,
+      if (endpoint != null) 'endpoint': endpoint,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PushNotificationSettingsCompanion copyWith({
+    Value<String>? instanceHost,
+    Value<String>? accountId,
+    Value<bool>? enabled,
+    Value<String?>? endpoint,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return PushNotificationSettingsCompanion(
+      instanceHost: instanceHost ?? this.instanceHost,
+      accountId: accountId ?? this.accountId,
+      enabled: enabled ?? this.enabled,
+      endpoint: endpoint ?? this.endpoint,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (instanceHost.present) {
+      map['instance_host'] = Variable<String>(instanceHost.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (endpoint.present) {
+      map['endpoint'] = Variable<String>(endpoint.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PushNotificationSettingsCompanion(')
+          ..write('instanceHost: $instanceHost, ')
+          ..write('accountId: $accountId, ')
+          ..write('enabled: $enabled, ')
+          ..write('endpoint: $endpoint, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5899,6 +6283,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CommentDraftsTable commentDrafts = $CommentDraftsTable(this);
   late final $QuietHoursSettingsTable quietHoursSettings =
       $QuietHoursSettingsTable(this);
+  late final $PushNotificationSettingsTable pushNotificationSettings =
+      $PushNotificationSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5916,6 +6302,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     todoPollStates,
     commentDrafts,
     quietHoursSettings,
+    pushNotificationSettings,
   ];
 }
 
@@ -8958,6 +9345,227 @@ typedef $$QuietHoursSettingsTableProcessedTableManager =
       QuietHoursSetting,
       PrefetchHooks Function()
     >;
+typedef $$PushNotificationSettingsTableCreateCompanionBuilder =
+    PushNotificationSettingsCompanion Function({
+      required String instanceHost,
+      required String accountId,
+      required bool enabled,
+      Value<String?> endpoint,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$PushNotificationSettingsTableUpdateCompanionBuilder =
+    PushNotificationSettingsCompanion Function({
+      Value<String> instanceHost,
+      Value<String> accountId,
+      Value<bool> enabled,
+      Value<String?> endpoint,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$PushNotificationSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $PushNotificationSettingsTable> {
+  $$PushNotificationSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get endpoint => $composableBuilder(
+    column: $table.endpoint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PushNotificationSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PushNotificationSettingsTable> {
+  $$PushNotificationSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountId => $composableBuilder(
+    column: $table.accountId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get endpoint => $composableBuilder(
+    column: $table.endpoint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PushNotificationSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PushNotificationSettingsTable> {
+  $$PushNotificationSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get instanceHost => $composableBuilder(
+    column: $table.instanceHost,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountId =>
+      $composableBuilder(column: $table.accountId, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<String> get endpoint =>
+      $composableBuilder(column: $table.endpoint, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$PushNotificationSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PushNotificationSettingsTable,
+          PushNotificationSetting,
+          $$PushNotificationSettingsTableFilterComposer,
+          $$PushNotificationSettingsTableOrderingComposer,
+          $$PushNotificationSettingsTableAnnotationComposer,
+          $$PushNotificationSettingsTableCreateCompanionBuilder,
+          $$PushNotificationSettingsTableUpdateCompanionBuilder,
+          (
+            PushNotificationSetting,
+            BaseReferences<
+              _$AppDatabase,
+              $PushNotificationSettingsTable,
+              PushNotificationSetting
+            >,
+          ),
+          PushNotificationSetting,
+          PrefetchHooks Function()
+        > {
+  $$PushNotificationSettingsTableTableManager(
+    _$AppDatabase db,
+    $PushNotificationSettingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PushNotificationSettingsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$PushNotificationSettingsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PushNotificationSettingsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> instanceHost = const Value.absent(),
+                Value<String> accountId = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<String?> endpoint = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PushNotificationSettingsCompanion(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                enabled: enabled,
+                endpoint: endpoint,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String instanceHost,
+                required String accountId,
+                required bool enabled,
+                Value<String?> endpoint = const Value.absent(),
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => PushNotificationSettingsCompanion.insert(
+                instanceHost: instanceHost,
+                accountId: accountId,
+                enabled: enabled,
+                endpoint: endpoint,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PushNotificationSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PushNotificationSettingsTable,
+      PushNotificationSetting,
+      $$PushNotificationSettingsTableFilterComposer,
+      $$PushNotificationSettingsTableOrderingComposer,
+      $$PushNotificationSettingsTableAnnotationComposer,
+      $$PushNotificationSettingsTableCreateCompanionBuilder,
+      $$PushNotificationSettingsTableUpdateCompanionBuilder,
+      (
+        PushNotificationSetting,
+        BaseReferences<
+          _$AppDatabase,
+          $PushNotificationSettingsTable,
+          PushNotificationSetting
+        >,
+      ),
+      PushNotificationSetting,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8986,4 +9594,9 @@ class $AppDatabaseManager {
       $$CommentDraftsTableTableManager(_db, _db.commentDrafts);
   $$QuietHoursSettingsTableTableManager get quietHoursSettings =>
       $$QuietHoursSettingsTableTableManager(_db, _db.quietHoursSettings);
+  $$PushNotificationSettingsTableTableManager get pushNotificationSettings =>
+      $$PushNotificationSettingsTableTableManager(
+        _db,
+        _db.pushNotificationSettings,
+      );
 }

@@ -11,6 +11,7 @@ import '../../core/database/app_database.dart';
 import '../../core/icons/gs_icons.dart';
 import '../../core/lock/app_lock.dart';
 import '../../core/network/graphql_subscriptions.dart';
+import '../../core/notifications/push_delivery.dart';
 import '../../core/notifications/quiet_hours.dart';
 import '../../core/repository/offline_first_repository.dart';
 import '../../core/repository/recently_viewed_repository.dart';
@@ -41,6 +42,7 @@ import '../releases/presentation/release_detail_screen.dart';
 import '../releases/presentation/release_list_screen.dart';
 import '../search/data/search_repository.dart';
 import '../search/presentation/search_screen.dart';
+import '../settings/push_delivery_screen.dart';
 import '../settings/quiet_hours_screen.dart';
 import '../sign_in/sign_in_screen.dart';
 import '../todos/todo_deep_link.dart';
@@ -66,7 +68,9 @@ import '../todos/todos_screen.dart';
 /// one is wired, otherwise it opens the item's web URL via [openWebUrl]
 /// (defaulting to the system browser; injectable for tests).
 /// [quietHoursStore] enables the Profile tab's quiet-hours entry and
-/// its settings route. [appLockController] surfaces the E13.1 app lock toggle
+/// its settings route. [pushDeliveryController] enables the E12.4 Android
+/// opt-in push entry and its settings route. [appLockController] surfaces the
+/// E13.1 app lock toggle
 /// on the Profile tab. [graphQlSubscriptions] gives detail screens foreground
 /// live updates over the E12.3 GraphQL subscription transport.
 /// [accountSessions] with [activeAccountStore] enable the E13.2 account
@@ -80,6 +84,7 @@ GoRouter buildAppRouter({
   AppLockController? appLockController,
   HomeTileOrderStore? homeTileOrderStore,
   QuietHoursStore? quietHoursStore,
+  PushDeliveryController? pushDeliveryController,
   GraphQlSubscriptions? graphQlSubscriptions,
   IssuesRepository? issuesRepository,
   CommentDraftQueue? commentDraftQueue,
@@ -170,6 +175,9 @@ GoRouter buildAppRouter({
                   onQuietHoursTap: quietHoursStore == null
                       ? null
                       : () => context.push('/settings/quiet-hours'),
+                  onAndroidPushTap: pushDeliveryController == null
+                      ? null
+                      : () => context.push('/settings/android-push'),
                   onSwitchAccountTap:
                       accountSessions == null || activeAccountStore == null
                       ? null
@@ -206,6 +214,12 @@ GoRouter buildAppRouter({
         GoRoute(
           path: '/settings/quiet-hours',
           builder: (context, state) => QuietHoursScreen(store: quietHoursStore),
+        ),
+      if (pushDeliveryController != null)
+        GoRoute(
+          path: '/settings/android-push',
+          builder: (context, state) =>
+              PushDeliveryScreen(controller: pushDeliveryController),
         ),
       if (issuesRepository != null) ...[
         GoRoute(
