@@ -87,6 +87,9 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   The only Android env available here (and the spike's) is a SwiftShader software-rasterized emulator that cannot demonstrate 60fps for even a no-glass baseline, so absolute 60fps stays a deferred real-device manual step; do not "reduce" the treatment on software-raster numbers.
 - Accessibility (E16.1) is enforced by `test/accessibility/a11y_guidelines_test.dart`: every key screen is pumped with its feature's fixture repository and must pass Flutter's `androidTapTargetGuideline`/`iOSTapTargetGuideline`/`labeledTapTargetGuideline`/`textContrastGuideline`; add every new screen to that suite.
   Content on the accent (and other saturated action fills) is `neutral-950`, never white - ADR 0010 records the WCAG math (`GsTheme.onAccent`, `ColorScheme.onPrimary`, `--gs-action-text-on`), so pair new saturated fills with `gs.onAccent` rather than a hardcoded light color, and note the glass toast pattern needs explicit light text (`gs.textHeading`) because the M3 snackbar default is dark `onInverseSurface`.
+- Store listing content (E15.5) lives in `store/`: per-store listing text written to each store's researched field limits, truthful privacy declarations derived from the code and ADR 0002, and screenshot sets at store-spec pixel sizes.
+  `tool/store_screenshots_test.dart` regenerates the screenshots from real screens with the real bundled fonts (`flutter test tool/store_screenshots_test.dart`); it deliberately lives outside `test/` so suite discovery and `test/flutter_test_config.dart`'s Ahem font override never touch it.
+  `store/README.md` owns the limits, screenshot specs, known gaps, and the honesty constraints (near-real-time notification wording, no-data-collected privacy answers) that any copy edit must preserve.
 
 ## Maintaining this file
 

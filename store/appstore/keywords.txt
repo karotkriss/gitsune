@@ -1,0 +1,1 @@
+gitlab,git,merge request,code review,ci,cd,pipeline,devops,issue,todo,self-hosted,repository
