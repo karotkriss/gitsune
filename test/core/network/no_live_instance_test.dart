@@ -48,4 +48,36 @@ void main() {
       throwsA(isA<LiveNetworkBlocked>()),
     );
   });
+
+  test('the only HttpOverrides subclass in the test tree is the sanctioned '
+      'loopback guard', () {
+    // A test that subclasses HttpOverrides itself - especially a bare
+    // pass-through with no createHttpClient override - silently re-opens the
+    // whole network for its client and defeats this guarantee. The only
+    // sanctioned subclass is LoopbackHttpOverrides; every test reuses it.
+    // The needle is split so this enforcement file never matches itself.
+    final needle =
+        'extends '
+        'HttpOverrides';
+    const sanctioned = 'test/support/loopback_http_overrides.dart';
+    final offenders = <String>[];
+    for (final dir in const ['test', 'integration_test']) {
+      final root = Directory(dir);
+      if (!root.existsSync()) continue;
+      for (final entity in root.listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) continue;
+        final path = entity.path.replaceAll(r'\', '/');
+        if (path == sanctioned) continue;
+        if (entity.readAsStringSync().contains(needle)) offenders.add(path);
+      }
+    }
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'These test files declare their own HttpOverrides subclass; route '
+          'them through the shared LoopbackHttpOverrides in $sanctioned '
+          'instead so the no-live-instance guard is not bypassed.',
+    );
+  });
 }
