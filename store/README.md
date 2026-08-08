@@ -6,6 +6,7 @@ It is the content to paste or wire into each store; actually creating store acco
 ## Layout
 
 - `play/` - Google Play main store listing text plus the Data safety questionnaire answers (`data-safety.md`).
+- `play/graphics/` - the Play app icon (512 x 512) and feature graphic (1024 x 500), generated from the design system's brand mark; see `play/graphics/README.md` for sources and the regeneration command (the same script keeps the Android/iOS launcher icons in sync).
 - `appstore/` - App Store Connect listing text plus the App Privacy answers (`app-privacy.md`).
 - `fdroid/` - F-Droid listing text plus the anti-features declaration (`anti-features.md`); file names already match the fastlane layout (`title.txt`, `short_description.txt`, `full_description.txt`) that F-Droid reads from `fastlane/metadata/android/en-US/` once the submission task wires it up.
 - `privacy-policy.md` - the privacy policy both Play and the App Store require a public URL for; publish it (e.g. repo file or project page) and paste the URL into both consoles.
@@ -50,8 +51,7 @@ F-Droid imposes no fixed screenshot dimensions and downscales for its catalog; r
 
 ### Known gaps (for the submission tasks)
 
-- **PNG alpha channel.** Flutter's PNG encoder always writes an (entirely opaque) alpha channel, and App Store Connect can reject screenshots with one. No image tool is available on this machine to strip it; before upload run `magick mogrify -alpha off store/screenshots/appstore/*/*.png` (ImageMagick) or equivalent.
-- **Play feature graphic (1024 x 500) and 512 x 512 store icon.** These are designed promotional assets, not app screens, so they are deliberately not produced by the real-screens harness here; they belong to the Play submission task alongside the final app icon.
+- **PNG alpha channel.** Flutter's PNG encoder always writes an (entirely opaque) alpha channel, and App Store Connect can reject screenshots with one. Before upload strip it, e.g. `magick mogrify -alpha off store/screenshots/appstore/*/*.png` (ImageMagick) or a few lines of Pillow (`uv run --with pillow python3 ...`, as `play/graphics/generate.py` does).
 - **Play tablet screenshots.** Optional for listing, needed for tablet featuring; add a tablet profile to `tool/store_screenshots_test.dart` if wanted.
 
 ## Honesty constraints baked into the text
