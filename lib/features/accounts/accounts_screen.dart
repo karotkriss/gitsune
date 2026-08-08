@@ -352,10 +352,23 @@ class _AccountAvatarState extends State<AccountAvatar> {
     final gs = Theme.of(context).extension<GsTheme>()!;
     final url = _imageFailed ? null : widget.avatarUrl;
     final initial = widget.label.isEmpty ? '?' : widget.label[0].toUpperCase();
+    // Decode the avatar at its on-screen size, not its source size: a remote
+    // avatar is often served much larger than this slot, and decoding it full
+    // size wastes memory and decode time. The physical target is the logical
+    // slot scaled by the device pixel ratio.
+    final decodePx = (widget.size * MediaQuery.devicePixelRatioOf(context))
+        .round();
     return CircleAvatar(
       radius: widget.size / 2,
       backgroundColor: gs.surfaceInset,
-      foregroundImage: url == null ? null : NetworkImage(url),
+      foregroundImage: url == null
+          ? null
+          : ResizeImage(
+              NetworkImage(url),
+              width: decodePx,
+              height: decodePx,
+              policy: ResizeImagePolicy.fit,
+            ),
       onForegroundImageError: url == null
           ? null
           : (_, _) => setState(() => _imageFailed = true),
