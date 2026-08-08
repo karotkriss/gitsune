@@ -89,8 +89,10 @@ void main() {
     await tester.pumpAndSettle();
 
     final builtAtBottom = rows().evaluate().length;
-    debugPrint('lazy-list: $total releases -> $builtAtBottom rows built at '
-        'bottom after scroll');
+    debugPrint(
+      'lazy-list: $total releases -> $builtAtBottom rows built at '
+      'bottom after scroll',
+    );
 
     expect(builtAtBottom, lessThan(60));
     expect(find.byKey(const ValueKey('release-row-v499')), findsOneWidget);
