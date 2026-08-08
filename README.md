@@ -35,6 +35,20 @@ Gitsune has completed its documentation and design-system phases, and developmen
 The Flutter project is scaffolded (`lib/core/`, `lib/features/`); feature work is in progress per `docs/plan/roadmap.md` and `docs/plan/task-breakdown.md`.
 See `docs/plan/phase-plan.md` for the full sequencing.
 
+## Installing
+
+Gitsune is planned for distribution through the Apple App Store, Google Play, and F-Droid.
+
+On Android, pick either Google Play or F-Droid, and stick with it.
+The two builds are signed with different keys.
+Android treats a differently-signed package as a different app, so it will not let one build update on top of the other.
+Switching sources later means uninstalling the version you have and installing the other one fresh, which deletes the app's local data, including cached issues, drafts, and signed-in accounts.
+This is a guarantee of Android's own signing model, not a Gitsune choice: it is the same mechanism that stops anyone else from shipping a fake update to an app they don't control.
+
+If you do decide to switch, sign out first if you want a clean handoff, then uninstall, install from the other source, and sign back in.
+
+iOS only ships through the App Store, so this does not apply there.
+
 ## Running
 
 Android uses separate `play` and `fdroid` build flavors.
