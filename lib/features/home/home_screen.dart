@@ -132,7 +132,9 @@ class _HomeTileRow extends StatelessWidget {
                 color: tile.colorOf(gs),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: GsIcon(tile.glyph, size: 20, color: gs.onAccent),
+              // Tile fills are ramp-500 colors, not the accent: white glyphs
+              // clear the 3:1 graphical bar on every tile fill.
+              child: GsIcon(tile.glyph, size: 20, color: gs.textHeading),
             ),
             const SizedBox(width: 12),
             Expanded(

@@ -41,7 +41,7 @@ color-scheme:dark;
 --gl-feedback-info-text-color:var(--gl-color-blue-200);--gl-feedback-success-text-color:var(--gl-color-green-200);--gl-feedback-warning-text-color:var(--gl-color-orange-200);--gl-feedback-danger-text-color:var(--gl-color-red-200);
 --gs-surface-card:var(--gl-color-neutral-900);--gs-surface-sheet:var(--gl-color-neutral-900);--gs-surface-inset:var(--gl-color-neutral-900);
 --gs-scrim:rgba(5,5,6,.6);
---gs-action-color:var(--gs-color-brand-500);--gs-action-color-hover:var(--gs-color-brand-400);--gs-action-color-active:var(--gs-color-brand-300);
+--gs-action-color:var(--gs-color-brand-500);--gs-action-color-hover:var(--gs-color-brand-400);--gs-action-color-active:var(--gs-color-brand-300);--gs-action-text-on:var(--gl-color-neutral-950);/* WCAG AA: neutral-0 on brand-500 is 2.9:1; neutral-950 is 7.1:1 (ADR 0010) */
 --gs-action-selected-bg:rgba(252,109,38,.16);--gs-action-selected-text:var(--gs-color-brand-200);
 --gs-press-overlay:var(--gl-color-alpha-light-8);--gs-press-overlay-strong:var(--gl-color-alpha-light-16);
 --gs-link-color-hover:var(--gs-color-brand-200);

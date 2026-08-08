@@ -92,7 +92,17 @@ class _TodosScreenState extends State<TodosScreen> {
             padding: const EdgeInsets.fromLTRB(20, 8, 12, 8),
             child: Row(
               children: [
-                Expanded(child: Text(message)),
+                // The glass toast keeps the transparent SnackBar background,
+                // so the M3 default onInverseSurface text (dark-on-dark here)
+                // must be overridden with the design's toast text token.
+                Expanded(
+                  child: Text(
+                    message,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: gs.textHeading),
+                  ),
+                ),
                 TextButton(
                   onPressed: () {
                     if (!mounted) return;

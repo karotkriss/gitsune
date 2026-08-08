@@ -14,7 +14,8 @@ ThemeData buildAppTheme([GsTokenSet tokens = gsTokens]) {
   final colorScheme = ColorScheme(
     brightness: Brightness.dark,
     primary: tokens.brand.shade500,
-    onPrimary: n.shade0,
+    // WCAG AA: white on brand-500 is 2.9:1, neutral-950 is 7.1:1 (ADR 0010).
+    onPrimary: n.shade950,
     primaryContainer: tokens.brand.shade900,
     onPrimaryContainer: tokens.brand.shade200,
     primaryFixed: tokens.brand.shade100,
@@ -152,7 +153,9 @@ class GsTheme extends ThemeExtension<GsTheme> {
     : accent = t.brand.shade500,
       accentHover = t.brand.shade400,
       accentActive = t.brand.shade300,
-      onAccent = t.neutral.shade0,
+      // Content on accent (and other saturated action fills): neutral-950,
+      // the AA-compliant ramp step; white fails 4.5:1 on brand-500 (ADR 0010).
+      onAccent = t.neutral.shade950,
       accentSelectedBg = t.brand.shade500.withValues(alpha: 0.16),
       accentSelectedText = t.brand.shade200,
       link = t.brand.shade300,

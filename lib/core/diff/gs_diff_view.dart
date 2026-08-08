@@ -666,7 +666,9 @@ class _HunkHeaderRow extends StatelessWidget {
               style: gs.mono.copyWith(
                 fontSize: 11,
                 fontStyle: FontStyle.italic,
-                color: gs.codeComment,
+                // codeComment passes AA on codeBg but not on this row's
+                // surfaceStrong fill; textSubtle is the compliant ramp step.
+                color: gs.textSubtle,
               ),
             ),
             const SizedBox(width: 16),
