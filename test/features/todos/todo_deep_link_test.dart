@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dio/io.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -16,10 +14,9 @@ import 'package:gitsune/features/todos/todos_screen.dart';
 
 import '../../support/fake_gitlab_server.dart';
 import '../../support/fixtures.dart';
+import '../../support/loopback_http_overrides.dart';
 import '../issues/support/fixture_issues_repository.dart';
 import 'support/fixture_todos_repository.dart';
-
-class _LoopbackHttpOverrides extends HttpOverrides {}
 
 void main() {
   // Real HTTP against the in-process fake server needs the real event loop.
@@ -139,10 +136,11 @@ void main() {
       readToken: (_) async => const TokenReadResult('tok'),
       refreshToken: (_, _) async => fail('refresh should not be called'),
     );
-    // Bypass flutter_test's mocked HttpClient so requests reach the loopback
-    // fake server.
+    // Escape flutter_test's mocked HttpClient so requests reach the loopback
+    // fake server, while keeping the no-live-instance guard (a non-loopback
+    // host still throws LiveNetworkBlocked), matching the sibling widget tests.
     client.httpClientAdapter = IOHttpClientAdapter(
-      createHttpClient: () => _LoopbackHttpOverrides().createHttpClient(null),
+      createHttpClient: () => LoopbackHttpOverrides().createHttpClient(null),
     );
     final repository = TodosRepository(
       database: db,
