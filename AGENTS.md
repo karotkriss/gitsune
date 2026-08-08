@@ -90,6 +90,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - Store listing content (E15.5) lives in `store/`: per-store listing text written to each store's researched field limits, truthful privacy declarations derived from the code and ADR 0002, and screenshot sets at store-spec pixel sizes.
   `tool/store_screenshots_test.dart` regenerates the screenshots from real screens with the real bundled fonts (`flutter test tool/store_screenshots_test.dart`); it deliberately lives outside `test/` so suite discovery and `test/flutter_test_config.dart`'s Ahem font override never touch it.
   `store/README.md` owns the limits, screenshot specs, known gaps, and the honesty constraints (near-real-time notification wording, no-data-collected privacy answers) that any copy edit must preserve.
+  The app icon and Play graphics are generated, not drawn: `store/play/graphics/generate.py` renders the brand mark (wordmark/G monogram per `design/guidelines/brand-wordmark.card.html`) into the Play icon, feature graphic, Android mipmaps, and iOS appiconset in one run (`uv run --with pillow python3 store/play/graphics/generate.py`); never edit those PNGs by hand.
 
 ## Maintaining this file
 
