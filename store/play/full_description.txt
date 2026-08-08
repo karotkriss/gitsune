@@ -1,0 +1,27 @@
+Gitsune puts GitLab in your pocket: review merge requests, watch pipelines, triage issues, and clear your to-do list from your phone - on gitlab.com or your own self-hosted instance.
+
+WORKS WITH YOUR GITLAB
+Sign in with your instance URL: gitlab.com and self-hosted GitLab are equally first-class. OAuth sign-in comes with a guided setup for self-hosted instances, and a Personal Access Token fallback covers instances where OAuth registration is not available. Add multiple accounts across multiple instances and switch between them in two taps.
+
+REVIEW ON THE GO
+- Merge requests: read syntax-highlighted diffs, comment inline, resolve threads, approve, and merge.
+- CI/CD: pipeline and job status, job logs, and retry, cancel, or run manual jobs.
+- Issues: view, create, comment, label, assign, and triage.
+- To-Do List: your GitLab to-dos as an inbox - filter, mark done, and jump straight to the underlying item.
+- Code: browse repositories and read files with syntax highlighting.
+- Search: projects, issues, and merge requests everywhere; code search where your instance supports it.
+- Releases: view releases and download assets, including from private projects.
+
+BUILT FOR FLAKY NETWORKS
+Recently viewed issues, merge requests, and pipelines stay readable offline, and comments written offline queue up and send when you are back on the network.
+
+HONEST NOTIFICATIONS
+Gitsune checks the to-do list on your own instance and notifies you in near real time - it does not promise guaranteed-instant push, because there are no Gitsune servers to relay notifications through, by design. If you want faster delivery, opt in to a push path you own: UnifiedPush with your own ntfy server on Android, or a relay service account you choose and control. Gitsune generates the GitLab webhook configuration for you and never touches the messages itself. Scheduled quiet hours keep notifications silent when you want to be left alone.
+
+PRIVATE BY ARCHITECTURE
+- No analytics, no trackers, no crash reporting.
+- No project-operated servers: your GitLab activity is visible only to you and the instance you signed into.
+- Sign-in tokens are stored in Android's platform secure storage.
+- Optional biometric app lock.
+
+Gitsune is an independent project and is not affiliated with or endorsed by GitLab Inc. GitLab is a trademark of GitLab Inc.
