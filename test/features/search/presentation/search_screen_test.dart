@@ -113,6 +113,53 @@ void main() {
     expect(repository.blobSearches, 1);
   });
 
+  testWidgets('tapping a result invokes its open callback', (tester) async {
+    final repository = FixtureSearchRepository(
+      projects: [project],
+      issues: [issue],
+      mergeRequests: [mergeRequest],
+      blobs: [blob],
+    );
+    SearchProject? tappedProject;
+    Issue? tappedIssue;
+    SearchMergeRequest? tappedMergeRequest;
+    SearchBlob? tappedBlob;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: SearchScreen(
+          repository: repository,
+          now: now,
+          onProjectTap: (p) => tappedProject = p,
+          onIssueTap: (i) => tappedIssue = i,
+          onMergeRequestTap: (m) => tappedMergeRequest = m,
+          onBlobTap: (b) => tappedBlob = b,
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'offline');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('gitsune / app'));
+    expect(tappedProject?.id, 7);
+
+    await tester.tap(find.text('Keep draft comments after reconnecting'));
+    expect(tappedIssue?.iid, 142);
+
+    await tester.tap(find.text('Retry offline queue after reconnect'));
+    expect(tappedMergeRequest?.iid, 88);
+
+    await tester.tap(
+      find.text('lib/core/repository/offline_first_repository.dart'),
+    );
+    expect(
+      tappedBlob?.path,
+      'lib/core/repository/offline_first_repository.dart',
+    );
+  });
+
   testWidgets('missing Advanced Search offers web code search, not an empty '
       'result', (tester) async {
     final openedUrls = <Uri>[];

@@ -400,7 +400,17 @@ void main() {
       ],
     );
     await tester.pumpWidget(
-      _app(SearchScreen(repository: repository, now: now)),
+      _app(
+        SearchScreen(
+          repository: repository,
+          now: now,
+          // Production wires every result as tappable; validate that config.
+          onProjectTap: (_) {},
+          onIssueTap: (_) {},
+          onMergeRequestTap: (_) {},
+          onBlobTap: (_) {},
+        ),
+      ),
     );
     await tester.enterText(find.byType(TextField), 'offline');
     await tester.testTextInput.receiveAction(TextInputAction.search);
