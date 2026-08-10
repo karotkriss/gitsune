@@ -258,8 +258,7 @@ class _GitsuneAppState extends State<GitsuneApp> {
       refreshToken: _refresh.refreshToken,
       baseUrl: widget.clientBaseUrl,
     );
-    final issues =
-        widget.issuesRepository ?? GitLabIssuesRepository(client);
+    final issues = widget.issuesRepository ?? GitLabIssuesRepository(client);
     final todos =
         widget.todosRepository ??
         TodosRepository(database: _database, client: client, account: account);
