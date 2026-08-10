@@ -106,4 +106,26 @@ void main() {
     );
     expect(find.byType(SwitchListTile), findsNothing);
   });
+
+  testWidgets('signed out, there is no sign-out control', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(theme: buildAppTheme(), home: const ProfileScreen()),
+    );
+    expect(find.text('Sign out'), findsNothing);
+  });
+
+  testWidgets('the sign-out control fires its callback', (tester) async {
+    var signedOut = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildAppTheme(),
+        home: ProfileScreen(onSignOutTap: () => signedOut = true),
+      ),
+    );
+
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+
+    expect(signedOut, isTrue);
+  });
 }

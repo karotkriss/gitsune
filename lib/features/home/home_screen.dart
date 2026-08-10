@@ -13,10 +13,20 @@ import 'home_tiles.dart';
 /// the signed-in account, the same convention as `buildAppRouter`'s optional
 /// repositories) renders the default order without persisting.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.tileOrderStore, this.onTileTap});
+  const HomeScreen({
+    super.key,
+    this.tileOrderStore,
+    this.onTileTap,
+    this.isTileEnabled,
+  });
 
   final HomeTileOrderStore? tileOrderStore;
   final ValueChanged<HomeTile>? onTileTap;
+
+  /// Whether a tile has a destination to navigate to. A disabled tile renders
+  /// visibly muted and does not respond to taps (it never dead-taps). Null
+  /// enables every tile - the default for isolated screen tests and goldens.
+  final bool Function(HomeTile)? isTileEnabled;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -45,6 +55,19 @@ class _HomeScreenState extends State<HomeScreen> {
     order.insert(newIndex, order.removeAt(oldIndex));
     setState(() => _order = order);
     unawaited(widget.tileOrderStore?.saveOrder(order));
+  }
+
+  Widget _tileRow(HomeTile tile, bool divider) {
+    final enabled = widget.isTileEnabled?.call(tile) ?? true;
+    return _HomeTileRow(
+      key: ValueKey(tile),
+      tile: tile,
+      divider: divider,
+      enabled: enabled,
+      onTap: (enabled && widget.onTileTap != null)
+          ? () => widget.onTileTap!(tile)
+          : null,
+    );
   }
 
   @override
@@ -77,14 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onReorderItem: _reorder,
                 children: [
                   for (final (index, tile) in _order.indexed)
-                    _HomeTileRow(
-                      key: ValueKey(tile),
-                      tile: tile,
-                      divider: index < _order.length - 1,
-                      onTap: widget.onTileTap == null
-                          ? null
-                          : () => widget.onTileTap!(tile),
-                    ),
+                    _tileRow(tile, index < _order.length - 1),
                 ],
               ),
             ),
@@ -102,16 +118,21 @@ class _HomeTileRow extends StatelessWidget {
     super.key,
     required this.tile,
     required this.divider,
+    this.enabled = true,
     this.onTap,
   });
 
   final HomeTile tile;
   final bool divider;
+  final bool enabled;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final gs = Theme.of(context).extension<GsTheme>()!;
+    // A disabled tile has no destination yet: mute its ramp-colored glyph
+    // chip, drop the navigate chevron, and take no tap. The label stays at
+    // its full-contrast color so text contrast still passes.
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -129,12 +150,16 @@ class _HomeTileRow extends StatelessWidget {
               height: 32,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: tile.colorOf(gs),
+                color: enabled ? tile.colorOf(gs) : gs.surfaceStrong,
                 borderRadius: BorderRadius.circular(8),
               ),
               // Tile fills are ramp-500 colors, not the accent: white glyphs
               // clear the 3:1 graphical bar on every tile fill.
-              child: GsIcon(tile.glyph, size: 20, color: gs.textHeading),
+              child: GsIcon(
+                tile.glyph,
+                size: 20,
+                color: enabled ? gs.textHeading : gs.textSubtle,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -143,7 +168,8 @@ class _HomeTileRow extends StatelessWidget {
                 style: Theme.of(context).textTheme.labelLarge,
               ),
             ),
-            GsIcon(GsIconGlyph.chevronRight, size: 16, color: gs.textSubtle),
+            if (enabled)
+              GsIcon(GsIconGlyph.chevronRight, size: 16, color: gs.textSubtle),
           ],
         ),
       ),

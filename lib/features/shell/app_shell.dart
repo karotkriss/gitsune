@@ -128,8 +128,11 @@ GoRouter buildAppRouter({
                 path: '/home',
                 builder: (context, state) => HomeScreen(
                   tileOrderStore: homeTileOrderStore,
-                  // Only the To-Do List has a global destination yet; the
-                  // other tiles route once their sections land (E6+).
+                  // Only the To-Do List has a global destination screen yet;
+                  // the other tiles need My-Work/Projects/Groups surfaces that
+                  // are not built. They render visibly disabled rather than
+                  // dead-tapping, and are enabled here once those land.
+                  isTileEnabled: (tile) => tile == HomeTile.todos,
                   onTileTap: (tile) {
                     if (tile == HomeTile.todos) context.go('/todos');
                   },
@@ -178,9 +181,68 @@ GoRouter buildAppRouter({
             routes: [
               GoRoute(
                 path: '/explore',
-                builder: (context, state) => searchRepository != null
-                    ? SearchScreen(repository: searchRepository)
-                    : const ExploreScreen(),
+                builder: (context, state) {
+                  if (searchRepository == null) return const ExploreScreen();
+                  Future<void> openWeb(String? url) async {
+                    if (url == null) return;
+                    await (openWebUrl ?? _launchExternally)(Uri.parse(url));
+                  }
+
+                  return SearchScreen(
+                    repository: searchRepository,
+                    openWebUrl: openWebUrl,
+                    // Route to the in-app surface when its repository is wired,
+                    // otherwise open the result's web URL - the same
+                    // wired-surface-or-web rule the to-do deep link uses. A
+                    // project opens its issue list (the surface that needs no
+                    // ref); code opens the file view.
+                    onProjectTap: (project) {
+                      if (issuesRepository != null) {
+                        context.push(
+                          Uri(
+                            path: '/projects/${project.id}/issues',
+                            queryParameters: {
+                              'projectPath': project.nameWithNamespace,
+                            },
+                          ).toString(),
+                        );
+                      } else {
+                        unawaited(openWeb(project.webUrl));
+                      }
+                    },
+                    onIssueTap: (issue) {
+                      if (issuesRepository != null) {
+                        context.push(
+                          '/projects/${issue.projectId}/issues/${issue.iid}',
+                          extra: issue,
+                        );
+                      } else {
+                        unawaited(openWeb(issue.webUrl));
+                      }
+                    },
+                    onMergeRequestTap: (mergeRequest) {
+                      if (mergeRequestsRepository != null) {
+                        context.push(
+                          '/projects/${mergeRequest.projectId}'
+                          '/merge_requests/${mergeRequest.iid}',
+                        );
+                      } else {
+                        unawaited(openWeb(mergeRequest.webUrl));
+                      }
+                    },
+                    onBlobTap: repositoryTreeRepository == null
+                        ? null
+                        : (blob) => context.push(
+                            Uri(
+                              path: '/projects/${blob.projectId}/blob',
+                              queryParameters: {
+                                'path': blob.path,
+                                if (blob.ref != null) 'ref': blob.ref!,
+                              },
+                            ).toString(),
+                          ),
+                  );
+                },
               ),
             ],
           ),
@@ -211,6 +273,9 @@ GoRouter buildAppRouter({
                       accountSessions == null || activeAccountStore == null
                       ? null
                       : () => context.push('/accounts'),
+                  onSignOutTap: activeAccountStore == null
+                      ? null
+                      : () => unawaited(activeAccountStore.setActive(null)),
                 ),
               ),
             ],

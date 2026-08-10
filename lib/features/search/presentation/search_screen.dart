@@ -22,6 +22,10 @@ class SearchScreen extends StatefulWidget {
     required this.repository,
     this.now,
     this.openWebUrl,
+    this.onProjectTap,
+    this.onIssueTap,
+    this.onMergeRequestTap,
+    this.onBlobTap,
   });
 
   final SearchRepository repository;
@@ -30,6 +34,15 @@ class SearchScreen extends StatefulWidget {
   /// Test seam for the code-search web fallback; the default opens the
   /// URL in the external browser via `url_launcher`.
   final Future<void> Function(Uri url)? openWebUrl;
+
+  /// Opens a tapped result on its in-app surface. Each is null until the
+  /// composition root wires it (the same null-until-composition-root
+  /// convention as the router's optional repositories); a null callback
+  /// leaves that result section non-tappable.
+  final ValueChanged<SearchProject>? onProjectTap;
+  final ValueChanged<Issue>? onIssueTap;
+  final ValueChanged<SearchMergeRequest>? onMergeRequestTap;
+  final ValueChanged<SearchBlob>? onBlobTap;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -265,8 +278,15 @@ class _SearchScreenState extends State<SearchScreen> {
                 _ResultSection(
                   title: 'Projects',
                   itemCount: _projects.items.length,
-                  itemBuilder: (context, index) =>
-                      _ProjectResultRow(project: _projects.items[index]),
+                  itemBuilder: (context, index) {
+                    final project = _projects.items[index];
+                    return _ProjectResultRow(
+                      project: project,
+                      onTap: widget.onProjectTap == null
+                          ? null
+                          : () => widget.onProjectTap!(project),
+                    );
+                  },
                   hasMore: _projects.hasMore,
                   loadingMore: _projects.loadingMore,
                   loadMoreFailed: _projects.loadMoreFailed,
@@ -276,8 +296,16 @@ class _SearchScreenState extends State<SearchScreen> {
                 _ResultSection(
                   title: 'Issues',
                   itemCount: _issues.items.length,
-                  itemBuilder: (context, index) =>
-                      _IssueResultRow(issue: _issues.items[index], now: now),
+                  itemBuilder: (context, index) {
+                    final issue = _issues.items[index];
+                    return _IssueResultRow(
+                      issue: issue,
+                      now: now,
+                      onTap: widget.onIssueTap == null
+                          ? null
+                          : () => widget.onIssueTap!(issue),
+                    );
+                  },
                   hasMore: _issues.hasMore,
                   loadingMore: _issues.loadingMore,
                   loadMoreFailed: _issues.loadMoreFailed,
@@ -287,10 +315,16 @@ class _SearchScreenState extends State<SearchScreen> {
                 _ResultSection(
                   title: 'Merge requests',
                   itemCount: _mergeRequests.items.length,
-                  itemBuilder: (context, index) => _MergeRequestResultRow(
-                    mergeRequest: _mergeRequests.items[index],
-                    now: now,
-                  ),
+                  itemBuilder: (context, index) {
+                    final mergeRequest = _mergeRequests.items[index];
+                    return _MergeRequestResultRow(
+                      mergeRequest: mergeRequest,
+                      now: now,
+                      onTap: widget.onMergeRequestTap == null
+                          ? null
+                          : () => widget.onMergeRequestTap!(mergeRequest),
+                    );
+                  },
                   hasMore: _mergeRequests.hasMore,
                   loadingMore: _mergeRequests.loadingMore,
                   loadMoreFailed: _mergeRequests.loadMoreFailed,
@@ -300,8 +334,15 @@ class _SearchScreenState extends State<SearchScreen> {
                 _ResultSection(
                   title: 'Code',
                   itemCount: _code.items.length,
-                  itemBuilder: (context, index) =>
-                      _BlobResultRow(blob: _code.items[index]),
+                  itemBuilder: (context, index) {
+                    final blob = _code.items[index];
+                    return _BlobResultRow(
+                      blob: blob,
+                      onTap: widget.onBlobTap == null
+                          ? null
+                          : () => widget.onBlobTap!(blob),
+                    );
+                  },
                   hasMore: _code.hasMore,
                   loadingMore: _code.loadingMore,
                   loadMoreFailed: _code.loadMoreFailed,
@@ -389,47 +430,52 @@ class _ResultSection extends StatelessWidget {
 }
 
 class _ProjectResultRow extends StatelessWidget {
-  const _ProjectResultRow({required this.project});
+  const _ProjectResultRow({required this.project, this.onTap});
 
   final SearchProject project;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final gs = theme.extension<GsTheme>()!;
     return Semantics(
+      button: onTap != null,
       label: '${project.nameWithNamespace}. ${project.starCount} stars.',
       child: ExcludeSemantics(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                project.nameWithNamespace,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: gs.textHeading,
-                ),
-              ),
-              if (project.description.isNotEmpty) ...[
-                const SizedBox(height: 4),
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  project.description,
-                  maxLines: 2,
+                  project.nameWithNamespace,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: gs.textSubtle,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: gs.textHeading,
                   ),
                 ),
+                if (project.description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    project.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: gs.textSubtle,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Text(
+                  '${project.starCount} stars',
+                  style: gs.caption.copyWith(color: gs.textSubtle),
+                ),
               ],
-              const SizedBox(height: 4),
-              Text(
-                '${project.starCount} stars',
-                style: gs.caption.copyWith(color: gs.textSubtle),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -438,53 +484,58 @@ class _ProjectResultRow extends StatelessWidget {
 }
 
 class _IssueResultRow extends StatelessWidget {
-  const _IssueResultRow({required this.issue, required this.now});
+  const _IssueResultRow({required this.issue, required this.now, this.onTap});
 
   final Issue issue;
   final DateTime now;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final gs = theme.extension<GsTheme>()!;
     return Semantics(
+      button: onTap != null,
       label:
           '${issue.state.label} issue ${issue.reference}: ${issue.title}. '
           'Opened by ${issue.author.username}. '
           'Updated ${formatIssueRelativeTime(issue.updatedAt, now)}.',
       child: ExcludeSemantics(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                issue.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: gs.textHeading,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  issue.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: gs.textHeading,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  IssueStateBadge(state: issue.state),
-                  IssueMetadataPill(
-                    label: issue.reference,
-                    icon: GsIconGlyph.comments,
-                  ),
-                  Text(
-                    '${issue.author.username} · '
-                    '${formatIssueRelativeTime(issue.updatedAt, now)}',
-                    style: gs.caption.copyWith(color: gs.textSubtle),
-                  ),
-                ],
-              ),
-            ],
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    IssueStateBadge(state: issue.state),
+                    IssueMetadataPill(
+                      label: issue.reference,
+                      icon: GsIconGlyph.comments,
+                    ),
+                    Text(
+                      '${issue.author.username} · '
+                      '${formatIssueRelativeTime(issue.updatedAt, now)}',
+                      style: gs.caption.copyWith(color: gs.textSubtle),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -493,54 +544,63 @@ class _IssueResultRow extends StatelessWidget {
 }
 
 class _MergeRequestResultRow extends StatelessWidget {
-  const _MergeRequestResultRow({required this.mergeRequest, required this.now});
+  const _MergeRequestResultRow({
+    required this.mergeRequest,
+    required this.now,
+    this.onTap,
+  });
 
   final SearchMergeRequest mergeRequest;
   final DateTime now;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final gs = theme.extension<GsTheme>()!;
     return Semantics(
+      button: onTap != null,
       label:
           '${mergeRequest.state.label} merge request '
           '${mergeRequest.reference}: ${mergeRequest.title}. '
           'Opened by ${mergeRequest.author.username}. '
           'Updated ${formatIssueRelativeTime(mergeRequest.updatedAt, now)}.',
       child: ExcludeSemantics(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                mergeRequest.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: gs.textHeading,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  mergeRequest.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: gs.textHeading,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  _MergeRequestStateBadge(state: mergeRequest.state),
-                  IssueMetadataPill(
-                    label: mergeRequest.reference,
-                    icon: GsIconGlyph.comments,
-                  ),
-                  Text(
-                    '${mergeRequest.author.username} · '
-                    '${formatIssueRelativeTime(mergeRequest.updatedAt, now)}',
-                    style: gs.caption.copyWith(color: gs.textSubtle),
-                  ),
-                ],
-              ),
-            ],
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _MergeRequestStateBadge(state: mergeRequest.state),
+                    IssueMetadataPill(
+                      label: mergeRequest.reference,
+                      icon: GsIconGlyph.comments,
+                    ),
+                    Text(
+                      '${mergeRequest.author.username} · '
+                      '${formatIssueRelativeTime(mergeRequest.updatedAt, now)}',
+                      style: gs.caption.copyWith(color: gs.textSubtle),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -549,9 +609,10 @@ class _MergeRequestResultRow extends StatelessWidget {
 }
 
 class _BlobResultRow extends StatelessWidget {
-  const _BlobResultRow({required this.blob});
+  const _BlobResultRow({required this.blob, this.onTap});
 
   final SearchBlob blob;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -561,45 +622,49 @@ class _BlobResultRow extends StatelessWidget {
     final syntaxTheme = gsSyntaxTextTheme(gs);
     final lines = blob.data.trimRight().split('\n');
     return Semantics(
+      button: onTap != null,
       label: 'Code match in ${blob.path}.',
       child: ExcludeSemantics(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                blob.path,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: gs.mono.copyWith(color: gs.textHeading),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: gs.surfaceStrong,
-                  borderRadius: BorderRadius.circular(6),
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  blob.path,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: gs.mono.copyWith(color: gs.textHeading),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final line in lines)
-                      Text.rich(
-                        highlightCodeLine(
-                          line,
-                          languageId: languageId,
-                          base: base,
-                          theme: syntaxTheme,
+                const SizedBox(height: 4),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: gs.surfaceStrong,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final line in lines)
+                        Text.rich(
+                          highlightCodeLine(
+                            line,
+                            languageId: languageId,
+                            base: base,
+                            theme: syntaxTheme,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

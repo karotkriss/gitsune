@@ -21,6 +21,7 @@ class ProfileScreen extends StatelessWidget {
     this.onRelayTap,
     this.onSwitchAccountTap,
     this.onManageAccountsTap,
+    this.onSignOutTap,
   });
 
   final AppLockController? appLockController;
@@ -29,6 +30,11 @@ class ProfileScreen extends StatelessWidget {
   final VoidCallback? onRelayTap;
   final VoidCallback? onSwitchAccountTap;
   final VoidCallback? onManageAccountsTap;
+
+  /// Signs out of the active account, clearing it so the app returns to the
+  /// signed-out shell. Null until the composition root wires a signed-in
+  /// account, so the control only appears while signed in.
+  final VoidCallback? onSignOutTap;
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +94,13 @@ class ProfileScreen extends StatelessWidget {
               if (appLockController != null) ...[
                 const SizedBox(height: 24),
                 _AppLockTile(controller: appLockController!),
+              ],
+              if (onSignOutTap != null) ...[
+                const SizedBox(height: 24),
+                OutlinedButton(
+                  onPressed: onSignOutTap,
+                  child: const Text('Sign out'),
+                ),
               ],
             ],
           ),
