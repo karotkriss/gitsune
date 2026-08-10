@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gitsune/core/auth/active_account.dart';
 import 'package:gitsune/core/lock/app_lock.dart';
 import 'package:gitsune/main.dart';
 
@@ -14,8 +15,12 @@ void main() {
     );
     addTearDown(appLock.dispose);
     await appLock.load();
+    final activeAccount = ActiveAccountStore(storage: MemorySecureStorage());
+    addTearDown(activeAccount.dispose);
 
-    await tester.pumpWidget(GitsuneApp(appLockController: appLock));
+    await tester.pumpWidget(
+      GitsuneApp(appLockController: appLock, activeAccount: activeAccount),
+    );
     await tester.pumpAndSettle();
 
     final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));

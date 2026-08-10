@@ -85,6 +85,11 @@ import '../todos/todos_screen.dart';
 /// [resolveDownloadsDirectory] overrides where the E11.2 release detail
 /// screen saves a downloaded asset, letting tests avoid the real platform
 /// downloads directory; it defaults to the real one.
+/// [signIn], [signInSelfHosted], and [signInWithToken] are the composition
+/// root's sign-in continuations wired into the `/signin` route (gitlab.com
+/// OAuth, the self-hosted wizard's OAuth completion, and the PAT fallback):
+/// each completes auth and then registers the session and makes it active, so
+/// a completed sign-in produces a signed-in app rather than a silent no-op.
 GoRouter buildAppRouter({
   AccountSessions? accountSessions,
   ActiveAccountStore? activeAccountStore,
@@ -106,6 +111,9 @@ GoRouter buildAppRouter({
   OfflineFirstRepository<List<TodoItem>>? todosRepository,
   RecentlyViewedCache? recentlyViewedCache,
   Future<void> Function(Uri url)? openWebUrl,
+  Future<void> Function()? signIn,
+  Future<void> Function(Uri base, String applicationId)? signInSelfHosted,
+  Future<void> Function(Uri base, String token)? signInWithToken,
   String initialLocation = '/home',
 }) {
   return GoRouter(
@@ -211,7 +219,11 @@ GoRouter buildAppRouter({
       ),
       GoRoute(
         path: '/signin',
-        builder: (context, state) => const SignInScreen(),
+        builder: (context, state) => SignInScreen(
+          signIn: signIn,
+          signInSelfHostedWithId: signInSelfHosted,
+          signInWithToken: signInWithToken,
+        ),
       ),
       if (accountSessions != null && activeAccountStore != null)
         GoRoute(

@@ -101,8 +101,12 @@ void main() {
     );
     addTearDown(appLock.dispose);
     await appLock.load();
+    final activeAccount = ActiveAccountStore(storage: MemorySecureStorage());
+    addTearDown(activeAccount.dispose);
 
-    await tester.pumpWidget(GitsuneApp(appLockController: appLock));
+    await tester.pumpWidget(
+      GitsuneApp(appLockController: appLock, activeAccount: activeAccount),
+    );
     await tester.pumpAndSettle();
 
     await expectMeetsA11yGuidelines(tester);
