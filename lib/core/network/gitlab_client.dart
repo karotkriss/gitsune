@@ -68,7 +68,13 @@ Dio createGitLabClient({
   Uri? baseUrl,
 }) {
   final dio = Dio(
-    BaseOptions(baseUrl: (baseUrl ?? resolveApiBaseUrl(account)).toString()),
+    BaseOptions(
+      baseUrl: (baseUrl ?? resolveApiBaseUrl(account)).toString(),
+      // A self-hosted instance that stalls must fail a request rather than
+      // hang the UI on it; matches the OAuth client and reachability probe.
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+    ),
   );
 
   dio.interceptors.add(

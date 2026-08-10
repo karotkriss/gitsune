@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/auth/gitlab_oauth.dart';
@@ -210,5 +212,27 @@ void main() {
       await expectLater(attempt, throwsStateError);
       expect(store.tokens, isEmpty);
     });
+
+    // Regression: a self-hosted instance that accepts the connection but never
+    // answers the token endpoint must surface the wizard's error, not hang the
+    // sign-in forever (the field-reported "complete freeze"). The default
+    // client carries a finite receive timeout, so the call throws rather than
+    // stalling; revert that and this test hangs past its bound and fails.
+    test('exchangeCode times out instead of hanging when the token '
+        'endpoint never responds', () async {
+      // Holds the request open forever without ever writing a response.
+      server.handle('POST /oauth/token', (request) => Completer<void>().future);
+
+      await expectLater(
+        oauth().exchangeCode(code: 'the-code', codeVerifier: 'the-verifier'),
+        throwsA(
+          isA<DioException>().having(
+            (error) => error.type,
+            'type',
+            DioExceptionType.receiveTimeout,
+          ),
+        ),
+      );
+    }, timeout: const Timeout(Duration(seconds: 30)));
   });
 }

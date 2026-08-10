@@ -34,7 +34,15 @@ class GitLabOAuth {
     Authorizer? authorizer,
     Dio? dio,
   }) : _authorize = authorizer ?? _systemBrowserAuthorizer,
-       _dio = dio ?? Dio();
+       _dio = dio ?? Dio(_defaultOptions);
+
+  // A self-hosted instance that accepts the connection but never answers must
+  // surface an error, not hang the sign-in wizard forever. Mirrors the same
+  // 10s bounds the reachability probe (`isGitLabInstance`) already uses.
+  static final _defaultOptions = BaseOptions(
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+  );
 
   /// The gitlab.com one-tap sign-in entry point, using the baked-in
   /// Application ID and platform secure storage.
