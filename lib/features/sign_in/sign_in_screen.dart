@@ -18,6 +18,7 @@ class SignInScreen extends StatefulWidget {
     this.signIn,
     this.probeInstance,
     this.signInSelfHosted,
+    this.signInSelfHostedWithId,
     this.signInWithToken,
   });
 
@@ -34,6 +35,13 @@ class SignInScreen extends StatefulWidget {
   /// opens the E2.3 registration wizard, which supplies and validates the
   /// instance's Application ID, then runs [GitLabOAuth.selfHosted].
   final Future<void> Function(Uri base)? signInSelfHosted;
+
+  /// The production self-hosted continuation, forwarded to the E2.3 wizard's
+  /// `signIn`: runs OAuth against [base] with the validated Application ID and,
+  /// at the composition root, registers the session and makes it active.
+  /// Distinct from [signInSelfHosted], which bypasses the wizard for tests.
+  final Future<void> Function(Uri base, String applicationId)?
+  signInSelfHostedWithId;
 
   /// Personal Access Token sign-in (E2.4), forwarded to [PatSignInScreen]
   /// behind the secondary "Having trouble signing in?" affordance. Injectable
@@ -89,6 +97,7 @@ class _SignInScreenState extends State<SignInScreen> {
             MaterialPageRoute<void>(
               builder: (_) => SelfHostedWizardScreen(
                 base: base,
+                signIn: widget.signInSelfHostedWithId,
                 signInWithToken: widget.signInWithToken,
               ),
             ),
