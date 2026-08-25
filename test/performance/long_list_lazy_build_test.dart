@@ -4,8 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/database/app_database.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
+import 'package:gitsune/features/issues/data/issue_models.dart';
+import 'package:gitsune/features/my_work/presentation/my_work_screen.dart';
+import 'package:gitsune/features/projects/presentation/projects_screen.dart';
+import 'package:gitsune/features/search/data/search_models.dart';
 import 'package:gitsune/features/shell/app_shell.dart';
 
+import '../features/my_work/support/fixture_my_work_repository.dart';
+import '../features/projects/support/fixture_projects_repository.dart';
 import '../features/releases/support/fixture_releases_repository.dart';
 
 /// E16.2 performance guard: prove the paginated lists build lazily.
@@ -97,5 +103,90 @@ void main() {
     expect(builtAtBottom, lessThan(60));
     expect(find.byKey(const ValueKey('release-row-v499')), findsOneWidget);
     expect(find.byKey(const ValueKey('release-row-v0')), findsNothing);
+  });
+
+  // The My Work and Projects lists render outside the project routes, so
+  // they get their own window check rather than riding the releases one.
+  Future<void> expectLazyWindow(
+    WidgetTester tester, {
+    required Widget screen,
+    required String keyPrefix,
+    required int total,
+  }) async {
+    tester.view.devicePixelRatio = dpr;
+    tester.view.physicalSize = logicalSize * dpr;
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(MaterialApp(theme: buildAppTheme(), home: screen));
+    await tester.pumpAndSettle();
+
+    Finder rows() => find.byWidgetPredicate((widget) {
+      final key = widget.key;
+      return key is ValueKey && '${key.value}'.startsWith(keyPrefix);
+    });
+
+    final builtAtTop = rows().evaluate().length;
+    debugPrint('lazy-list: $total $keyPrefix -> $builtAtTop rows built');
+    expect(builtAtTop, greaterThan(0));
+    expect(
+      builtAtTop,
+      lessThan(60),
+      reason: 'a lazy list builds ~one viewport of rows, not all $total',
+    );
+    expect(find.byKey(ValueKey('$keyPrefix${total - 1}')), findsNothing);
+  }
+
+  testWidgets('the My Work issues list builds lazily', (tester) async {
+    const author = IssueAuthor(id: 1, username: 'marin', name: 'Marin');
+    await expectLazyWindow(
+      tester,
+      screen: MyIssuesScreen(
+        repository: FixtureMyWorkRepository(
+          issues: [
+            for (var i = 0; i < 500; i++)
+              Issue(
+                id: i,
+                projectId: 7,
+                iid: i,
+                title: 'Issue $i',
+                description: '',
+                state: IssueState.opened,
+                author: author,
+                createdAt: DateTime.utc(2026),
+                updatedAt: DateTime.utc(2026, 8),
+                labels: const [],
+                assignees: const [],
+                userNotesCount: 0,
+              ),
+          ],
+        ),
+        now: DateTime.utc(2026, 8, 10),
+      ),
+      keyPrefix: 'my-issue-row-',
+      total: 500,
+    );
+  });
+
+  testWidgets('the Projects browser builds lazily', (tester) async {
+    await expectLazyWindow(
+      tester,
+      screen: ProjectsScreen(
+        repository: FixtureProjectsRepository(
+          firstPage: [
+            for (var i = 0; i < 500; i++)
+              SearchProject(
+                id: i,
+                name: 'project-$i',
+                nameWithNamespace: 'gitsune / project-$i',
+                description: 'Project number $i.',
+                starCount: i,
+              ),
+          ],
+        ),
+      ),
+      keyPrefix: 'project-row-',
+      total: 500,
+    );
   });
 }

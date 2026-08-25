@@ -246,7 +246,7 @@ class _IssueListScreenState extends State<IssueListScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList.builder(
                   itemCount: _issues.length,
-                  itemBuilder: (context, index) => _IssueListRow(
+                  itemBuilder: (context, index) => IssueListRow(
                     key: ValueKey('issue-row-${_issues[index].iid}'),
                     issue: _issues[index],
                     now: widget.now ?? DateTime.now(),
@@ -271,8 +271,10 @@ class _IssueListScreenState extends State<IssueListScreen> {
   }
 }
 
-class _IssueListRow extends StatelessWidget {
-  const _IssueListRow({
+/// One issue row in the card-list treatment, shared between the project
+/// issue list and the Home tile's My Work issues list.
+class IssueListRow extends StatelessWidget {
+  const IssueListRow({
     super.key,
     required this.issue,
     required this.now,
@@ -305,6 +307,7 @@ class _IssueListRow extends StatelessWidget {
     if (labels.isNotEmpty) metadata.write(' Labels: $labels.');
     return Semantics(
       button: true,
+      onTap: onTap,
       label: metadata.toString(),
       child: ExcludeSemantics(
         child: DecoratedBox(
