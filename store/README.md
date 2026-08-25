@@ -61,4 +61,4 @@ Keep these when editing the copy:
 - **Notifications are near-real-time, never "instant push".** The baseline is conditional polling of the user's own instance, and the only faster paths are user-owned relays (`docs/decisions/0002-notification-architecture.md`). The copy must never promise delivery the architecture cannot make.
 - **Privacy answers say "no data collected" because it is true**: no analytics or tracking dependencies exist, tokens live in platform secure storage, and the project operates no servers. If a dependency with any data collection is ever added, `play/data-safety.md` and `appstore/app-privacy.md` must change in the same PR.
 - **"Independent project, not affiliated with GitLab Inc."** stays in every description.
-- The F-Droid description says "free software only" about the `fdroid` flavor; the repository license itself is still TBD and must be decided (as its own ADR) before an F-Droid submission.
+- The F-Droid description says "free software only" about the `fdroid` flavor; the repository itself is MIT licensed (`LICENSE`, `docs/decisions/0011-license-choice.md`).

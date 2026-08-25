@@ -58,9 +58,8 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   `MainActivity` extends `FlutterFragmentActivity` because local_auth's BiometricPrompt requires it; do not revert it to `FlutterActivity`.
 - A widget test whose widget subscribes to a drift stream (e.g. `HomeScreen` with a `HomeTileOrderStore`) must unmount that widget and then pump with a nonzero duration before the test body ends: cancelling a drift query stream schedules a zero-duration real timer, and only elapsing fake time runs it, so skipping this fails the test with "pending timers" (see `test/features/home/home_screen_test.dart`).
   For the same reason, never `await` a drift stream (e.g. `watchAll().first`) inside a `testWidgets` body: the initial fetch waits on such a timer while the blocked body prevents any pump from elapsing fake time, deadlocking the test until its timeout; assert through the pumped UI instead (see `test/features/accounts/accounts_screen_test.dart`).
-- The license is intentionally unset ("License: TBD" in `README.md`).
-  Do not add a `LICENSE` file or pick a license without an explicit decision recorded as a new ADR in `docs/decisions/`.
-  This is distinct from the vendored third-party licenses in `design/`, which govern only the files they accompany regardless of what license this repository eventually adopts.
+- The repository is MIT licensed (`LICENSE`, `docs/decisions/0011-license-choice.md`).
+  This is distinct from the vendored third-party licenses in `design/`, which govern only the files they accompany.
 - Android flavor commands are documented in `README.md`; `android/app/build.gradle.kts` owns the proprietary-dependency boundary, and `docs/decisions/0004-app-store-launch-scope.md` owns its rationale.
 - `docs/plan/roadmap.md` owns the search scope and tier-fallback contract; its implementation lives under `lib/features/search/`.
   Each network-only scope has its own `loadFirst*`/`loadNext*` repository method pair backed by a `KeysetPaginator`.
