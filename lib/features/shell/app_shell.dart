@@ -35,11 +35,15 @@ import '../merge_requests/data/merge_requests_repository.dart';
 import '../merge_requests/presentation/merge_request_changes_screen.dart';
 import '../merge_requests/presentation/merge_request_detail_screen.dart';
 import '../merge_requests/presentation/merge_request_list_screen.dart';
+import '../my_work/data/my_work_repository.dart';
+import '../my_work/presentation/my_work_screen.dart';
 import '../pipelines/data/pipeline_models.dart';
 import '../pipelines/data/pipelines_repository.dart';
 import '../pipelines/presentation/job_log_screen.dart';
 import '../pipelines/presentation/pipeline_detail_screen.dart';
 import '../profile/profile_screen.dart';
+import '../projects/data/projects_repository.dart';
+import '../projects/presentation/projects_screen.dart';
 import '../releases/data/releases_repository.dart';
 import '../releases/presentation/release_detail_screen.dart';
 import '../releases/presentation/release_list_screen.dart';
@@ -82,6 +86,11 @@ import '../todos/todos_screen.dart';
 /// management surface, its `/accounts` route, and the Profile tab's
 /// quick-switch entry; [tokenStore] additionally clears a removed account's
 /// tokens.
+/// [myWorkRepository] enables the Home Issues and Merge Requests tiles and
+/// their `/my/issues` and `/my/merge_requests` list routes, and
+/// [projectsRepository] likewise enables the Projects tile and its
+/// `/projects` browser route; a tile without a wired destination renders
+/// visibly disabled rather than dead-tapping.
 /// [resolveDownloadsDirectory] overrides where the E11.2 release detail
 /// screen saves a downloaded asset, letting tests avoid the real platform
 /// downloads directory; it defaults to the real one.
@@ -103,7 +112,9 @@ GoRouter buildAppRouter({
   IssuesRepository? issuesRepository,
   CommentDraftQueue? commentDraftQueue,
   MergeRequestsRepository? mergeRequestsRepository,
+  MyWorkRepository? myWorkRepository,
   PipelinesRepository? pipelinesRepository,
+  ProjectsRepository? projectsRepository,
   ReleasesRepository? releasesRepository,
   Future<Directory> Function()? resolveDownloadsDirectory,
   RepositoryTreeRepository? repositoryTreeRepository,
@@ -128,13 +139,30 @@ GoRouter buildAppRouter({
                 path: '/home',
                 builder: (context, state) => HomeScreen(
                   tileOrderStore: homeTileOrderStore,
-                  // Only the To-Do List has a global destination screen yet;
-                  // the other tiles need My-Work/Projects/Groups surfaces that
-                  // are not built. They render visibly disabled rather than
-                  // dead-tapping, and are enabled here once those land.
-                  isTileEnabled: (tile) => tile == HomeTile.todos,
+                  // A tile is live only when its destination's repository is
+                  // wired; otherwise it renders visibly disabled rather than
+                  // dead-tapping. Pipelines and Groups have no global surface
+                  // yet - flip them on here once one lands.
+                  isTileEnabled: (tile) => switch (tile) {
+                    HomeTile.todos => true,
+                    HomeTile.issues ||
+                    HomeTile.mergeRequests => myWorkRepository != null,
+                    HomeTile.projects => projectsRepository != null,
+                    HomeTile.pipelines || HomeTile.groups => false,
+                  },
                   onTileTap: (tile) {
-                    if (tile == HomeTile.todos) context.go('/todos');
+                    switch (tile) {
+                      case HomeTile.todos:
+                        context.go('/todos');
+                      case HomeTile.issues:
+                        context.push('/my/issues');
+                      case HomeTile.mergeRequests:
+                        context.push('/my/merge_requests');
+                      case HomeTile.projects:
+                        context.push('/projects');
+                      case HomeTile.pipelines || HomeTile.groups:
+                        break;
+                    }
                   },
                 ),
               ),
@@ -316,6 +344,74 @@ GoRouter buildAppRouter({
           path: '/settings/relay',
           builder: (context, state) =>
               RelayWizardScreen(store: relaySetupStore),
+        ),
+      if (myWorkRepository != null) ...[
+        GoRoute(
+          path: '/my/issues',
+          builder: (context, state) => MyIssuesScreen(
+            repository: myWorkRepository,
+            // Route to the wired in-app surface, else open the item's web
+            // URL - the same wired-surface-or-web rule the to-do deep link
+            // and the Explore results use.
+            onIssueTap: (issue) {
+              if (issuesRepository != null) {
+                context.push(
+                  '/projects/${issue.projectId}/issues/${issue.iid}',
+                  extra: issue,
+                );
+              } else if (issue.webUrl != null) {
+                unawaited(
+                  (openWebUrl ?? _launchExternally)(Uri.parse(issue.webUrl!)),
+                );
+              }
+            },
+          ),
+        ),
+        GoRoute(
+          path: '/my/merge_requests',
+          builder: (context, state) => MyMergeRequestsScreen(
+            repository: myWorkRepository,
+            onMergeRequestTap: (mergeRequest) {
+              if (mergeRequestsRepository != null) {
+                context.push(
+                  '/projects/${mergeRequest.projectId}/merge_requests/'
+                  '${mergeRequest.iid}',
+                  extra: mergeRequest,
+                );
+              } else if (mergeRequest.webUrl != null) {
+                unawaited(
+                  (openWebUrl ?? _launchExternally)(
+                    Uri.parse(mergeRequest.webUrl!),
+                  ),
+                );
+              }
+            },
+          ),
+        ),
+      ],
+      if (projectsRepository != null)
+        GoRoute(
+          path: '/projects',
+          builder: (context, state) => ProjectsScreen(
+            repository: projectsRepository,
+            // A project opens its issue list (the surface that needs no ref)
+            // when wired, else its web URL - the same rule as the Explore
+            // tab's project results.
+            onProjectTap: (project) {
+              if (issuesRepository != null) {
+                context.push(
+                  Uri(
+                    path: '/projects/${project.id}/issues',
+                    queryParameters: {'projectPath': project.nameWithNamespace},
+                  ).toString(),
+                );
+              } else if (project.webUrl != null) {
+                unawaited(
+                  (openWebUrl ?? _launchExternally)(Uri.parse(project.webUrl!)),
+                );
+              }
+            },
+          ),
         ),
       if (issuesRepository != null) ...[
         GoRoute(

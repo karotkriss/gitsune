@@ -22,10 +22,12 @@ import 'package:gitsune/features/issues/presentation/issue_list_screen.dart';
 import 'package:gitsune/features/merge_requests/presentation/merge_request_changes_screen.dart';
 import 'package:gitsune/features/merge_requests/presentation/merge_request_detail_screen.dart';
 import 'package:gitsune/features/merge_requests/presentation/merge_request_list_screen.dart';
+import 'package:gitsune/features/my_work/presentation/my_work_screen.dart';
 import 'package:gitsune/features/pipelines/data/pipeline_models.dart';
 import 'package:gitsune/features/pipelines/presentation/job_log_screen.dart';
 import 'package:gitsune/features/pipelines/presentation/pipeline_detail_screen.dart';
 import 'package:gitsune/features/profile/profile_screen.dart';
+import 'package:gitsune/features/projects/presentation/projects_screen.dart';
 import 'package:gitsune/features/search/data/search_models.dart';
 import 'package:gitsune/features/settings/push_delivery_screen.dart';
 import 'package:gitsune/features/settings/quiet_hours_screen.dart';
@@ -39,6 +41,8 @@ import 'package:gitsune/main.dart';
 import '../features/code/support/fixture_repository_tree_repository.dart';
 import '../features/issues/support/fixture_issues_repository.dart';
 import '../features/merge_requests/support/fixture_merge_requests_repository.dart';
+import '../features/my_work/support/fixture_my_work_repository.dart';
+import '../features/projects/support/fixture_projects_repository.dart';
 import '../features/pipelines/support/fixture_pipelines_repository.dart';
 import '../features/releases/support/fixture_releases_repository.dart';
 import '../features/search/support/fixture_search_repository.dart';
@@ -222,6 +226,41 @@ void main() {
           now: now,
         ),
       ),
+    );
+    await tester.pumpAndSettle();
+
+    await expectMeetsA11yGuidelines(tester);
+    semantics.dispose();
+  });
+
+  testWidgets('my issues list with scope toggle', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _app(MyIssuesScreen(repository: FixtureMyWorkRepository(), now: now)),
+    );
+    await tester.pumpAndSettle();
+
+    await expectMeetsA11yGuidelines(tester);
+    semantics.dispose();
+  });
+
+  testWidgets('my merge requests list with scope toggle', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _app(
+        MyMergeRequestsScreen(repository: FixtureMyWorkRepository(), now: now),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await expectMeetsA11yGuidelines(tester);
+    semantics.dispose();
+  });
+
+  testWidgets('projects browser', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _app(ProjectsScreen(repository: FixtureProjectsRepository())),
     );
     await tester.pumpAndSettle();
 

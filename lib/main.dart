@@ -25,7 +25,9 @@ import 'features/home/home_tiles.dart';
 import 'features/issues/data/comment_draft_queue.dart';
 import 'features/issues/data/issues_repository.dart';
 import 'features/merge_requests/data/merge_requests_repository.dart';
+import 'features/my_work/data/my_work_repository.dart';
 import 'features/pipelines/data/pipelines_repository.dart';
+import 'features/projects/data/projects_repository.dart';
 import 'features/releases/data/releases_repository.dart';
 import 'features/search/data/search_repository.dart';
 import 'features/shell/app_shell.dart';
@@ -285,7 +287,9 @@ class _GitsuneAppState extends State<GitsuneApp> {
         onReconnect: const Stream.empty(),
       ),
       mergeRequestsRepository: GitLabMergeRequestsRepository(client),
+      myWorkRepository: GitLabMyWorkRepository(client),
       pipelinesRepository: GitLabPipelinesRepository(client),
+      projectsRepository: GitLabProjectsRepository(client),
       releasesRepository: GitLabReleasesRepository(
         database: _database,
         client: client,

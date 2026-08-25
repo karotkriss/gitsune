@@ -2,34 +2,29 @@ import 'package:flutter/material.dart';
 
 import '../../../core/icons/gs_icons.dart';
 import '../../../core/theme/app_theme.dart';
-import '../data/merge_request_models.dart';
-import '../data/merge_requests_repository.dart';
-import 'merge_request_components.dart';
-import 'merge_request_detail_screen.dart';
+import '../../search/data/search_models.dart';
+import '../data/projects_repository.dart';
 
-class MergeRequestListScreen extends StatefulWidget {
-  const MergeRequestListScreen({
+/// The Home "Projects" tile's destination: the projects the signed-in user
+/// is a member of, most recently active first, in the same paginated
+/// card-list treatment as the project issue and merge request lists.
+class ProjectsScreen extends StatefulWidget {
+  const ProjectsScreen({
     super.key,
-    required this.projectId,
-    required this.projectPath,
     required this.repository,
-    this.onMergeRequestTap,
-    this.now,
+    this.onProjectTap,
   });
 
-  final int projectId;
-  final String projectPath;
-  final MergeRequestsRepository repository;
-  final ValueChanged<MergeRequest>? onMergeRequestTap;
-  final DateTime? now;
+  final ProjectsRepository repository;
+  final ValueChanged<SearchProject>? onProjectTap;
 
   @override
-  State<MergeRequestListScreen> createState() => _MergeRequestListScreenState();
+  State<ProjectsScreen> createState() => _ProjectsScreenState();
 }
 
-class _MergeRequestListScreenState extends State<MergeRequestListScreen> {
+class _ProjectsScreenState extends State<ProjectsScreen> {
   final _scrollController = ScrollController();
-  final _mergeRequests = <MergeRequest>[];
+  final _projects = <SearchProject>[];
   bool _loading = true;
   bool _loadingMore = false;
   bool _hasMore = false;
@@ -42,16 +37,6 @@ class _MergeRequestListScreenState extends State<MergeRequestListScreen> {
     super.initState();
     _scrollController.addListener(_handleScroll);
     _loadFirstPage();
-  }
-
-  @override
-  void didUpdateWidget(covariant MergeRequestListScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.projectId != widget.projectId ||
-        oldWidget.repository != widget.repository) {
-      _mergeRequests.clear();
-      _loadFirstPage();
-    }
   }
 
   @override
@@ -79,10 +64,10 @@ class _MergeRequestListScreenState extends State<MergeRequestListScreen> {
       _nextPageError = false;
     });
     try {
-      final page = await widget.repository.loadFirstPage(widget.projectId);
+      final page = await widget.repository.loadFirstPage();
       if (!mounted || generation != _generation) return;
       setState(() {
-        _mergeRequests
+        _projects
           ..clear()
           ..addAll(page.items);
         _hasMore = page.hasMore;
@@ -95,9 +80,9 @@ class _MergeRequestListScreenState extends State<MergeRequestListScreen> {
         _loading = false;
         _initialError = true;
       });
-      if (_mergeRequests.isNotEmpty) {
+      if (_projects.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to refresh merge requests.')),
+          const SnackBar(content: Text('Unable to refresh projects.')),
         );
       }
     }
@@ -111,10 +96,10 @@ class _MergeRequestListScreenState extends State<MergeRequestListScreen> {
     });
     final generation = _generation;
     try {
-      final page = await widget.repository.loadNextPage(widget.projectId);
+      final page = await widget.repository.loadNextPage();
       if (!mounted || generation != _generation) return;
       setState(() {
-        _mergeRequests.addAll(page.items);
+        _projects.addAll(page.items);
         _hasMore = page.hasMore;
         _loadingMore = false;
       });
@@ -137,26 +122,6 @@ class _MergeRequestListScreenState extends State<MergeRequestListScreen> {
     });
   }
 
-  void _openMergeRequest(MergeRequest mergeRequest) {
-    final callback = widget.onMergeRequestTap;
-    if (callback != null) {
-      callback(mergeRequest);
-      return;
-    }
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => MergeRequestDetailScreen(
-          projectId: widget.projectId,
-          projectPath: widget.projectPath,
-          mergeIid: mergeRequest.iid,
-          repository: widget.repository,
-          initialMergeRequest: mergeRequest,
-          now: widget.now,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final gs = Theme.of(context).extension<GsTheme>()!;
@@ -176,7 +141,7 @@ class _MergeRequestListScreenState extends State<MergeRequestListScreen> {
               )
             : null,
         title: Text(
-          'Merge Requests',
+          'Projects',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(color: gs.textHeading),
@@ -189,52 +154,41 @@ class _MergeRequestListScreenState extends State<MergeRequestListScreen> {
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-                child: Text(
-                  widget.projectPath,
-                  style: gs.mono.copyWith(color: gs.textSubtle),
-                ),
-              ),
-            ),
-            if (_loading && _mergeRequests.isEmpty)
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            if (_loading && _projects.isEmpty)
               const SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(child: CircularProgressIndicator()),
               )
-            else if (_initialError && _mergeRequests.isEmpty)
+            else if (_initialError && _projects.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: _MergeRequestListMessage(
-                  title: 'Unable to load merge requests.',
+                child: _ProjectsMessage(
+                  title: 'Unable to load projects.',
                   detail: 'Check your connection, then try again.',
                   actionLabel: 'Try again',
                   onAction: _loadFirstPage,
                 ),
               )
-            else if (_mergeRequests.isEmpty)
+            else if (_projects.isEmpty)
               const SliverFillRemaining(
                 hasScrollBody: false,
-                child: _MergeRequestListMessage(
-                  title: 'No merge requests yet.',
-                  detail: 'Merge requests for this project will appear here.',
+                child: _ProjectsMessage(
+                  title: 'No projects yet.',
+                  detail: 'Projects you are a member of appear here.',
                 ),
               )
             else ...[
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverList.builder(
-                  itemCount: _mergeRequests.length,
-                  itemBuilder: (context, index) => MergeRequestListRow(
-                    key: ValueKey(
-                      'merge-request-row-${_mergeRequests[index].iid}',
-                    ),
-                    mergeRequest: _mergeRequests[index],
-                    now: widget.now ?? DateTime.now(),
+                  itemCount: _projects.length,
+                  itemBuilder: (context, index) => _ProjectRow(
+                    key: ValueKey('project-row-${_projects[index].id}'),
+                    project: _projects[index],
                     isFirst: index == 0,
-                    isLast: index == _mergeRequests.length - 1,
-                    onTap: () => _openMergeRequest(_mergeRequests[index]),
+                    isLast: index == _projects.length - 1,
+                    onTap: () => widget.onProjectTap?.call(_projects[index]),
                   ),
                 ),
               ),
@@ -253,20 +207,16 @@ class _MergeRequestListScreenState extends State<MergeRequestListScreen> {
   }
 }
 
-/// One merge request row in the card-list treatment, shared between the
-/// project merge request list and the Home tile's My Work list.
-class MergeRequestListRow extends StatelessWidget {
-  const MergeRequestListRow({
+class _ProjectRow extends StatelessWidget {
+  const _ProjectRow({
     super.key,
-    required this.mergeRequest,
-    required this.now,
+    required this.project,
     required this.isFirst,
     required this.isLast,
     required this.onTap,
   });
 
-  final MergeRequest mergeRequest;
-  final DateTime now;
+  final SearchProject project;
   final bool isFirst;
   final bool isLast;
   final VoidCallback onTap;
@@ -279,16 +229,15 @@ class MergeRequestListRow extends StatelessWidget {
       top: isFirst ? const Radius.circular(12) : Radius.zero,
       bottom: isLast ? const Radius.circular(12) : Radius.zero,
     );
-    final updated = formatMergeRequestRelativeTime(mergeRequest.updatedAt, now);
+    final metadata = StringBuffer(
+      '${project.nameWithNamespace}. ${project.starCount} stars.',
+    );
+    if (project.description.isNotEmpty) {
+      metadata.write(' ${project.description}');
+    }
     return Semantics(
       button: true,
-      onTap: onTap,
-      label:
-          '${mergeRequest.displayStateLabel} merge request '
-          '${mergeRequest.reference}: ${mergeRequest.title}. '
-          'Source branch ${mergeRequest.sourceBranch}, target branch '
-          '${mergeRequest.targetBranch}. ${mergeRequest.userNotesCount} '
-          'comments. Updated $updated by ${mergeRequest.author.username}.',
+      label: metadata.toString(),
       child: ExcludeSemantics(
         child: DecoratedBox(
           decoration: BoxDecoration(
@@ -310,9 +259,9 @@ class MergeRequestListRow extends StatelessWidget {
             child: InkWell(
               onTap: onTap,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 88),
+                constraints: const BoxConstraints(minHeight: 64),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 11, 12, 11),
                   child: Row(
                     children: [
                       Expanded(
@@ -320,42 +269,40 @@ class MergeRequestListRow extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              mergeRequest.title,
-                              maxLines: 2,
+                              project.nameWithNamespace,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: gs.textHeading,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            MergeRequestBranchPath(
-                              source: mergeRequest.sourceBranch,
-                              target: mergeRequest.targetBranch,
-                            ),
-                            const SizedBox(height: 8),
+                            if (project.description.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                project.description,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: gs.textSubtle,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 4),
                             Wrap(
-                              spacing: 7,
-                              runSpacing: 6,
+                              spacing: 4,
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                MergeRequestStateBadge(
-                                  state: mergeRequest.state,
-                                  draft: mergeRequest.draft,
+                                GsIcon(
+                                  GsIconGlyph.star,
+                                  size: 12,
+                                  color: gs.textSubtle,
                                 ),
                                 Text(
-                                  mergeRequest.reference,
-                                  style: gs.mono.copyWith(color: gs.textSubtle),
-                                ),
-                                Text(
-                                  '${mergeRequest.author.username} · $updated',
+                                  '${project.starCount}',
                                   style: gs.caption.copyWith(
                                     color: gs.textSubtle,
                                   ),
                                 ),
-                                if (mergeRequest.userNotesCount > 0)
-                                  _CommentCount(
-                                    count: mergeRequest.userNotesCount,
-                                  ),
                               ],
                             ),
                           ],
@@ -375,25 +322,6 @@ class MergeRequestListRow extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _CommentCount extends StatelessWidget {
-  const _CommentCount({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final gs = Theme.of(context).extension<GsTheme>()!;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GsIcon(GsIconGlyph.comments, size: 12, color: gs.textSubtle),
-        const SizedBox(width: 3),
-        Text('$count', style: gs.caption.copyWith(color: gs.textSubtle)),
-      ],
     );
   }
 }
@@ -437,8 +365,8 @@ class _PaginationFooter extends StatelessWidget {
   }
 }
 
-class _MergeRequestListMessage extends StatelessWidget {
-  const _MergeRequestListMessage({
+class _ProjectsMessage extends StatelessWidget {
+  const _ProjectsMessage({
     required this.title,
     required this.detail,
     this.actionLabel,

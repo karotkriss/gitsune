@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
 import 'package:gitsune/features/home/home_screen.dart';
+import 'package:gitsune/features/home/home_tiles.dart';
 import 'package:gitsune/features/issues/data/issue_models.dart';
 import 'package:gitsune/features/issues/presentation/issue_detail_screen.dart';
+import 'package:gitsune/features/issues/presentation/issue_list_screen.dart';
 import 'package:gitsune/features/profile/profile_screen.dart';
 import 'package:gitsune/features/search/presentation/search_screen.dart';
 import 'package:gitsune/features/shell/app_shell.dart';
 import 'package:gitsune/features/todos/todos_screen.dart';
 
 import '../issues/support/fixture_issues_repository.dart';
+import '../my_work/support/fixture_my_work_repository.dart';
+import '../projects/support/fixture_projects_repository.dart';
 import '../search/support/fixture_search_repository.dart';
 import '../todos/support/fixture_todos_repository.dart';
 
@@ -68,8 +72,15 @@ void main() {
     await unmount(tester);
   });
 
-  testWidgets('the To-Do tile navigates; the others are disabled, not '
-      'dead-tapping', (tester) async {
+  InkWell inkWellFor(WidgetTester tester, String label) =>
+      tester.widget<InkWell>(
+        find
+            .ancestor(of: find.text(label), matching: find.byType(InkWell))
+            .first,
+      );
+
+  testWidgets('with nothing wired, only the To-Do tile is live; the others '
+      'are disabled, not dead-tapping', (tester) async {
     final todos = FixtureTodosRepository();
     addTearDown(todos.dispose);
     final router = buildAppRouter(
@@ -83,12 +94,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    InkWell inkWellFor(String label) => tester.widget<InkWell>(
-      find.ancestor(of: find.text(label), matching: find.byType(InkWell)).first,
-    );
-
-    // The five destination-less tiles take no tap (onTap == null), so they
-    // are disabled rather than tapping into nothing.
+    // The destination-less tiles take no tap (onTap == null), so they are
+    // disabled rather than tapping into nothing.
     for (final label in const [
       'Issues',
       'Merge Requests',
@@ -97,17 +104,147 @@ void main() {
       'Groups',
     ]) {
       expect(
-        inkWellFor(label).onTap,
+        inkWellFor(tester, label).onTap,
         isNull,
         reason: '$label must be disabled',
       );
     }
 
     // The To-Do tile is live and navigates to the To-Dos surface.
-    expect(inkWellFor('To-Do List').onTap, isNotNull);
+    expect(inkWellFor(tester, 'To-Do List').onTap, isNotNull);
     await tester.tap(find.text('To-Do List'));
     await tester.pumpAndSettle();
     expect(find.byType(TodosScreen), findsOneWidget);
+
+    await unmount(tester);
+  });
+
+  testWidgets('every Home tile either reaches its destination screen or is '
+      'disabled - a live tile that navigates nowhere cannot ship', (
+    tester,
+  ) async {
+    final todos = FixtureTodosRepository();
+    addTearDown(todos.dispose);
+    final router = buildAppRouter(
+      todosRepository: todos,
+      searchRepository: FixtureSearchRepository(),
+      issuesRepository: FixtureIssuesRepository(),
+      myWorkRepository: FixtureMyWorkRepository(),
+      projectsRepository: FixtureProjectsRepository(),
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(theme: buildAppTheme(), routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+
+    // Each live tile must land on a screen that is not Home; each remaining
+    // tile must be disabled. Add every new tile here as its surface lands.
+    const destinations = <String, String?>{
+      'Issues': 'My Issues',
+      'Merge Requests': 'My Merge Requests',
+      'To-Do List': null, // asserted via TodosScreen below
+      'Projects': 'Projects',
+      'Pipelines': null,
+      'Groups': null,
+    };
+    const disabled = {'Pipelines', 'Groups'};
+    for (final tile in HomeTile.values) {
+      expect(
+        destinations.containsKey(tile.label),
+        isTrue,
+        reason:
+            '${tile.label} is not covered by this guard; give the new tile '
+            'a destination (or explicitly disable it) and add it here',
+      );
+    }
+
+    for (final MapEntry(key: label, value: title) in destinations.entries) {
+      if (disabled.contains(label)) {
+        expect(
+          inkWellFor(tester, label).onTap,
+          isNull,
+          reason: '$label has no destination and must be disabled',
+        );
+        continue;
+      }
+      expect(
+        inkWellFor(tester, label).onTap,
+        isNotNull,
+        reason: '$label must be live',
+      );
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(HomeScreen),
+        findsNothing,
+        reason: '$label must navigate away from Home',
+      );
+      if (title != null) {
+        expect(find.text(title), findsOneWidget);
+        await tester.pageBack();
+      } else {
+        expect(find.byType(TodosScreen), findsOneWidget);
+        // The To-Do tile switches tabs rather than pushing, so return home
+        // through the navigation bar.
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('Home'),
+          ),
+        );
+      }
+      await tester.pumpAndSettle();
+      expect(find.byType(HomeScreen), findsOneWidget);
+    }
+
+    await unmount(tester);
+  });
+
+  testWidgets('a My Issues row deep-links into the issue detail screen', (
+    tester,
+  ) async {
+    final router = buildAppRouter(
+      issuesRepository: FixtureIssuesRepository(),
+      myWorkRepository: FixtureMyWorkRepository(),
+      initialLocation: '/my/issues',
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(theme: buildAppTheme(), routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Keep draft comments after reconnecting'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(IssueDetailScreen), findsOneWidget);
+
+    await unmount(tester);
+  });
+
+  testWidgets('a Projects row opens that project\'s issue list', (
+    tester,
+  ) async {
+    final router = buildAppRouter(
+      issuesRepository: FixtureIssuesRepository(),
+      projectsRepository: FixtureProjectsRepository(),
+      initialLocation: '/projects',
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(theme: buildAppTheme(), routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('gitsune / app'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(IssueListScreen), findsOneWidget);
+    expect(find.text('gitsune / app'), findsOneWidget);
 
     await unmount(tester);
   });

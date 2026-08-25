@@ -1,0 +1,11 @@
+[
+  {
+    "id": 21,
+    "name": "relay-bridge",
+    "name_with_namespace": "gitsune / relay-bridge",
+    "description": "Webhook-to-push relay bridge examples.",
+    "avatar_url": null,
+    "star_count": 1,
+    "web_url": "https://gitlab.example.com/gitsune/relay-bridge"
+  }
+]
