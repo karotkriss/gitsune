@@ -27,7 +27,7 @@ See `docs/decisions/0006-strategy-and-positioning.md` for how this shapes positi
 - **Full feature breadth.** The v1 scope targets parity with GitHub Mobile's functional bar: merge request review and approval, CI/CD pipeline status and logs, issue triage, a notifications inbox, code browsing with syntax highlighting, search, releases, and an offline read cache.
 - **No project-operated servers, ever.** Notifications are delivered through polling, GitLab's own real-time channels, and optional user-owned services the person chooses to connect, never through infrastructure this project runs and that would see anyone's GitLab activity.
 - **Designed in GitLab's own visual language.** The interface follows GitLab's Pajamas design system for color, type, iconography, and terminology, borrowing proven mobile interaction patterns where GitLab's design system does not yet cover mobile-specific needs.
-- **License: TBD.** A license has not been chosen yet; this is a deliberate, open decision rather than an oversight.
+- **Open source, MIT licensed.** See `LICENSE` and `docs/decisions/0011-license-choice.md`.
 
 ## Current status
 
@@ -86,3 +86,8 @@ The research docs are there to back up the decisions with evidence, not to be re
 
 Internal project development is under way, but Gitsune is not yet open to outside code contributions.
 See `docs/plan/phase-plan.md` for the development sequence and contribution status.
+
+## License
+
+Gitsune is licensed under the MIT License.
+See `LICENSE` for the full text.

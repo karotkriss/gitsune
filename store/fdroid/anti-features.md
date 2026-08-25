@@ -9,5 +9,4 @@ Reasoning against the [anti-feature list](https://f-droid.org/docs/Anti-Features
 - **NonFreeDep / NonFreeAdd:** the `fdroid` flavor contains free software only; push is UnifiedPush (no Google Play services, no FCM), and any future proprietary dependency is confined to the `play` flavor by the build script.
 - **UpstreamNonFree:** the upstream app is the same codebase being submitted.
 
-Note: F-Droid inclusion requires a declared free-software license, and this repository's license is deliberately still TBD (see `README.md`).
-The license decision (its own ADR) must land before an F-Droid submission can happen; that is owned by the submission task, not this content.
+Note: F-Droid inclusion requires a declared free-software license; this repository is MIT licensed (`LICENSE`, `docs/decisions/0011-license-choice.md`), so this requirement is satisfied.
