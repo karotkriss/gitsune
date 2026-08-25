@@ -62,13 +62,12 @@ import '../todos/todos_screen.dart';
 /// A fresh router per app instance (rather than a shared global) so app
 /// restarts and tests never inherit a previous instance's location.
 ///
-/// The optional feature repositories enable their project routes once the
-/// account and project composition root owns a signed-in GitLab client.
-/// Keeping those dependencies optional lets the shell boot before E2's account
-/// wiring lands without hiding the route contracts exposed to project
-/// navigation. [searchRepository] swaps the Explore tab's placeholder for the
-/// real [SearchScreen], while [todosRepository] binds the To-Dos tab to its
-/// offline-first cache stream and [homeTileOrderStore] persists the Home
+/// The optional feature repositories enable their routes once the
+/// composition root owns a signed-in GitLab client. Keeping those dependencies
+/// optional lets the signed-out shell and focused tests assemble only the
+/// surfaces they need. [searchRepository] swaps the Explore tab's placeholder
+/// for the real [SearchScreen], while [todosRepository] binds the To-Dos tab
+/// to its offline-first cache stream and [homeTileOrderStore] persists the Home
 /// tab's tile order per account. [recentlyViewedCache] lets the issue, merge
 /// request, and pipeline detail screens serve recently viewed items offline,
 /// and [commentDraftQueue] routes issue comment sends through the offline
