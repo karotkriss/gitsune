@@ -45,8 +45,10 @@ class GitLabProjectsRepository implements ProjectsRepository {
       }),
       decode: SearchProject.fromJson,
     );
-    _paginator = paginator;
-    return _loadPage(paginator);
+    return _loadPage(paginator).then((page) {
+      _paginator = paginator;
+      return page;
+    });
   }
 
   @override

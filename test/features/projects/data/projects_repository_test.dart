@@ -62,6 +62,42 @@ void main() {
 
     expect(repository.loadNextPage, throwsStateError);
   });
+
+  test('a failed refresh preserves the next-page cursor', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    var firstPageRequests = 0;
+    server.handle('GET /api/v4/projects', (request) async {
+      final page = request.uri.queryParameters['page'];
+      request.response.headers.contentType = ContentType.json;
+      if (page == null) {
+        firstPageRequests += 1;
+        if (firstPageRequests == 2) {
+          request.response.statusCode = HttpStatus.internalServerError;
+          request.response.write('{}');
+        } else {
+          request.response.statusCode = HttpStatus.ok;
+          final nextUri = server.baseUri.resolve('/api/v4/projects?page=2');
+          request.response.headers.set('Link', '<$nextUri>; rel="next"');
+          request.response.write(Fixtures.raw('search_projects_page1'));
+        }
+      } else {
+        expect(page, '2');
+        request.response.statusCode = HttpStatus.ok;
+        request.response.write(Fixtures.raw('projects_page2'));
+      }
+      await request.response.close();
+    });
+
+    final repository = GitLabProjectsRepository(_client(server, account));
+    await repository.loadFirstPage();
+
+    await expectLater(repository.loadFirstPage(), throwsA(isA<DioException>()));
+    final next = await repository.loadNextPage();
+
+    expect(next.items.map((project) => project.name), ['relay-bridge']);
+    expect(firstPageRequests, 2);
+  });
 }
 
 Dio _client(FakeGitLabServer server, AccountKey account) => createGitLabClient(

@@ -101,6 +101,91 @@ void main() {
     expect(drained.hasMore, isFalse);
   });
 
+  test('a failed issue refresh preserves the next-page cursor', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    var firstPageRequests = 0;
+    server.handle('GET /api/v4/issues', (request) async {
+      final page = request.uri.queryParameters['page'];
+      request.response.headers.contentType = ContentType.json;
+      if (page == null) {
+        firstPageRequests += 1;
+        if (firstPageRequests == 2) {
+          request.response.statusCode = HttpStatus.internalServerError;
+          request.response.write('{}');
+        } else {
+          request.response.statusCode = HttpStatus.ok;
+          final nextUri = server.baseUri.resolve('/api/v4/issues?page=2');
+          request.response.headers.set('Link', '<$nextUri>; rel="next"');
+          request.response.write(Fixtures.raw('issues_page1'));
+        }
+      } else {
+        expect(page, '2');
+        request.response.statusCode = HttpStatus.ok;
+        request.response.write(Fixtures.raw('issues_page2'));
+      }
+      await request.response.close();
+    });
+
+    final repository = GitLabMyWorkRepository(_client(server, account));
+    await repository.loadFirstIssuesPage(MyWorkScope.assigned);
+
+    await expectLater(
+      repository.loadFirstIssuesPage(MyWorkScope.assigned),
+      throwsA(isA<DioException>()),
+    );
+    final next = await repository.loadNextIssuesPage(MyWorkScope.assigned);
+
+    expect(next.items.map((issue) => issue.iid), [140]);
+    expect(firstPageRequests, 2);
+  });
+
+  test(
+    'a failed merge request refresh preserves the next-page cursor',
+    () async {
+      final server = await FakeGitLabServer.start();
+      addTearDown(server.close);
+      var firstPageRequests = 0;
+      server.handle('GET /api/v4/merge_requests', (request) async {
+        final page = request.uri.queryParameters['page'];
+        request.response.headers.contentType = ContentType.json;
+        if (page == null) {
+          firstPageRequests += 1;
+          if (firstPageRequests == 2) {
+            request.response.statusCode = HttpStatus.internalServerError;
+            request.response.write('{}');
+          } else {
+            request.response.statusCode = HttpStatus.ok;
+            final nextUri = server.baseUri.resolve(
+              '/api/v4/merge_requests?page=2',
+            );
+            request.response.headers.set('Link', '<$nextUri>; rel="next"');
+            request.response.write(Fixtures.raw('merge_requests_page1'));
+          }
+        } else {
+          expect(page, '2');
+          request.response.statusCode = HttpStatus.ok;
+          request.response.write('[]');
+        }
+        await request.response.close();
+      });
+
+      final repository = GitLabMyWorkRepository(_client(server, account));
+      await repository.loadFirstMergeRequestsPage(MyWorkScope.assigned);
+
+      await expectLater(
+        repository.loadFirstMergeRequestsPage(MyWorkScope.assigned),
+        throwsA(isA<DioException>()),
+      );
+      final next = await repository.loadNextMergeRequestsPage(
+        MyWorkScope.assigned,
+      );
+
+      expect(next.items, isEmpty);
+      expect(firstPageRequests, 2);
+    },
+  );
+
   test('loading the next page before the first throws', () async {
     final server = await FakeGitLabServer.start();
     addTearDown(server.close);

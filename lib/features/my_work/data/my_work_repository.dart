@@ -64,8 +64,12 @@ class GitLabMyWorkRepository implements MyWorkRepository {
       }),
       decode: Issue.fromJson,
     );
-    _issuePaginators[scope] = paginator;
-    return _loadPage(scope, paginator, _issuePageLoads, _toIssuePage);
+    return _loadPage(scope, paginator, _issuePageLoads, _toIssuePage).then((
+      page,
+    ) {
+      _issuePaginators[scope] = paginator;
+      return page;
+    });
   }
 
   @override
@@ -90,8 +94,12 @@ class GitLabMyWorkRepository implements MyWorkRepository {
       }),
       decode: MergeRequest.fromJson,
     );
-    _mrPaginators[scope] = paginator;
-    return _loadPage(scope, paginator, _mrPageLoads, _toMergeRequestPage);
+    return _loadPage(scope, paginator, _mrPageLoads, _toMergeRequestPage).then((
+      page,
+    ) {
+      _mrPaginators[scope] = paginator;
+      return page;
+    });
   }
 
   @override
