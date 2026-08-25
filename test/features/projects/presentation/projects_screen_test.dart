@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
@@ -43,6 +45,7 @@ void main() {
   });
 
   testWidgets('tapping a project reports it', (tester) async {
+    final semantics = tester.ensureSemantics();
     final repository = FixtureProjectsRepository();
     final tapped = <SearchProject>[];
     await tester.pumpWidget(
@@ -50,8 +53,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final firstRow = find.bySemanticsLabel(
+      RegExp(r'gitsune / app\. 12 stars\. The Gitsune mobile client\.'),
+    );
+    expect(
+      tester
+          .getSemantics(firstRow)
+          .getSemanticsData()
+          .hasAction(SemanticsAction.tap),
+      isTrue,
+    );
     await tester.tap(find.text('gitsune / app'));
     expect(tapped.map((project) => project.id), [7]);
+    semantics.dispose();
   });
 
   testWidgets('an empty membership list shows the empty state', (tester) async {

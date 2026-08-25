@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gitsune/core/theme/app_theme.dart';
@@ -54,6 +56,7 @@ void main() {
   });
 
   testWidgets('tapping an issue row reports the issue', (tester) async {
+    final semantics = tester.ensureSemantics();
     final repository = FixtureMyWorkRepository();
     final tapped = <Issue>[];
     await tester.pumpWidget(
@@ -67,8 +70,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final firstRow = find.bySemanticsLabel(
+      RegExp(r'Open issue #142: Keep draft comments after reconnecting'),
+    );
+    expect(
+      tester
+          .getSemantics(firstRow)
+          .getSemanticsData()
+          .hasAction(SemanticsAction.tap),
+      isTrue,
+    );
     await tester.tap(find.text('Keep draft comments after reconnecting'));
     expect(tapped.map((issue) => issue.iid), [142]);
+    semantics.dispose();
   });
 
   testWidgets('an empty issue queue explains the active scope', (tester) async {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -183,6 +184,97 @@ void main() {
 
       expect(next.items, isEmpty);
       expect(firstPageRequests, 2);
+    },
+  );
+
+  test('only the latest concurrent issue load commits its cursor', () async {
+    final server = await FakeGitLabServer.start();
+    addTearDown(server.close);
+    final olderStarted = Completer<void>();
+    final releaseOlder = Completer<void>();
+    var firstPageRequests = 0;
+    String? nextCursor;
+    server.handle('GET /api/v4/issues', (request) async {
+      final cursor = request.uri.queryParameters['cursor'];
+      request.response.statusCode = HttpStatus.ok;
+      request.response.headers.contentType = ContentType.json;
+      if (cursor == null) {
+        firstPageRequests += 1;
+        final isOlder = firstPageRequests == 1;
+        if (isOlder) {
+          olderStarted.complete();
+          await releaseOlder.future;
+        }
+        final nextUri = server.baseUri.resolve(
+          '/api/v4/issues?cursor=${isOlder ? 'older' : 'latest'}',
+        );
+        request.response.headers.set('Link', '<$nextUri>; rel="next"');
+        request.response.write(Fixtures.raw('issues_page1'));
+      } else {
+        nextCursor = cursor;
+        request.response.write(Fixtures.raw('issues_page2'));
+      }
+      await request.response.close();
+    });
+
+    final repository = GitLabMyWorkRepository(_client(server, account));
+    final older = repository.loadFirstIssuesPage(MyWorkScope.assigned);
+    await olderStarted.future;
+    final latest = repository.loadFirstIssuesPage(MyWorkScope.assigned);
+    await latest;
+    releaseOlder.complete();
+    await older;
+
+    await repository.loadNextIssuesPage(MyWorkScope.assigned);
+
+    expect(nextCursor, 'latest');
+  });
+
+  test(
+    'only the latest concurrent merge request load commits its cursor',
+    () async {
+      final server = await FakeGitLabServer.start();
+      addTearDown(server.close);
+      final olderStarted = Completer<void>();
+      final releaseOlder = Completer<void>();
+      var firstPageRequests = 0;
+      String? nextCursor;
+      server.handle('GET /api/v4/merge_requests', (request) async {
+        final cursor = request.uri.queryParameters['cursor'];
+        request.response.statusCode = HttpStatus.ok;
+        request.response.headers.contentType = ContentType.json;
+        if (cursor == null) {
+          firstPageRequests += 1;
+          final isOlder = firstPageRequests == 1;
+          if (isOlder) {
+            olderStarted.complete();
+            await releaseOlder.future;
+          }
+          final nextUri = server.baseUri.resolve(
+            '/api/v4/merge_requests?cursor=${isOlder ? 'older' : 'latest'}',
+          );
+          request.response.headers.set('Link', '<$nextUri>; rel="next"');
+          request.response.write(Fixtures.raw('merge_requests_page1'));
+        } else {
+          nextCursor = cursor;
+          request.response.write('[]');
+        }
+        await request.response.close();
+      });
+
+      final repository = GitLabMyWorkRepository(_client(server, account));
+      final older = repository.loadFirstMergeRequestsPage(MyWorkScope.assigned);
+      await olderStarted.future;
+      final latest = repository.loadFirstMergeRequestsPage(
+        MyWorkScope.assigned,
+      );
+      await latest;
+      releaseOlder.complete();
+      await older;
+
+      await repository.loadNextMergeRequestsPage(MyWorkScope.assigned);
+
+      expect(nextCursor, 'latest');
     },
   );
 

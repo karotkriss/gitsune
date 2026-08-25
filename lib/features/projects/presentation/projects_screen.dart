@@ -237,6 +237,7 @@ class _ProjectRow extends StatelessWidget {
     }
     return Semantics(
       button: true,
+      onTap: onTap,
       label: metadata.toString(),
       child: ExcludeSemantics(
         child: DecoratedBox(

@@ -31,6 +31,7 @@ class GitLabProjectsRepository implements ProjectsRepository {
 
   KeysetPaginator<SearchProject>? _paginator;
   Future<ProjectPage>? _pageLoad;
+  Object? _firstPageRequest;
 
   @override
   Future<ProjectPage> loadFirstPage() {
@@ -45,9 +46,18 @@ class GitLabProjectsRepository implements ProjectsRepository {
       }),
       decode: SearchProject.fromJson,
     );
-    return _loadPage(paginator).then((page) {
-      _paginator = paginator;
+    final request = Object();
+    _firstPageRequest = request;
+    final future = _loadPage(paginator).then((page) {
+      if (identical(_firstPageRequest, request)) {
+        _paginator = paginator;
+      }
       return page;
+    });
+    return future.whenComplete(() {
+      if (identical(_firstPageRequest, request)) {
+        _firstPageRequest = null;
+      }
     });
   }
 

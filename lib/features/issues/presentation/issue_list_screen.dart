@@ -307,6 +307,7 @@ class IssueListRow extends StatelessWidget {
     if (labels.isNotEmpty) metadata.write(' Labels: $labels.');
     return Semantics(
       button: true,
+      onTap: onTap,
       label: metadata.toString(),
       child: ExcludeSemantics(
         child: DecoratedBox(

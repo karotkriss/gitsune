@@ -45,8 +45,10 @@ class GitLabMyWorkRepository implements MyWorkRepository {
 
   final _issuePaginators = <MyWorkScope, KeysetPaginator<Issue>>{};
   final _issuePageLoads = <MyWorkScope, Future<IssuePage>>{};
+  final _issueFirstPageRequests = <MyWorkScope, Object>{};
   final _mrPaginators = <MyWorkScope, KeysetPaginator<MergeRequest>>{};
   final _mrPageLoads = <MyWorkScope, Future<MergeRequestPage>>{};
+  final _mrFirstPageRequests = <MyWorkScope, Object>{};
 
   @override
   Future<IssuePage> loadFirstIssuesPage(MyWorkScope scope) {
@@ -64,12 +66,14 @@ class GitLabMyWorkRepository implements MyWorkRepository {
       }),
       decode: Issue.fromJson,
     );
-    return _loadPage(scope, paginator, _issuePageLoads, _toIssuePage).then((
-      page,
-    ) {
-      _issuePaginators[scope] = paginator;
-      return page;
-    });
+    return _loadFirst(
+      scope,
+      paginator,
+      _issuePaginators,
+      _issuePageLoads,
+      _issueFirstPageRequests,
+      _toIssuePage,
+    );
   }
 
   @override
@@ -94,12 +98,14 @@ class GitLabMyWorkRepository implements MyWorkRepository {
       }),
       decode: MergeRequest.fromJson,
     );
-    return _loadPage(scope, paginator, _mrPageLoads, _toMergeRequestPage).then((
-      page,
-    ) {
-      _mrPaginators[scope] = paginator;
-      return page;
-    });
+    return _loadFirst(
+      scope,
+      paginator,
+      _mrPaginators,
+      _mrPageLoads,
+      _mrFirstPageRequests,
+      _toMergeRequestPage,
+    );
   }
 
   @override
@@ -117,6 +123,29 @@ class GitLabMyWorkRepository implements MyWorkRepository {
 
   static MergeRequestPage _toMergeRequestPage(KeysetPage<MergeRequest> page) =>
       MergeRequestPage(items: page.items, hasMore: page.hasMore);
+
+  Future<P> _loadFirst<T, P>(
+    MyWorkScope scope,
+    KeysetPaginator<T> paginator,
+    Map<MyWorkScope, KeysetPaginator<T>> paginators,
+    Map<MyWorkScope, Future<P>> pageLoads,
+    Map<MyWorkScope, Object> firstPageRequests,
+    P Function(KeysetPage<T>) toPage,
+  ) {
+    final request = Object();
+    firstPageRequests[scope] = request;
+    final future = _loadPage(scope, paginator, pageLoads, toPage).then((page) {
+      if (identical(firstPageRequests[scope], request)) {
+        paginators[scope] = paginator;
+      }
+      return page;
+    });
+    return future.whenComplete(() {
+      if (identical(firstPageRequests[scope], request)) {
+        firstPageRequests.remove(scope);
+      }
+    });
+  }
 
   Future<P> _loadNext<T, P>(
     MyWorkScope scope,
