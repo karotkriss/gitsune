@@ -2,6 +2,7 @@
 
 - Status: accepted
 - Date: 2026-08-25
+- Amends: `docs/decisions/0006-strategy-and-positioning.md` (the exact license choice only)
 
 ## Context
 

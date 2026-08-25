@@ -25,7 +25,7 @@ Each package's license text ships alongside the files it covers:
 - `assets/fonts/GitLabSans.woff2`, `assets/fonts/GitLabSans-Italic.woff2` — from npm `@gitlab/fonts@1.3.1`, SIL Open Font License 1.1 (GitLab Sans is derived from Inter), text at `assets/fonts/LICENSE-gitlab-sans.txt`.
 - `assets/fonts/GitLabMono.woff2`, `assets/fonts/GitLabMono-Italic.woff2` — from npm `@gitlab/fonts@1.3.1`, SIL Open Font License 1.1 (GitLab Mono is derived from JetBrains Mono), text at `assets/fonts/LICENSE-gitlab-mono.txt`.
 
-This repository's own license is not yet decided (see `README.md`); the licenses above govern only the vendored files they accompany, regardless of what license this repository eventually adopts.
+This repository is MIT licensed (see `LICENSE` and `docs/decisions/0011-license-choice.md`); the licenses above govern only the vendored files they accompany.
 
 ## Content fundamentals
 
